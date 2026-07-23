@@ -1,0 +1,11 @@
+<button
+  type="button"
+  class="gipsi-chip"
+  [class.gipsi-chip--selected]="selected"
+  (click)="onChipClick($event)"
+>
+  @if (icon) {
+    <span class="material-symbols-rounded chip-icon">{{ icon }}</span>
+  }
+  <span class="chip-label">{{ label }}</span>
+</button>

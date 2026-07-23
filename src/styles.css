@@ -1,0 +1,412 @@
+/* ============================================================
+   BIPSY WEB — Global Design System
+   Matching exactly the mobile Flutter app aesthetics
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap');
+
+:root {
+  /* ── Base Colors (matching GipsiColors in Flutter) ── */
+  --clr-base:     #21242a;   /* main background */
+  --clr-surface:  #23282f;   /* card surface */
+  --clr-card:     rgba(255,255,255,0.055);  /* glass card bg */
+  --clr-border:   rgba(255,255,255,0.10);   /* card border */
+  --clr-border-hover: rgba(185,235,208,0.30);
+  --clr-input:    rgba(255,255,255,0.06);
+
+  /* ── Brand Mint (GipsiColors.primary) ── */
+  --clr-mint:       #b9ebd0;
+  --clr-mint-hover: #cef2df;
+  --clr-mint-dim:   rgba(185,235,208,0.12);
+  --clr-mint-glow:  rgba(185,235,208,0.35);
+  --clr-mint-text:  #0c1a11;
+
+  /* ── Text ── */
+  --clr-text:      #f0f4f8;
+  --clr-text-2:    #8e9aaa;
+  --clr-text-3:    #5a6470;
+
+  /* ── Warning / Star ── */
+  --clr-warn:  #FFBA49;
+
+  /* ── Radii (matching GipsiRadii) ── */
+  --r-xs:   6px;
+  --r-sm:   12px;
+  --r-md:   16px;
+  --r-lg:   20px;
+  --r-xl:   24px;
+  --r-pill: 999px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 6px 24px rgba(0,0,0,0.30), 0 1px 0 rgba(255,255,255,0.04) inset;
+  --shadow-glow: 0 0 24px rgba(185,235,208,0.40);
+
+  /* ── Blur ── */
+  --blur-glass: blur(16px) saturate(1.4);
+
+  /* ── Typography ── */
+  --ff: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* ── Glassmorphism helpers for dark mode ── */
+  --clr-nav-bg: rgba(21, 23, 26, 0.75);
+  --clr-nav-border: rgba(255, 255, 255, 0.08);
+  --clr-nav-shadow: 0 4px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  --clr-chip-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 100%);
+  --clr-chip-border: rgba(255, 255, 255, 0.16);
+  --clr-chip-shadow: 0 3px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  --clr-btn-sec-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  --clr-btn-sec-border: rgba(255, 255, 255, 0.16);
+  --clr-btn-sec-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --clr-btn-sec-bg-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.05) 100%);
+  --clr-btn-sec-border-hover: rgba(255, 255, 255, 0.26);
+  --clr-btn-sec-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  --clr-btn-prim-bg: linear-gradient(135deg, var(--clr-mint) 0%, rgba(185, 235, 208, 0.70) 100%);
+  --clr-btn-prim-shadow: 0 4px 12px rgba(185, 235, 208, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --clr-btn-prim-bg-hover: linear-gradient(135deg, var(--clr-mint-hover) 0%, rgba(185, 235, 208, 0.80) 100%);
+  --clr-btn-prim-shadow-hover: 0 6px 16px rgba(185, 235, 208, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+
+  --clr-chip-sel-bg: linear-gradient(135deg, rgba(185, 235, 208, 0.95) 0%, rgba(185, 235, 208, 0.82) 100%);
+  --clr-chip-sel-shadow: 0 3px 8px rgba(185, 235, 208, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  --clr-chip-sel-bg-hover: linear-gradient(135deg, rgba(206, 242, 223, 0.98) 0%, rgba(185, 235, 208, 0.90) 100%);
+  --clr-chip-sel-shadow-hover: 0 5px 12px rgba(185, 235, 208, 0.40);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --clr-base:     #F7F8F7;   /* lightBackground */
+    --clr-surface:  #FFFFFF;   /* lightSurface */
+    --clr-card:     rgba(0, 0, 0, 0.025);  /* lightCardFill */
+    --clr-border:   rgba(0, 0, 0, 0.08);   /* lightBorder */
+    --clr-border-hover: rgba(48, 53, 58, 0.25);
+    --clr-input:    #F0F3F1;   /* lightFieldFill */
+
+    --clr-text:      #1A2529;   /* lightTextHigh */
+    --clr-text-2:    #4C5A54;   /* lightTextMedium */
+    --clr-text-3:    #8A958F;   /* lightTextLow */
+
+    --clr-nav-bg: rgba(255, 255, 255, 0.75);
+    --clr-nav-border: rgba(0, 0, 0, 0.08);
+    --clr-nav-shadow: 0 4px 30px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.80);
+
+    --clr-chip-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.40) 100%);
+    --clr-chip-border: rgba(0, 0, 0, 0.08);
+    --clr-chip-shadow: 0 3px 8px rgba(29, 41, 47, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.80);
+
+    --clr-btn-sec-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.40) 100%);
+    --clr-btn-sec-border: rgba(0, 0, 0, 0.12);
+    --clr-btn-sec-shadow: 0 4px 12px rgba(29, 41, 47, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.60);
+    --clr-btn-sec-bg-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.60) 100%);
+    --clr-btn-sec-border-hover: rgba(0, 0, 0, 0.20);
+    --clr-btn-sec-shadow-hover: 0 6px 16px rgba(29, 41, 47, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+    --shadow-card: 0 6px 24px rgba(29, 41, 47, 0.08), 0 1px 0 rgba(255,255,255,0.80) inset;
+    --shadow-glow: 0 0 24px rgba(48, 53, 58, 0.15);
+
+    /* ── Carbon Accent (#30353a) replacing Mint Green ── */
+    --clr-mint:       #30353a;
+    --clr-mint-hover: #454c54;
+    --clr-mint-dim:   rgba(48, 53, 58, 0.08);
+    --clr-mint-glow:  rgba(48, 53, 58, 0.15);
+    --clr-mint-text:  #ffffff;
+
+    /* ── Primary Button & Active Chip Gradients ── */
+    --clr-btn-prim-bg: linear-gradient(135deg, #30353a 0%, #212428 100%);
+    --clr-btn-prim-shadow: 0 4px 12px rgba(48, 53, 58, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+    --clr-btn-prim-bg-hover: linear-gradient(135deg, #454c54 0%, #30353a 100%);
+    --clr-btn-prim-shadow-hover: 0 6px 16px rgba(48, 53, 58, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+
+    --clr-chip-sel-bg: linear-gradient(135deg, #30353a 0%, #212428 100%);
+    --clr-chip-sel-shadow: 0 3px 8px rgba(48, 53, 58, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    --clr-chip-sel-bg-hover: linear-gradient(135deg, #454c54 0%, #30353a 100%);
+    --clr-chip-sel-shadow-hover: 0 5px 12px rgba(48, 53, 58, 0.30);
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background-color: var(--clr-base);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Material Symbols Rounded (Matches Flutter Icons) ── */
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.material-symbols-rounded.fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--clr-base); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--clr-mint); }
+
+/* ── App shell ── */
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex: 1;
+}
+
+/* ============================================================
+   GLASSMORPHISM CARD  — matches Flutter BusinessCard
+   ============================================================ */
+.glass-card {
+  background: var(--clr-card);
+  border: 1.2px solid var(--clr-border);
+  border-radius: var(--r-xl);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  box-shadow: var(--shadow-card);
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s cubic-bezier(.4,0,.2,1);
+  overflow: hidden;
+}
+
+.glass-card:hover {
+  border-color: var(--clr-border-hover);
+  box-shadow: 0 12px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(185,235,208,.15);
+  transform: translateY(-4px);
+}
+
+/* ============================================================
+   CHIPS / PILLS  — matches GipsiChip
+   ============================================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--clr-border);
+  background: var(--clr-input);
+  color: var(--clr-text-2);
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--ff);
+}
+
+.chip:hover {
+  background: var(--clr-btn-sec-bg-hover);
+  color: var(--clr-text);
+  border-color: var(--clr-btn-sec-border-hover);
+}
+
+.chip.chip--active {
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  border-color: var(--clr-mint);
+  box-shadow: 0 0 18px var(--clr-mint-glow);
+}
+
+.chip svg { flex-shrink: 0; }
+
+/* ============================================================
+   MINT PRIMARY BUTTON
+   ============================================================ */
+.btn-mint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-weight: 800;
+  font-size: 0.95rem;
+  font-family: var(--ff);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--clr-mint-glow);
+  text-decoration: none;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+  letter-spacing: -.2px;
+}
+
+.btn-mint:hover {
+  background: var(--clr-mint-hover);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 32px rgba(185,235,208,.55);
+}
+
+.btn-mint:active { transform: scale(.97); }
+
+/* Ghost button */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: var(--r-pill);
+  border: 1.2px solid var(--clr-border);
+  background: rgba(255,255,255,0.05);
+  color: var(--clr-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: var(--ff);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .2s ease;
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* ============================================================
+   BADGE PILL  — glassmorphism, like Flutter RatingBadge
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  background: rgba(29,33,39,0.70);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.25);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--clr-text);
+}
+
+.badge--mint {
+  background: var(--clr-mint-dim);
+  color: var(--clr-mint);
+  border-color: rgba(185,235,208,.30);
+}
+
+/* ============================================================
+   FORM INPUTS
+   ============================================================ */
+.input-field {
+  width: 100%;
+  padding: 14px 20px;
+  background: var(--clr-input);
+  border: 1.2px solid var(--clr-border);
+  border-radius: var(--r-md);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.input-field:focus {
+  border-color: var(--clr-mint);
+  box-shadow: 0 0 0 3px var(--clr-mint-dim);
+}
+
+.input-field::placeholder { color: var(--clr-text-3); }
+
+/* ============================================================
+   AMBIENT GLOW ORBS
+   ============================================================ */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--clr-mint-glow) 0%, transparent 70%);
+  animation: orb-float 8s ease-in-out infinite;
+}
+
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-12px) scale(1.05); }
+}
+
+/* ============================================================
+   SPINNER / LOADING
+   ============================================================ */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255,255,255,0.08);
+  border-top-color: var(--clr-mint);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 16px;
+  color: var(--clr-text-2);
+  font-size: 0.95rem;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-up {
+  animation: fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--clr-border);
+  margin: 0;
+}
+
+/* Logo & Theme visibility helpers */
+.logo-carbon,
+.theme-light-only {
+  display: none !important;
+}
+.theme-dark-only {
+  display: block !important;
+}
+@media (prefers-color-scheme: light) {
+  .logo-mint,
+  .theme-dark-only {
+    display: none !important;
+  }
+  .logo-carbon,
+  .theme-light-only {
+    display: block !important;
+  }
+}

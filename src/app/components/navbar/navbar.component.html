@@ -1,0 +1,178 @@
+<header class="navbar">
+  <div class="navbar-inner">
+    <!-- Logo -->
+    <a routerLink="/home" class="navbar-logo">
+      <img
+        src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
+        alt="Bipsy"
+        class="navbar-logo-img logo-mint"
+      />
+      <img
+        src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
+        alt="Bipsy"
+        class="navbar-logo-img logo-carbon"
+      />
+    </a>
+
+    <!-- Nav links — pill container (matches Flutter bottom nav style on web) -->
+    @if (currentUser) {
+      <nav class="nav-links" aria-label="Navegación principal">
+        <a
+          routerLink="/home"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-link"
+        >
+          <span class="material-symbols-rounded nav-icon">home</span>
+          <span>Inicio</span>
+        </a>
+        <a routerLink="/search" routerLinkActive="active" class="nav-link">
+          <span class="material-symbols-rounded nav-icon">explore</span>
+          <span>Explorar</span>
+        </a>
+        <a
+          routerLink="/appointments"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <span class="material-symbols-rounded nav-icon">calendar_month</span>
+          <span>Mis Citas</span>
+        </a>
+      </nav>
+    }
+
+    <!-- User zone -->
+    <div class="navbar-user">
+      @if (currentUser) {
+        <a routerLink="/profile" class="user-badge">
+          <div class="user-avatar">{{ currentUser.initials || "U" }}</div>
+          <span class="user-name-label">{{
+            currentUser.name?.split(" ")?.at(0) ?? ""
+          }}</span>
+          <span class="material-symbols-rounded" style="font-size: 18px"
+            >expand_more</span
+          >
+        </a>
+        <button
+          type="button"
+          class="icon-btn"
+          (click)="logout()"
+          title="Cerrar sesión"
+          aria-label="Cerrar sesión"
+        >
+          <span class="material-symbols-rounded" style="font-size: 20px"
+            >logout</span
+          >
+        </button>
+      } @else {
+        <app-button
+          variant="secondary"
+          [fullWidth]="true"
+          style="width: 138px"
+          (onClick)="openAuth(true)"
+        >
+          Iniciar sesión
+        </app-button>
+        <app-button
+          variant="primary"
+          [fullWidth]="true"
+          style="width: 138px"
+          (onClick)="openAuth(false)"
+        >
+          Registrarse
+        </app-button>
+        <span class="nav-divider"></span>
+        <a class="biz-promo-link" (click)="onBizPromoClick()">
+          <span class="material-symbols-rounded" style="font-size: 18px; color: var(--clr-mint); margin-right: 6px;">storefront</span>
+          ¿Tienes un negocio?
+        </a>
+      }
+    </div>
+  </div>
+</header>
+
+<!-- ─── AUTH MODAL ─── -->
+@if (isAuthModalOpen) {
+  <div class="modal-backdrop anim-fade-up" (click)="closeAuth()">
+    <div class="modal-box glass-card" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="modal-close"
+        (click)="closeAuth()"
+        aria-label="Cerrar"
+      >
+        <span class="material-symbols-rounded">close</span>
+      </button>
+
+      <div class="modal-header">
+        <img
+          src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
+          alt="Bipsy"
+          class="modal-logo logo-mint"
+        />
+        <img
+          src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
+          alt="Bipsy"
+          class="modal-logo logo-carbon"
+        />
+        <h2 class="modal-title">
+          {{ isLoginMode ? "Iniciar sesión" : "Crear cuenta" }}
+        </h2>
+        <p class="modal-sub">
+          Reserva barbería, peluquería y estética en segundos
+        </p>
+      </div>
+
+      <form class="modal-form" (submit)="submitAuth(); $event.preventDefault()">
+        @if (!isLoginMode) {
+          <div class="form-row">
+            <label class="form-label">Nombre</label>
+            <input
+              type="text"
+              class="input-field"
+              placeholder="Ej. Miguel Torres"
+              [(ngModel)]="nameInput"
+              name="name"
+            />
+          </div>
+        }
+        <div class="form-row">
+          <label class="form-label">Correo electrónico</label>
+          <input
+            type="email"
+            class="input-field"
+            placeholder="tu@email.com"
+            [(ngModel)]="emailInput"
+            name="email"
+          />
+        </div>
+        <div class="form-row">
+          <label class="form-label">Contraseña</label>
+          <input
+            type="password"
+            class="input-field"
+            placeholder="••••••••"
+            [(ngModel)]="passwordInput"
+            name="password"
+          />
+        </div>
+
+        @if (authError) {
+          <p class="form-error">{{ authError }}</p>
+        }
+
+        <app-button type="submit" variant="primary" [fullWidth]="true">
+          {{ isLoginMode ? "Entrar" : "Crear cuenta" }}
+        </app-button>
+      </form>
+
+      <p class="modal-toggle">
+        @if (isLoginMode) {
+          ¿Sin cuenta? <a (click)="isLoginMode = false">Regístrate gratis</a>
+        } @else {
+          ¿Ya tienes cuenta? <a (click)="isLoginMode = true">Inicia sesión</a>
+        }
+      </p>
+    </div>
+  </div>
+}

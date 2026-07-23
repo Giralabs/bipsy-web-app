@@ -1,0 +1,221 @@
+<div class="home-page anim-fade-up">
+
+  <!-- ── Ambient Orbs (matching Flutter RadialGradient ambient mesh) ── -->
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+
+  <!-- ══════════════════════════════════════════
+       HERO SECTION — matching Flutter _Header
+       ══════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 class="hero-title">
+          ¿Dónde reservas<br>
+          <em class="hero-accent">hoy?</em>
+        </h1>
+        <p class="hero-sub">
+          Descubre los mejores salones de barbería, peluquería y estética. Reserva online en segundos.
+        </p>
+
+        <!-- Search box -->
+        <form class="hero-search" (submit)="executeSearch(); $event.preventDefault()">
+          <div class="hero-search-input-wrap">
+            <span class="material-symbols-rounded hero-search-icon">search</span>
+            <input
+              type="text"
+              class="hero-search-input"
+              placeholder="Busca un servicio, barbería, peluquería..."
+              [(ngModel)]="searchQuery"
+              name="q"
+            />
+          </div>
+          <app-button
+            type="submit"
+            variant="primary"
+          >
+            Buscar
+          </app-button>
+        </form>
+      </div>
+
+      <!-- Glassmorphic Booking Mockup Showcase -->
+      <div class="hero-showcase">
+        <img
+          src="assets_bip/bip_hello.webp"
+          alt="Bipsy Preview"
+          class="hero-image"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       CATEGORY CHIPS — matches Flutter _CategoryChips with GipsiChip
+       ══════════════════════════════════════════ -->
+  <div class="section-wrap">
+    <div class="chips-row" #chipsRow
+         (mousedown)="onDragStart($event, chipsRow)"
+         (mouseleave)="onDragEnd(chipsRow)"
+         (mouseup)="onDragEnd(chipsRow)"
+         (mousemove)="onDragMove($event, chipsRow)">
+      @for (cat of categories; track cat.id) {
+        <app-chip
+          [label]="cat.name"
+          [selected]="selectedCategoryCode === cat.code"
+          [icon]="getCategoryIcon(cat.code)"
+          (onClick)="selectCategory(cat)"
+        />
+      }
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         FEATURED SECTION — Horizontal carousel
+         ══════════════════════════════════════════ -->
+    @if (!isLoading && featuredBusinesses.length > 0 && selectedCategoryCode === 'ALL') {
+      <div class="section-header">
+        <h2 class="section-title">En tu zona</h2>
+        <a routerLink="/search" class="section-link">
+          Ver todos
+          <span class="material-symbols-rounded" style="font-size: 18px;">chevron_right</span>
+        </a>
+      </div>
+
+      <div class="featured-scroll" #featuredScroll
+           (mouseenter)="stopContinuousScroll()"
+           (mouseleave)="startContinuousScroll()">
+        <!-- First set -->
+        @for (biz of featuredBusinesses; track biz.id) {
+          <div class="featured-item">
+            <app-business-card [business]="biz" [compact]="true" />
+          </div>
+        }
+        <!-- Second set for seamless infinite loop -->
+        @for (biz of featuredBusinesses; track biz.id + '_dup') {
+          <div class="featured-item">
+            <app-business-card [business]="biz" [compact]="true" />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ══════════════════════════════════════════
+         MAIN BUSINESSES LIST / GRID (Category views only)
+         ══════════════════════════════════════════ -->
+    @if (selectedCategoryCode !== 'ALL') {
+      <div class="section-header">
+        <h2 class="section-title">
+          {{ getSelectedCategoryName() }}
+        </h2>
+      </div>
+
+      @if (isLoading) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Cargando establecimientos...</span>
+        </div>
+      } @else if (businesses.length === 0) {
+        <div class="empty-state">
+          <span class="material-symbols-rounded" style="font-size: 48px; color: var(--clr-text-3);">storefront</span>
+          <h3>Sin resultados</h3>
+          <p>No hay negocios que coincidan con este filtro.</p>
+        </div>
+      } @else {
+        <div class="businesses-grid">
+          @for (biz of businesses; track biz.id) {
+            <app-business-card [business]="biz" />
+          }
+        </div>
+      }
+    }
+
+    <!-- ══════════════════════════════════════════
+         DOWNLOAD APP PROMO SECTION
+         ══════════════════════════════════════════ -->
+      <div class="apps-promo-section">
+        <!-- Bipsy App (Client) -->
+        <div class="app-promo-card client-promo-card">
+          <div class="promo-card-top">
+            <!-- Brand Logo -->
+            <img src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp" alt="Bipsy Logo" class="promo-logo-img theme-dark-only" />
+            <img src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp" alt="Bipsy Logo" class="promo-logo-img theme-light-only" />
+
+            <!-- Real Store Badges -->
+            <div class="store-badges-row">
+              <a href="https://www.youtube.com" target="_blank" class="promo-store-badge-img-link">
+                <img src="assets_apps/donwload_play_store.webp" alt="Get it on Google Play" class="promo-store-badge-img" />
+              </a>
+
+              <a href="https://www.youtube.com" target="_blank" class="promo-store-badge-img-link">
+                <img src="assets_apps/download_app_store.webp" alt="Download on the App Store" class="promo-store-badge-img" />
+              </a>
+            </div>
+
+            <!-- Subtitle -->
+            <p class="promo-card-subtitle">Reserva ya tus citas desde la app móvil</p>
+
+            <!-- Real Email Input & Download Button Pill -->
+            <div class="promo-email-form">
+              <input
+                type="email"
+                class="promo-email-input"
+                placeholder="Tu correo electrónico..."
+                [(ngModel)]="clientEmail"
+                name="clientEmail"
+              />
+              <button
+                type="button"
+                class="promo-email-btn"
+                (click)="onDownloadClick()"
+              >
+                DESCARGAR
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Showcase Graphic -->
+          <div class="promo-bottom-showcase">
+            <img src="assets_apps/bipsy_dark.webp" alt="Bipsy Mascot Client" class="promo-showcase-img theme-dark-only" />
+            <img src="assets_apps/bipsy_light.webp" alt="Bipsy Mascot Client" class="promo-showcase-img theme-light-only" />
+          </div>
+        </div>
+
+        <!-- Bipsy Business App -->
+        <div class="app-promo-card business-promo-card">
+          <div class="promo-card-top">
+            <!-- Brand Logo -->
+            <img src="assets_bipsy_business/Combination Marks/combinationmark_horizontal_dark_nobackground.webp" alt="Bipsy Business Logo" class="promo-logo-img theme-dark-only" />
+            <img src="assets_bipsy_business/Combination Marks/combinationmark_horizontal_light_nobackground.webp" alt="Bipsy Business Logo" class="promo-logo-img theme-light-only" />
+
+            <!-- Real Store Badges -->
+            <div class="store-badges-row">
+              <a href="https://www.youtube.com" target="_blank" class="promo-store-badge-img-link">
+                <img src="assets_apps/donwload_play_store.webp" alt="Get it on Google Play" class="promo-store-badge-img" />
+              </a>
+
+              <a href="https://www.youtube.com" target="_blank" class="promo-store-badge-img-link">
+                <img src="assets_apps/download_app_store.webp" alt="Download on the App Store" class="promo-store-badge-img" />
+              </a>
+            </div>
+
+            <!-- Subtitle -->
+            <p class="promo-card-subtitle text-business-subtitle">Gestiona las citas de tu negocio</p>
+
+            <!-- Promo Badge Text -->
+            <h4 class="promo-free-text">¡3 MESES GRATIS!</h4>
+
+            <!-- Real Styled Action Button -->
+            <a href="https://www.youtube.com" target="_blank" class="promo-action-link">
+              ABRE YA TU NEGOCIO
+            </a>
+          </div>
+
+          <!-- Bottom Showcase Graphic -->
+          <div class="promo-bottom-showcase">
+            <img src="assets_apps/bipsy_business_dark.webp" alt="Bipsy Mascot Business" class="promo-showcase-img theme-dark-only" />
+            <img src="assets_apps/bipsy_business_light.webp" alt="Bipsy Mascot Business" class="promo-showcase-img theme-light-only" />
+          </div>
+        </div>
+      </div>
+  </div>
+</div>

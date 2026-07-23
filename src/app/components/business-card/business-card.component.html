@@ -1,0 +1,38 @@
+<a [routerLink]="['/business', business.id]" class="biz-card" [class.biz-card--compact]="compact">
+  <!-- Image with inner padding radius — matches Flutter impl -->
+  <div class="biz-card__img-wrap">
+    <img [src]="imageUrl" [alt]="business.name" class="biz-card__img" loading="lazy" />
+
+    <!-- Bottom gradient overlay -->
+    <div class="biz-card__gradient"></div>
+
+    <!-- Rating Badge — glassmorphism, top-right — matches Flutter _RatingBadge -->
+    <div class="biz-card__rating badge">
+      <span class="material-symbols-rounded fill" style="font-size: 15px; color: #FFBA49;">star</span>
+      @if (hasRating) {
+        <span class="rating-score">{{ ratingDisplay }}</span>
+        @if (reviewCount > 0) {
+          <span class="rating-count">({{ reviewCount }})</span>
+        }
+      } @else {
+        <span class="rating-score">Nuevo</span>
+      }
+    </div>
+  </div>
+
+  <!-- Info section -->
+  <div class="biz-card__info">
+    <h3 class="biz-card__name">{{ business.name }}</h3>
+
+    <!-- Location row -->
+    <div class="biz-card__loc">
+      <span class="material-symbols-rounded" style="font-size: 16px;">location_on</span>
+      <span>{{ business.city || business.province || 'Sevilla' }}</span>
+    </div>
+
+    <!-- Description — only on non-compact -->
+    @if (!compact && business.description) {
+      <p class="biz-card__desc">{{ business.description }}</p>
+    }
+  </div>
+</a>
