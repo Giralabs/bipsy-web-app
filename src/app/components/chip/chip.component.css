@@ -1,0 +1,65 @@
+.gipsi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: var(--ff);
+  outline: none;
+  box-sizing: border-box;
+  
+  /* Glassmorphism unselected (identical to GipsiChip unselected) */
+  background: var(--clr-chip-bg);
+  border: 1.2px solid var(--clr-chip-border);
+  color: var(--clr-text-2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--clr-chip-shadow);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gipsi-chip:hover {
+  background: var(--clr-btn-sec-bg-hover);
+  border-color: var(--clr-btn-sec-border-hover);
+  color: var(--clr-text);
+  transform: translateY(-2px);
+  box-shadow: var(--clr-btn-sec-shadow-hover);
+}
+
+.gipsi-chip:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Glassmorphism selected (identical to GipsiChip selected) */
+.gipsi-chip--selected {
+  background: var(--clr-chip-sel-bg);
+  border: 1.2px solid rgba(255, 255, 255, 0.40);
+  color: var(--clr-mint-text);
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--clr-chip-sel-shadow);
+}
+
+.gipsi-chip--selected:hover {
+  background: var(--clr-chip-sel-bg-hover);
+  border-color: rgba(255, 255, 255, 0.50);
+  color: var(--clr-mint-text);
+  box-shadow: var(--clr-chip-sel-shadow-hover);
+}
+
+.chip-icon {
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease;
+}
+
+.gipsi-chip:hover .chip-icon {
+  transform: scale(1.1);
+}

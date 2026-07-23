@@ -1,0 +1,70 @@
+<div class="search-page anim-fade-up">
+  <!-- Orb -->
+  <div class="orb-bg"></div>
+
+  <!-- ── Header ── -->
+  <div class="search-header">
+    <div class="search-header-inner">
+      <h1 class="page-title">Explorar &amp; Buscar</h1>
+      <p class="page-sub">Encuentra salones, barberías y tratamientos cerca de ti</p>
+
+      <!-- Search input -->
+      <div class="search-bar">
+        <span class="material-symbols-rounded search-bar-icon">search</span>
+        <input
+          type="text"
+          class="search-bar-input"
+          placeholder="Buscar por nombre, servicio, ciudad..."
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="doSearch()"
+        />
+        @if (searchQuery) {
+          <button type="button" class="search-clear" (click)="searchQuery = ''; doSearch()" aria-label="Limpiar búsqueda">
+            <span class="material-symbols-rounded" style="font-size: 18px;">close</span>
+          </button>
+        }
+      </div>
+
+      <!-- Category filter chips -->
+      <div class="chips-row">
+        <app-chip
+          label="Todas"
+          [selected]="!selectedCategoryId"
+          icon="grid_view"
+          (onClick)="selectCategoryFilter(undefined)"
+        />
+        @for (c of categories; track c.id) {
+          <app-chip
+            [label]="c.name"
+            [selected]="selectedCategoryId === c.id"
+            [icon]="getCategoryIcon(c.code)"
+            (onClick)="selectCategoryFilter(c.id)"
+          />
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Results ── -->
+  <div class="results-wrap">
+    @if (isLoading) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Buscando...</span>
+      </div>
+    } @else if (businesses.length > 0) {
+      <p class="results-count">{{ businesses.length }} resultado{{ businesses.length !== 1 ? 's' : '' }}</p>
+      <div class="results-grid">
+        @for (biz of businesses; track biz.id) {
+          <app-business-card [business]="biz" />
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <span class="material-symbols-rounded" style="font-size: 52px; color: var(--clr-text-3);">search_off</span>
+        <h3>Sin resultados</h3>
+        <p>Prueba con otro término o cambia la categoría.</p>
+      </div>
+    }
+  </div>
+</div>

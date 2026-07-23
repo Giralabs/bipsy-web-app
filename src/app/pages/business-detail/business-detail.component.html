@@ -1,0 +1,240 @@
+<div class="detail-page anim-fade-up">
+
+  @if (isLoading) {
+    <div class="loading-state" style="min-height:60vh">
+      <div class="spinner"></div>
+      <span>Cargando negocio...</span>
+    </div>
+  }
+
+  @if (!isLoading && business) {
+    <!-- ── Hero Cover Image — full-width, tall, with blur collapse ── -->
+    <div class="cover-section">
+      <img [src]="getBusinessCoverUrl()"
+           [alt]="business.name" class="cover-img" />
+      <div class="cover-gradient"></div>
+
+      <!-- Back button -->
+      <button type="button" class="back-btn" (click)="goBack()">
+        <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 4px;">arrow_back</span>
+        Volver
+      </button>
+
+      <!-- Action buttons top-right -->
+      <div class="cover-actions">
+        <button type="button" class="cover-action-btn" (click)="toggleFavorite()" [title]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'">
+          <span class="material-symbols-rounded" [class.fill]="isFavorite" [style.color]="isFavorite ? '#ff5252' : ''">favorite</span>
+        </button>
+        <button type="button" class="cover-action-btn" title="Compartir">
+          <span class="material-symbols-rounded">share</span>
+        </button>
+      </div>
+
+      <!-- Business name on cover -->
+      <div class="cover-info">
+        <h1 class="cover-title">{{ business.name }}</h1>
+        <div class="cover-meta">
+          <div class="badge">
+            <span class="material-symbols-rounded" style="font-size: 15px; margin-right: 4px;">location_on</span>
+            {{ business.city || business.province }}
+          </div>
+          @if (business.averageRating && business.averageRating > 0) {
+            <div class="badge">
+              <span class="material-symbols-rounded fill" style="font-size: 15px; color: #FFBA49; margin-right: 4px;">star</span>
+              {{ business.averageRating | number:'1.1-1' }}
+              @if (business.reviewCount) { <span style="opacity:.7">({{ business.reviewCount }})</span> }
+            </div>
+          }
+          @if (business.autonomous) {
+            <div class="badge badge--mint">Autónomo</div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Main content 2-column layout ── -->
+    <div class="detail-body">
+      <div class="detail-main">
+
+        <!-- About section -->
+        @if (business.description) {
+          <section class="detail-section glass-card">
+            <h2 class="detail-section-title">
+              <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 6px; color: var(--clr-mint);">info</span>
+              Acerca del negocio
+            </h2>
+            <p class="detail-desc">{{ business.description }}</p>
+            @if (business.phone) {
+              <div class="detail-contact">
+                <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px;">phone</span>
+                {{ business.phone }}
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Services section -->
+        <section class="detail-section">
+          <h2 class="detail-section-title">
+            <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 6px; color: var(--clr-mint);">content_cut</span>
+            Servicios
+          </h2>
+
+          <div class="services-list">
+            @for (srv of services; track srv.id) {
+              <div class="service-row glass-card">
+                <div class="service-icon">
+                  <span class="material-symbols-rounded" style="font-size: 22px;">content_cut</span>
+                </div>
+                <div class="service-info">
+                  <h3 class="service-name">{{ srv.name }}</h3>
+                  @if (srv.description) {
+                    <p class="service-desc">{{ srv.description }}</p>
+                  }
+                  <div class="service-meta">
+                    <span class="service-duration">
+                      <span class="material-symbols-rounded" style="font-size: 14px; margin-right: 4px;">schedule</span>
+                      {{ srv.duration }} min
+                    </span>
+                  </div>
+                </div>
+                <div class="service-right">
+                  <span class="service-price">{{ srv.price }} €</span>
+                  <app-button
+                    variant="primary"
+                    size="small"
+                    (onClick)="openBookingModal(srv)"
+                  >
+                    Reservar
+                  </app-button>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- Reviews section -->
+        @if (reviews.length > 0) {
+          <section class="detail-section">
+            <h2 class="detail-section-title">
+              <span class="material-symbols-rounded fill" style="font-size: 20px; color: #FFBA49; margin-right: 6px;">star</span>
+              Valoraciones
+            </h2>
+            <div class="reviews-list">
+              @for (rev of reviews; track rev.id) {
+                <div class="review-card glass-card">
+                  <div class="review-header">
+                    <div class="review-avatar">{{ (rev.authorName || 'U').slice(0,2).toUpperCase() }}</div>
+                    <div>
+                      <p class="review-author">{{ rev.authorName || 'Cliente' }}</p>
+                      <div class="review-stars">
+                        @for (s of [1,2,3,4,5]; track s) {
+                          <span class="material-symbols-rounded" [class.fill]="s <= rev.rating" [style.color]="s <= rev.rating ? '#FFBA49' : 'rgba(255,255,255,0.2)'" style="font-size: 14px;">star</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  @if (rev.comment) {
+                    <p class="review-comment">{{ rev.comment }}</p>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+        }
+      </div>
+
+      <!-- ── Sidebar: Quick Book ── -->
+      <aside class="detail-sidebar">
+        <div class="sidebar-card glass-card">
+          <h3 class="sidebar-title">Reservar cita</h3>
+          <p class="sidebar-sub">Selecciona un servicio de la lista para reservar</p>
+          <div class="sidebar-services-mini">
+            @for (srv of services.slice(0,3); track srv.id) {
+              <button type="button" class="sidebar-srv-btn" (click)="openBookingModal(srv)">
+                <span class="sidebar-srv-name">{{ srv.name }}</span>
+                <span class="sidebar-srv-price">{{ srv.price }} €</span>
+              </button>
+            }
+          </div>
+          @if (business.phone) {
+            <a [href]="'tel:' + business.phone" class="btn-ghost sidebar-call-btn">
+              <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px;">phone</span>
+              Llamar
+            </a>
+          }
+        </div>
+      </aside>
+    </div>
+  }
+</div>
+
+<!-- ── BOOKING MODAL ── -->
+@if (selectedServiceForBooking) {
+  <div class="modal-backdrop anim-fade-up" (click)="closeBookingModal()">
+    <div class="modal-box glass-card" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeBookingModal()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+
+      @if (!bookingSuccess) {
+        <div class="booking-modal-inner">
+          <h2 class="modal-title">Reservar cita</h2>
+
+          <!-- Service summary pill -->
+          <div class="booking-service-pill">
+            <span class="booking-srv-name">{{ selectedServiceForBooking.name }}</span>
+            <span class="booking-srv-price">{{ selectedServiceForBooking.price }} €</span>
+          </div>
+
+          <!-- Date picker -->
+          <div class="booking-group">
+            <label class="booking-label">
+              <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px; color: var(--clr-mint);">calendar_month</span>
+              Fecha
+            </label>
+            <div class="booking-chips">
+              @for (d of availableDates; track d) {
+                <app-chip [label]="d" [selected]="selectedDate === d" (onClick)="selectedDate = d" />
+              }
+            </div>
+          </div>
+
+          <!-- Time picker -->
+          <div class="booking-group">
+            <label class="booking-label">
+              <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px; color: var(--clr-mint);">schedule</span>
+              Hora
+            </label>
+            <div class="booking-time-grid">
+              @for (t of timeSlots; track t) {
+                <app-chip [label]="t" [selected]="selectedTime === t" (onClick)="selectedTime = t" />
+              }
+            </div>
+          </div>
+
+          <app-button
+            variant="primary"
+            [fullWidth]="true"
+            (onClick)="confirmBooking()"
+          >
+            Confirmar reserva
+          </app-button>
+        </div>
+      } @else {
+        <div class="booking-success">
+          <div class="success-check">✓</div>
+          <h3 class="success-title">¡Cita confirmada!</h3>
+          <p class="success-sub">
+            <strong>{{ selectedServiceForBooking.name }}</strong> —
+            {{ selectedDate }} a las {{ selectedTime }}
+          </p>
+          <div class="success-actions">
+            <app-button routerLink="/appointments" variant="primary" (onClick)="closeBookingModal()">Ver mis citas</app-button>
+            <app-button variant="secondary" (onClick)="closeBookingModal()">Cerrar</app-button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,43 @@
+@if (routerLink && !disabled && !loading) {
+  <a
+    [routerLink]="routerLink"
+    [class]="buttonClass"
+    [class.bipsy-btn--full-width]="fullWidth"
+  >
+    <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+  </a>
+} @else if (href && !disabled && !loading) {
+  <a
+    [href]="href"
+    [class]="buttonClass"
+    [class.bipsy-btn--full-width]="fullWidth"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+  </a>
+} @else {
+  <button
+    [type]="type"
+    [disabled]="disabled || loading"
+    [class]="buttonClass"
+    [class.bipsy-btn--full-width]="fullWidth"
+    (click)="onBtnClick($event)"
+  >
+    <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+  </button>
+}
+
+<ng-template #contentTemplate>
+  @if (loading) {
+    <span class="btn-spinner"></span>
+  } @else {
+    @if (icon) {
+      <span class="material-symbols-rounded btn-icon">{{ icon }}</span>
+    }
+    <span class="btn-label"><ng-content></ng-content>{{ label }}</span>
+    @if (trailingIcon) {
+      <span class="material-symbols-rounded btn-icon btn-icon--trailing">{{ trailingIcon }}</span>
+    }
+  }
+</ng-template>

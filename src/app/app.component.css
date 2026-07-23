@@ -1,0 +1,12 @@
+:host { display: block; }
+
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--clr-base);
+}
+
+.page-content {
+  flex: 1;
+}

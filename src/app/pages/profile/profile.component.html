@@ -1,0 +1,111 @@
+<div class="profile-page anim-fade-up">
+  <!-- Ambient orb -->
+  <div class="profile-orb"></div>
+
+  <div class="profile-inner">
+    <h1 class="profile-heading">Mi perfil</h1>
+
+    @if (profile) {
+      <!-- ── User Card ── -->
+      <div class="user-card glass-card">
+        <div class="user-avatar-lg">{{ profile.initials || 'UB' }}</div>
+        <div class="user-card-info">
+          <h2 class="user-full-name">{{ profile.name || 'Usuario' }}</h2>
+          <p class="user-email">{{ profile.email }}</p>
+          <div class="user-role-badge badge badge--mint">{{ profile.role || 'Cliente' }}</div>
+        </div>
+        @if (profile.role === 'Invitado') {
+          <app-button
+            variant="primary"
+            icon="login"
+            (onClick)="openLogin()"
+          >
+            Iniciar sesión
+          </app-button>
+        } @else {
+          <app-button
+            variant="secondary"
+            icon="logout"
+            class="logout-btn-sm"
+            (onClick)="logout()"
+          >
+            Salir
+          </app-button>
+        }
+      </div>
+
+      <!-- ── Menu Sections ── -->
+      <div class="menu-block">
+        <p class="menu-label">MI CUENTA</p>
+        <div class="menu-group glass-card">
+          <div class="menu-item">
+            <div class="menu-item-left">
+              <div class="menu-icon">
+                <span class="material-symbols-rounded" style="font-size: 20px;">person_edit</span>
+              </div>
+              <span>Editar perfil</span>
+            </div>
+            <span class="material-symbols-rounded chevron" style="font-size: 18px;">chevron_right</span>
+          </div>
+          <div class="menu-item">
+            <div class="menu-item-left">
+              <div class="menu-icon">
+                <span class="material-symbols-rounded" style="font-size: 20px;">phone</span>
+              </div>
+              <span>Teléfono</span>
+            </div>
+            <span class="menu-item-value">{{ profile.phone || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-block">
+        <p class="menu-label">SEGURIDAD</p>
+        <div class="menu-group glass-card">
+          <div class="menu-item">
+            <div class="menu-item-left">
+              <div class="menu-icon">
+                <span class="material-symbols-rounded" style="font-size: 20px;">lock</span>
+              </div>
+              <span>Cambiar contraseña</span>
+            </div>
+            <span class="material-symbols-rounded chevron" style="font-size: 18px;">chevron_right</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-block">
+        <p class="menu-label">GENERAL</p>
+        <div class="menu-group glass-card">
+          <div class="menu-item">
+            <div class="menu-item-left">
+              <div class="menu-icon">
+                <span class="material-symbols-rounded" style="font-size: 20px;">notifications</span>
+              </div>
+              <span>Notificaciones</span>
+            </div>
+            <span class="material-symbols-rounded chevron" style="font-size: 18px;">chevron_right</span>
+          </div>
+          <div class="menu-item">
+            <div class="menu-item-left">
+              <div class="menu-icon">
+                <span class="material-symbols-rounded" style="font-size: 20px;">help</span>
+              </div>
+              <span>Ayuda y soporte</span>
+            </div>
+            <span class="material-symbols-rounded chevron" style="font-size: 18px;">chevron_right</span>
+          </div>
+          <div class="menu-item">
+            <div class="menu-item-left">
+              <div class="menu-icon">
+                <span class="material-symbols-rounded" style="font-size: 20px;">info</span>
+              </div>
+              <span>Acerca de Bipsy</span>
+            </div>
+            <span class="material-symbols-rounded chevron" style="font-size: 18px;">chevron_right</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

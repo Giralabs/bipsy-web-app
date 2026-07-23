@@ -1,0 +1,85 @@
+<div class="appts-page anim-fade-up">
+  <div class="appts-orb"></div>
+
+  <div class="appts-inner">
+    <h1 class="appts-heading">Mis Citas</h1>
+    <p class="appts-sub">Gestiona tus reservas pendientes y pasadas</p>
+
+    <!-- Tabs -->
+    <div class="appts-tabs">
+      <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'upcoming'" (click)="setTab('upcoming')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">event</span>
+        Próximas
+      </button>
+      <button type="button" class="tab-btn" [class.tab-btn--active]="activeTab === 'completed'" (click)="setTab('completed')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span>
+        Pasadas
+      </button>
+    </div>
+
+    @if (isLoading) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <span>Cargando citas...</span>
+      </div>
+    } @else if (filteredAppointments.length > 0) {
+      <div class="appts-list">
+        @for (app of filteredAppointments; track app.id) {
+          <div class="appt-card glass-card">
+            <div class="appt-card-left">
+              <div class="appt-icon-box">
+                <span class="material-symbols-rounded" style="font-size: 26px;">event</span>
+              </div>
+              <div class="appt-info">
+                <h3 class="appt-biz-name">{{ app.businessName }}</h3>
+                <p class="appt-srv-name">{{ app.serviceName }}</p>
+                <div class="appt-meta">
+                  <span class="appt-meta-item">
+                    <span class="material-symbols-rounded" style="font-size: 15px;">calendar_today</span>
+                    {{ app.date }}
+                  </span>
+                  <span class="appt-meta-item">
+                    <span class="material-symbols-rounded" style="font-size: 15px;">schedule</span>
+                    {{ app.time }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="appt-card-right">
+              <span class="appt-price">{{ app.price }} €</span>
+              <div class="appt-status-badge badge" [class.badge--mint]="app.status === 'upcoming'">
+                {{ app.status === 'upcoming' ? 'Confirmada' : 'Finalizada' }}
+              </div>
+              <app-button
+                [routerLink]="['/business', app.businessId]"
+                variant="secondary"
+                size="small"
+                class="appt-view-btn"
+              >
+                Ver negocio
+              </app-button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="appts-empty">
+        <div class="appts-empty-icon">
+          <span class="material-symbols-rounded" style="font-size: 40px; color: var(--clr-text-3);">event_busy</span>
+        </div>
+        <h3>Sin citas {{ activeTab === 'upcoming' ? 'próximas' : 'pasadas' }}</h3>
+        <p>{{ activeTab === 'upcoming' ? '¡Explora los negocios cercanos y reserva tu primera cita!' : 'No hay historial de citas anteriores.' }}</p>
+        @if (activeTab === 'upcoming') {
+          <app-button
+            routerLink="/home"
+            variant="primary"
+            style="margin-top: 8px; display: inline-block;"
+          >
+            Explorar negocios
+          </app-button>
+        }
+      </div>
+    }
+  </div>
+</div>
