@@ -307,6 +307,22 @@
   padding: 16px 28px 16px 4px;
   margin: -16px -28px 32px -4px;
   scrollbar-width: none;
+  
+  /* Mask gradient for smooth left/right fading */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
 }
 .featured-scroll::-webkit-scrollbar { display: none; }
 
