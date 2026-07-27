@@ -676,4 +676,77 @@
   .promo-action-link { font-size: 0.9rem; }
 }
 
+/* ── Info Section ── */
+.info-section {
+  position: relative;
+  z-index: 1;
+  margin-top: 80px;
+  margin-bottom: 40px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  align-items: center;
+  gap: 64px;
+}
+
+.info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+.info-title {
+  font-size: clamp(2.0rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+  color: var(--clr-text);
+  margin-bottom: 8px;
+}
+
+.info-paragraph {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--clr-text-2);
+  margin: 0;
+}
+
+.info-showcase {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.info-image {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  border-radius: var(--r-lg);
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.info-image:hover {
+  transform: scale(1.02);
+}
+
+@media (max-width: 960px) {
+  .info-section {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    margin-top: 48px;
+    margin-bottom: 24px;
+  }
+  
+  .info-showcase {
+    order: -1;
+  }
+  
+  .info-image {
+    max-width: 320px;
+  }
+}
+
 
