@@ -60,8 +60,18 @@ export class SearchComponent implements OnInit {
       'ESTHETIC': 'spa',
       'NAILS': 'brush',
       'MASSAGE': 'self_improvement',
+      'TATTOO': 'draw',
+      'MAKEUP': 'palette',
+      'EYEBROWS': 'visibility',
+      'PHYSIO': 'healing',
+      'PERSONAL_TRAINER': 'fitness_center',
       'LASER': 'bolt',
       'NUTRITION': 'restaurant',
+      'COACHING': 'psychology',
+      'PHOTOGRAPHY': 'photo_camera',
+      'TUTORING': 'school',
+      'PILATES': 'accessibility_new',
+      'OTHER': 'more_horiz',
     };
     return icons[code] || 'spa';
   }
