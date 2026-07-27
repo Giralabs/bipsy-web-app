@@ -119,7 +119,8 @@ export class BipsyService {
 
   getCategories(): Observable<CategoryResponse[]> {
     return this.http.get<CategoryResponse[]>(`${this.apiUrl}/categories?activeOnly=true`).pipe(
-      catchError(() => of(this.getFallbackCategories()))
+      map(cats => this.sortCategories(cats)),
+      catchError(() => of(this.sortCategories(this.getFallbackCategories())))
     );
   }
 
@@ -211,6 +212,17 @@ export class BipsyService {
     return name.slice(0, 2).toUpperCase();
   }
 
+  private sortCategories(cats: CategoryResponse[]): CategoryResponse[] {
+    const otherIndex = cats.findIndex(c => c.code === 'OTHER');
+    if (otherIndex !== -1) {
+      const sorted = [...cats];
+      const [other] = sorted.splice(otherIndex, 1);
+      sorted.push(other);
+      return sorted;
+    }
+    return cats;
+  }
+
   private getFallbackCategories(): CategoryResponse[] {
     return [
       { id: 2, code: 'BARBER', name: 'Barbería', active: true },
@@ -218,7 +230,11 @@ export class BipsyService {
       { id: 4, code: 'ESTHETIC', name: 'Estética', active: true },
       { id: 5, code: 'NAILS', name: 'Uñas', active: true },
       { id: 6, code: 'MASSAGE', name: 'Masajes', active: true },
-      { id: 7, code: 'MAKEUP', name: 'Maquillaje', active: true }
+      { id: 7, code: 'MAKEUP', name: 'Maquillaje', active: true },
+      { id: 8, code: 'COACHING', name: 'Coaching', active: true },
+      { id: 9, code: 'PHOTOGRAPHY', name: 'Fotografía', active: true },
+      { id: 10, code: 'TUTORING', name: 'Clases particulares', active: true },
+      { id: 11, code: 'OTHER', name: 'Otros', active: true }
     ];
   }
 
