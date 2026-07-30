@@ -1,0 +1,79 @@
+<div class="legal-page">
+  <div class="legal-orb" aria-hidden="true"></div>
+
+  @if (doc) {
+    <article class="legal-inner anim-fade-up">
+      <!-- ─── Cabecera ─── -->
+      <a routerLink="/home" class="legal-back">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Volver
+      </a>
+
+      <h1 class="legal-title">{{ doc.title }}</h1>
+      <p class="legal-subtitle">{{ doc.subtitle }}</p>
+
+      <div class="legal-meta">
+        <span class="badge badge--mint">Versión {{ doc.version }}</span>
+        <span class="legal-updated">Actualizado el {{ doc.updatedAt }}</span>
+      </div>
+
+      @if (isDraft) {
+        <div class="legal-draft" role="note">
+          <span class="material-symbols-rounded">gavel</span>
+          <p>
+            Borrador pendiente de revisión jurídica. El texto cubre la estructura
+            exigida por el RGPD y la LSSI-CE, pero debe revisarlo un abogado y
+            completarse con los datos de la sociedad antes de publicarse.
+          </p>
+        </div>
+      }
+
+      <!-- ─── Índice ─── -->
+      <nav class="legal-toc glass-card" aria-label="Índice del documento">
+        <p class="legal-toc-title">Contenido</p>
+        <ol>
+          @for (section of doc.sections; track section.id) {
+            <li><a [href]="'#' + section.id">{{ section.title }}</a></li>
+          }
+        </ol>
+      </nav>
+
+      <!-- ─── Secciones ─── -->
+      @for (section of doc.sections; track section.id) {
+        <section class="legal-section" [id]="section.id">
+          <h2>{{ section.title }}</h2>
+          @for (p of section.paragraphs; track $index) {
+            <p>{{ p }}</p>
+          }
+          @if (section.bullets?.length) {
+            <ul>
+              @for (b of section.bullets; track $index) {
+                <li>{{ b }}</li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      <!-- ─── Pie ─── -->
+      <div class="divider"></div>
+      <footer class="legal-footer">
+        <a [routerLink]="['/legal', otherSlug]" class="legal-cross-link">
+          <span class="material-symbols-rounded">description</span>
+          Leer también: {{ otherTitle }}
+        </a>
+      </footer>
+    </article>
+  } @else {
+    <div class="legal-inner">
+      <h1 class="legal-title">Documento no encontrado</h1>
+      <p class="legal-subtitle">
+        El documento que buscas no existe o ha cambiado de dirección.
+      </p>
+      <a routerLink="/home" class="legal-cross-link">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Volver al inicio
+      </a>
+    </div>
+  }
+</div>
