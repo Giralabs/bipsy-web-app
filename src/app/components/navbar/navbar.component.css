@@ -280,4 +280,32 @@
 @media (max-width: 700px) {
   .nav-links { display: none; }
   .user-name-label { display: none; }
+
+  /* El navbar provocaba scroll horizontal en TODA la web: 48px de padding a
+     cada lado + 48px de gap + dos botones de sesión de 138px fijos suman más
+     de lo que mide una pantalla de móvil (390px). Se reduce el espaciado y se
+     deja que los botones encojan. */
+  .navbar { padding: 0 16px; }
+  .navbar-inner { gap: 12px; }
+  /* flex-shrink: 0 en la regla base impedía que la zona de sesión cediera
+     espacio, que es justo lo que causaba el desbordamiento. */
+  .navbar-user { gap: 8px; min-width: 0; flex-shrink: 1; }
+  .navbar-logo { min-width: 0; }
+
+  /* El ancho de 138px llega como estilo en línea desde la plantilla, así que
+     solo se puede reducir con !important. El botón interior ya es full-width,
+     de modo que encoge con su host. */
+  .navbar-user app-button { width: 104px !important; }
+}
+
+/* Móviles estrechos (iPhone SE 1ª gen y similares). Con tan poco ancho
+   cualquier valor fijo se acaba pasando, así que los dos botones se reparten
+   el espacio que sobra tras el logo. */
+@media (max-width: 380px) {
+  .navbar { padding: 0 12px; }
+  .navbar-user app-button {
+    width: auto !important;
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
