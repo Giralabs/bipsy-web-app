@@ -1,0 +1,194 @@
+/* Página de documento legal. Misma estética que el resto de la web:
+   aura ambiental, glass-card para el índice y tokens de src/styles.css. */
+
+.legal-page { position: relative; min-height: 100vh; }
+
+.legal-orb {
+  position: fixed;
+  top: -120px; right: -120px;
+  width: 480px; height: 480px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--clr-mint-dim) 0%, transparent 65%);
+  z-index: 0;
+}
+
+.legal-inner {
+  position: relative;
+  z-index: 1;
+  /* Ancho de lectura cómodo: un texto legal a todo lo ancho no se lee. */
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 28px 96px;
+}
+
+/* ─── Cabecera ─── */
+
+.legal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--clr-text-2);
+  text-decoration: none;
+  font-size: .92rem;
+  font-weight: 600;
+  margin-bottom: 28px;
+  transition: color .2s ease;
+}
+.legal-back:hover { color: var(--clr-mint); }
+.legal-back .material-symbols-rounded { font-size: 18px; }
+
+.legal-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -.8px;
+  margin-bottom: 8px;
+}
+
+.legal-subtitle {
+  color: var(--clr-text-2);
+  font-size: 1.02rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.legal-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+
+.legal-updated {
+  color: var(--clr-text-3);
+  font-size: .85rem;
+}
+
+/* ─── Aviso de borrador ─── */
+
+.legal-draft {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 18px;
+  margin-bottom: 32px;
+  border-radius: var(--r-md);
+  background: rgba(255, 186, 73, .10);
+  border: 1px solid rgba(255, 186, 73, .32);
+}
+.legal-draft .material-symbols-rounded {
+  font-size: 20px;
+  color: var(--clr-warn);
+  flex-shrink: 0;
+}
+.legal-draft p {
+  color: var(--clr-text-2);
+  font-size: .9rem;
+  line-height: 1.55;
+}
+
+/* ─── Índice ─── */
+
+.legal-toc {
+  padding: 20px 24px;
+  margin-bottom: 40px;
+}
+/* El índice no es interactivo: sin el hover-lift de las tarjetas normales. */
+.legal-toc:hover {
+  transform: none;
+  border-color: var(--clr-border);
+  box-shadow: var(--shadow-card);
+}
+
+.legal-toc-title {
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+  margin-bottom: 12px;
+}
+
+.legal-toc ol {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.legal-toc a {
+  color: var(--clr-text-2);
+  text-decoration: none;
+  font-size: .93rem;
+  transition: color .2s ease;
+}
+.legal-toc a:hover { color: var(--clr-mint); }
+
+/* ─── Secciones ─── */
+
+.legal-section {
+  margin-bottom: 36px;
+  /* Compensa la navbar fija al saltar desde el índice. */
+  scroll-margin-top: 96px;
+}
+
+.legal-section h2 {
+  font-size: 1.22rem;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  margin-bottom: 12px;
+}
+
+.legal-section p {
+  color: var(--clr-text-2);
+  font-size: .97rem;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.legal-section ul {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.legal-section li {
+  position: relative;
+  padding-left: 20px;
+  color: var(--clr-text-2);
+  font-size: .97rem;
+  line-height: 1.6;
+}
+.legal-section li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: .62em;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--clr-mint);
+}
+
+/* ─── Pie ─── */
+
+.legal-footer { margin-top: 28px; }
+
+.legal-cross-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--clr-mint);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: .95rem;
+}
+.legal-cross-link:hover { text-decoration: underline; }
+.legal-cross-link .material-symbols-rounded { font-size: 18px; }
+
+/* ─── Móvil ─── */
+
+@media (max-width: 640px) {
+  .legal-inner { padding: 32px 20px 72px; }
+  .legal-title { font-size: 1.9rem; }
+}
