@@ -32,13 +32,27 @@ export interface LegalDocument {
  * Datos de la empresa. Centralizados aquí porque aparecen en los dos
  * documentos y no deben poder divergir entre ellos.
  *
- * PENDIENTE: rellenar con los datos reales de Giralabs antes de publicar.
+ * `taxId` y `address` siguen sin rellenar A PROPÓSITO: la LSSI-CE obliga a que
+ * el aviso legal identifique correctamente al prestador del servicio, así que
+ * tienen que ser los reales y no una aproximación. Mientras contengan
+ * "PENDIENTE" la página muestra el aviso de arriba.
+ *
+ * Al rellenarlos: si Giralabs es una sociedad, `legalName` debe llevar la
+ * denominación completa con su forma jurídica ("Giralabs S.L.", p. ej.); si se
+ * opera como autónomo, el nombre y apellidos de la persona física.
  */
 export const LEGAL_COMPANY = {
+  /** Nombre comercial, el que ve el usuario. */
   name: 'Giralabs',
-  legalName: '[RAZÓN SOCIAL PENDIENTE]',
+  /** Denominación social con su forma jurídica. */
+  legalName: 'Giralabs',
   taxId: '[CIF PENDIENTE]',
   address: '[DOMICILIO SOCIAL PENDIENTE]',
   email: 'soporte@gipsi-app.com',
   privacyEmail: 'privacidad@gipsi-app.com',
 } as const;
+
+/** True mientras falte algún dato obligatorio del prestador. */
+export const LEGAL_COMPANY_INCOMPLETE =
+  LEGAL_COMPANY.taxId.includes('PENDIENTE') ||
+  LEGAL_COMPANY.address.includes('PENDIENTE');

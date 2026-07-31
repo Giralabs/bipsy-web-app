@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LEGAL_DOCUMENTS } from './legal.content';
-import { LegalDocument } from './legal.models';
+import { LegalDocument, LEGAL_COMPANY_INCOMPLETE } from './legal.models';
 
 /**
  * Página de un documento legal (términos o privacidad).
@@ -50,5 +50,10 @@ export class LegalComponent implements OnInit {
   /** Marca el documento como borrador mientras no lo revise un abogado. */
   get isDraft(): boolean {
     return this.doc?.version.includes('borrador') ?? false;
+  }
+
+  /** Faltan datos identificativos obligatorios del prestador (LSSI-CE). */
+  get companyIncomplete(): boolean {
+    return LEGAL_COMPANY_INCOMPLETE;
   }
 }

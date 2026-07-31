@@ -5,8 +5,12 @@ import { LegalDocument, LEGAL_COMPANY } from './legal.models';
  *
  * El texto cubre la estructura que exigen el RGPD y la LSSI-CE y sirve para
  * tener el flujo de registro completo, pero NO es asesoramiento legal: antes
- * de publicar en producción tiene que revisarlo un abogado y hay que sustituir
- * los marcadores de LEGAL_COMPANY por los datos reales de la sociedad.
+ * de publicar en producción tiene que revisarlo un abogado y hay que rellenar
+ * el CIF y el domicilio en LEGAL_COMPANY.
+ *
+ * La numeración de los títulos va escrita a mano. Si insertas una sección en
+ * medio, renumera las siguientes: el índice de la página se genera a partir de
+ * estos títulos y quedaría descuadrado.
  */
 
 const TERMS: LegalDocument = {
@@ -23,6 +27,8 @@ const TERMS: LegalDocument = {
         `Bipsy es una plataforma de reservas de servicios titularidad de ${LEGAL_COMPANY.legalName}, ` +
           `con CIF ${LEGAL_COMPANY.taxId} y domicilio en ${LEGAL_COMPANY.address}.`,
         `Puedes contactar con nosotros en ${LEGAL_COMPANY.email}.`,
+        'Bipsy es el nombre comercial con el que se presta el servicio, tanto en esta web como en las ' +
+          'aplicaciones móviles Bipsy y Bipsy Business.',
       ],
     },
     {
@@ -85,8 +91,30 @@ const TERMS: LegalDocument = {
       ],
     },
     {
+      id: 'propiedad',
+      title: '7. Propiedad intelectual',
+      paragraphs: [
+        `La aplicación, su código, su diseño, la marca Bipsy y los demás signos distintivos pertenecen a ` +
+          `${LEGAL_COMPANY.legalName}. Poder usar el servicio no te da ningún derecho sobre ellos.`,
+        'El contenido que subes (fotos del local, descripciones de servicios, valoraciones) sigue siendo ' +
+          'tuyo. Al publicarlo nos autorizas a mostrarlo dentro de la plataforma y a usarlo para promocionar ' +
+          'tu ficha, mientras lo mantengas publicado.',
+      ],
+    },
+    {
+      id: 'baja',
+      title: '8. Suspensión y baja',
+      paragraphs: [
+        'Puedes darte de baja cuando quieras desde tu perfil. La baja no cancela por sí sola las citas ya ' +
+          'confirmadas: gestiónalas antes o quedarán sujetas a la política de cancelación del negocio.',
+        'Podemos suspender o cerrar una cuenta que incumpla estas condiciones, que suplante a otra persona ' +
+          'o que use la plataforma de forma fraudulenta. Salvo que el incumplimiento sea grave, avisaremos ' +
+          'antes y daremos margen para corregirlo.',
+      ],
+    },
+    {
       id: 'responsabilidad',
-      title: '7. Responsabilidad',
+      title: '9. Responsabilidad',
       paragraphs: [
         'Bipsy no responde de la prestación del servicio contratado, que corresponde al negocio.',
         'Trabajamos para que la plataforma esté siempre disponible, pero no garantizamos que funcione sin ' +
@@ -95,16 +123,31 @@ const TERMS: LegalDocument = {
       ],
     },
     {
+      id: 'consumidores',
+      title: '10. Consumidores y reclamaciones',
+      paragraphs: [
+        'Si contratas como consumidor, conservas todos los derechos que te reconoce la normativa de ' +
+          'consumidores y usuarios.',
+        'Ten en cuenta que el derecho de desistimiento de catorce días no se aplica a los servicios que se ' +
+          'reservan para una fecha y hora concretas, como es el caso de una cita. Lo que se aplica es la ' +
+          'política de cancelación del negocio, que ves antes de confirmar.',
+        `Puedes dirigir cualquier reclamación a ${LEGAL_COMPANY.email}. Si no quedas conforme, la Comisión ` +
+          'Europea ofrece una plataforma de resolución de litigios en línea en ec.europa.eu/consumers/odr.',
+      ],
+    },
+    {
       id: 'modificaciones',
-      title: '8. Cambios en estas condiciones',
+      title: '11. Cambios en estas condiciones',
       paragraphs: [
         'Podemos actualizar estas condiciones. Si el cambio es sustancial te avisaremos y, cuando proceda, ' +
           'te pediremos que las aceptes de nuevo antes de seguir usando el servicio.',
+        'Cada versión queda identificada por el número que aparece al principio de esta página, y guardamos ' +
+          'cuál aceptaste al registrarte.',
       ],
     },
     {
       id: 'ley',
-      title: '9. Ley aplicable',
+      title: '12. Ley aplicable',
       paragraphs: [
         'Estas condiciones se rigen por la legislación española. Para cualquier controversia serán ' +
           'competentes los juzgados que correspondan según la normativa de consumidores.',
@@ -175,29 +218,83 @@ const PRIVACY: LegalDocument = {
       ],
     },
     {
+      id: 'transferencias',
+      title: '6. Transferencias internacionales',
+      paragraphs: [
+        'Procuramos que nuestros proveedores traten los datos dentro del Espacio Económico Europeo.',
+        'Si alguno los trata fuera, la transferencia se ampara en una decisión de adecuación de la Comisión ' +
+          'Europea o en cláusulas contractuales tipo, con las garantías adicionales que correspondan.',
+      ],
+    },
+    {
       id: 'conservacion',
-      title: '6. Cuánto tiempo los guardamos',
+      title: '7. Cuánto tiempo los guardamos',
       paragraphs: [
         'Mientras tu cuenta esté activa. Al eliminarla, anonimizamos tus datos personales y conservamos ' +
           'solo lo que exige la ley durante los plazos legales de prescripción.',
+        'Los mensajes de soporte y sus archivos adjuntos se conservan mientras el caso siga abierto y, ' +
+          'después, el tiempo necesario para acreditar cómo se resolvió.',
+      ],
+    },
+    {
+      id: 'menores',
+      title: '8. Menores de edad',
+      paragraphs: [
+        'El servicio no está dirigido a menores de edad y no se puede crear una cuenta siendo menor.',
+        `Si detectamos una cuenta de un menor la eliminamos. Si crees que un menor a tu cargo se ha ` +
+          `registrado, escríbenos a ${LEGAL_COMPANY.privacyEmail} y la daremos de baja.`,
+      ],
+    },
+    {
+      id: 'cookies',
+      title: '9. Cookies y almacenamiento local',
+      paragraphs: [
+        'Esta web usa únicamente almacenamiento técnico imprescindible: guardamos en tu navegador la sesión ' +
+          'iniciada para no pedirte la contraseña en cada página.',
+        'No usamos cookies de publicidad ni de analítica de terceros, así que no necesitamos pedirte ' +
+          'consentimiento para ellas. Si eso cambiara, te lo pediríamos antes de instalarlas.',
+        'Las aplicaciones móviles no usan cookies: guardan la sesión en el almacenamiento seguro del ' +
+          'dispositivo.',
+      ],
+    },
+    {
+      id: 'decisiones',
+      title: '10. Decisiones automatizadas',
+      paragraphs: [
+        'No tomamos decisiones que te afecten significativamente basadas únicamente en un tratamiento ' +
+          'automatizado, ni elaboramos perfiles con tus datos.',
       ],
     },
     {
       id: 'derechos',
-      title: '7. Tus derechos',
+      title: '11. Tus derechos',
       paragraphs: [
         'Puedes ejercer en cualquier momento tus derechos de acceso, rectificación, supresión, oposición, ' +
           `limitación y portabilidad escribiendo a ${LEGAL_COMPANY.privacyEmail}.`,
+        'Responderemos en el plazo de un mes. Para comprobar que la solicitud es tuya podemos pedirte que ' +
+          'la envíes desde el correo de tu cuenta o que acredites tu identidad.',
+        'También puedes retirar en cualquier momento el consentimiento para recibir comunicaciones ' +
+          'comerciales, desde tu perfil o desde el enlace que incluye cada correo.',
         'Si consideras que no hemos atendido correctamente tu solicitud, puedes reclamar ante la Agencia ' +
           'Española de Protección de Datos (www.aepd.es).',
       ],
     },
     {
       id: 'seguridad',
-      title: '8. Seguridad',
+      title: '12. Seguridad',
       paragraphs: [
         'Aplicamos medidas técnicas y organizativas para proteger tus datos: las contraseñas se almacenan ' +
           'cifradas, las comunicaciones viajan cifradas y el acceso está restringido al personal que lo necesita.',
+        'Los archivos que adjuntas a un ticket de soporte se guardan en un almacenamiento privado, separado ' +
+          'de los archivos públicos, y solo son accesibles previa identificación.',
+      ],
+    },
+    {
+      id: 'cambios-privacidad',
+      title: '13. Cambios en esta política',
+      paragraphs: [
+        'Si modificamos esta política publicaremos aquí la nueva versión y actualizaremos la fecha. Cuando ' +
+          'el cambio afecte a algo que requiera tu consentimiento, te lo pediremos de nuevo.',
       ],
     },
   ],

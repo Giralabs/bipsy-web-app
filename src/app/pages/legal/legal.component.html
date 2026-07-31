@@ -22,8 +22,12 @@
           <span class="material-symbols-rounded">gavel</span>
           <p>
             Borrador pendiente de revisión jurídica. El texto cubre la estructura
-            exigida por el RGPD y la LSSI-CE, pero debe revisarlo un abogado y
-            completarse con los datos de la sociedad antes de publicarse.
+            exigida por el RGPD y la LSSI-CE, pero debe revisarlo un abogado antes
+            de publicarse.
+            @if (companyIncomplete) {
+              Faltan además el CIF y el domicilio social, que la LSSI-CE exige
+              indicar: rellénalos en <code>legal.models.ts</code>.
+            }
           </p>
         </div>
       }
