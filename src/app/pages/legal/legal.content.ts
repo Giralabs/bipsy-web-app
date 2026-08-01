@@ -17,8 +17,11 @@ const TERMS: LegalDocument = {
   slug: 'terminos',
   title: 'Términos y condiciones',
   subtitle: 'Condiciones de uso de Bipsy para clientes y negocios',
-  version: '1.0-borrador',
-  updatedAt: '31 de julio de 2026',
+  // Sube a 1.1 por el apartado 4: ahora hay cobros reales de por medio
+  // (cancelar, reprogramar y no presentarse), y quien acepto la 1.0 no acepto
+  // eso. El backend guarda que version firmo cada usuario.
+  version: '1.1-borrador',
+  updatedAt: '1 de agosto de 2026',
   sections: [
     {
       id: 'titular',
@@ -58,14 +61,33 @@ const TERMS: LegalDocument = {
     },
     {
       id: 'reservas',
-      title: '4. Reservas y cancelaciones',
+      title: '4. Reservas, cancelaciones y penalizaciones',
       paragraphs: [
         'Al confirmar una reserva se genera un compromiso con el negocio. Cada negocio fija su propia ' +
           'política de cancelación y sus plazos, que se te muestran antes de confirmar.',
-        'Un negocio puede exigir una tarjeta registrada para aceptar reservas y aplicar una tarifa por ' +
-          'cancelación tardía. Esa tarifa nunca podrá superar el 75 % del importe del servicio y solo se ' +
-          'aplica si cancelas dentro del plazo que el negocio haya definido.',
-        'La tarifa la percibe el negocio. Bipsy solo facilita el cobro.',
+        'Un negocio puede exigir que tengas una tarjeta guardada para aceptar reservas. En ese caso, ' +
+          'puede fijar una tarifa por avisar tarde y una ventana de antelación a partir de la cual se ' +
+          'aplica. La tarifa nunca superará el 50 % del importe del servicio, con un máximo de 100 € por ' +
+          'cita, y la ventana estará siempre entre 3 y 24 horas antes de la hora de la cita.',
+        'Esa tarifa se aplica en tres supuestos, con las mismas condiciones en los tres, porque en todos ' +
+          'ellos el negocio se queda con el hueco vacío y sin margen para ofrecérselo a otra persona:',
+      ],
+      bullets: [
+        'Cancelar la cita dentro de la ventana fijada por el negocio.',
+        'Cambiar la cita de fecha u hora dentro de esa misma ventana. La reprogramación se trata igual ' +
+          'que una cancelación y se calcula sobre la hora que tenías reservada.',
+        'No presentarte a la cita. El negocio puede marcarlo hasta 48 horas después de la hora prevista, ' +
+          'y solo en citas que estuvieran confirmadas.',
+      ],
+      closingParagraphs: [
+        'Antes de confirmar una reserva, y también antes de cancelarla o cambiarla, la aplicación te ' +
+          'muestra el importe exacto que se te cobraría en ese momento. Si cancelas o cambias la cita con ' +
+          'más antelación que la ventana fijada, no se cobra nada.',
+        'El cobro se realiza sobre la tarjeta que tengas guardada, sin necesidad de que hagas nada más, y ' +
+          'queda registrado en el apartado «Pagos» de la aplicación. Si el cargo es rechazado por tu ' +
+          'entidad, la cancelación se mantiene igualmente y el intento queda reflejado como fallido.',
+        'El cobro lo realiza Bipsy, que actúa como quien percibe el importe frente a ti, y liquida al ' +
+          'negocio lo que le corresponda conforme a su relación con nosotros.',
       ],
     },
     {

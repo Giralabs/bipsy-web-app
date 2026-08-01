@@ -15,6 +15,12 @@ export interface LegalSection {
   paragraphs: string[];
   /** Lista de puntos opcional bajo los párrafos. */
   bullets?: string[];
+  /**
+   * Párrafos que van DESPUÉS de la lista. Sin esto, todo el texto de una
+   * sección con puntos tendría que ir antes de ellos, y hay apartados que
+   * necesitan cerrar tras enumerar (p. ej. las penalizaciones de reserva).
+   */
+  closingParagraphs?: string[];
 }
 
 export interface LegalDocument {
