@@ -56,6 +56,9 @@
               }
             </ul>
           }
+          @for (p of section.closingParagraphs; track $index) {
+            <p>{{ p }}</p>
+          }
         </section>
       }
 
