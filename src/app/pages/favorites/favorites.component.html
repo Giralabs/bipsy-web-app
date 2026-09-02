@@ -1,0 +1,40 @@
+<div class="fav anim-fade-up">
+  <div class="fav__inner">
+    <h1 class="fav__heading">Tus favoritos</h1>
+    <p class="fav__sub">Los sitios que has guardado</p>
+
+    @if (!isAuthenticated) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">favorite</span>
+        <h3>Entra para ver tus favoritos</h3>
+        <p>Guarda los negocios a los que vuelves y tenlos siempre a mano.</p>
+        <app-button variant="primary" icon="login" (onClick)="goToLogin()">Iniciar sesión</app-button>
+      </div>
+    } @else if (isLoading) {
+      <div class="fav__grid">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="skeleton fav__skeleton"></div>
+        }
+      </div>
+    } @else if (loadError) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">wifi_off</span>
+        <h3>No hemos podido cargar tus favoritos</h3>
+        <p>{{ loadError.message }}</p>
+      </div>
+    } @else if (businesses.length === 0) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">favorite_border</span>
+        <h3>Todavía no tienes favoritos</h3>
+        <p>Pulsa el corazón en la ficha de un negocio y aparecerá aquí.</p>
+        <app-button variant="primary" icon="explore" (onClick)="goExplore()">Explorar negocios</app-button>
+      </div>
+    } @else {
+      <div class="fav__grid">
+        @for (biz of businesses; track biz.id) {
+          <app-business-card [business]="biz" />
+        }
+      </div>
+    }
+  </div>
+</div>

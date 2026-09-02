@@ -1,240 +1,271 @@
-<div class="detail-page anim-fade-up">
+<div class="detail anim-fade-up">
 
   @if (isLoading) {
     <div class="loading-state" style="min-height:60vh">
       <div class="spinner"></div>
-      <span>Cargando negocio...</span>
+      <span>Cargando negocio…</span>
     </div>
-  }
+  } @else if (loadError || !business) {
+    <div class="empty-state" style="min-height:60vh">
+      <span class="material-symbols-rounded">{{ loadError?.networkError ? 'wifi_off' : 'storefront' }}</span>
+      <h3>{{ loadError?.networkError ? 'Sin conexión' : 'No hemos encontrado este negocio' }}</h3>
+      <p>{{ loadError?.message }}</p>
+      <app-button variant="secondary" icon="arrow_back" (onClick)="goBack()">Volver</app-button>
+    </div>
+  } @else {
 
-  @if (!isLoading && business) {
-    <!-- ── Hero Cover Image — full-width, tall, with blur collapse ── -->
-    <div class="cover-section">
-      <img [src]="getBusinessCoverUrl()"
-           [alt]="business.name" class="cover-img" />
-      <div class="cover-gradient"></div>
+    <!-- ══════════ PORTADA ══════════ -->
+    <div class="cover">
+      <img class="cover__img" [src]="coverUrl()" [alt]="business.name" />
+      <div class="cover__veil"></div>
 
-      <!-- Back button -->
-      <button type="button" class="back-btn" (click)="goBack()">
-        <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 4px;">arrow_back</span>
-        Volver
-      </button>
-
-      <!-- Action buttons top-right -->
-      <div class="cover-actions">
-        <button type="button" class="cover-action-btn" (click)="toggleFavorite()" [title]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'">
-          <span class="material-symbols-rounded" [class.fill]="isFavorite" [style.color]="isFavorite ? '#ff5252' : ''">favorite</span>
+      <div class="cover__bar">
+        <button type="button" class="cover__btn" (click)="goBack()">
+          <span class="material-symbols-rounded">arrow_back</span>
+          Volver
         </button>
-        <button type="button" class="cover-action-btn" title="Compartir">
-          <span class="material-symbols-rounded">share</span>
+
+        <button
+          type="button"
+          class="cover__btn cover__btn--icon"
+          [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+          [disabled]="favoriteBusy"
+          (click)="toggleFavorite()"
+        >
+          <span class="material-symbols-rounded" [class.fill]="isFavorite"
+                [style.color]="isFavorite ? '#E67676' : ''">favorite</span>
         </button>
       </div>
 
-      <!-- Business name on cover -->
-      <div class="cover-info">
-        <h1 class="cover-title">{{ business.name }}</h1>
-        <div class="cover-meta">
-          <div class="badge">
-            <span class="material-symbols-rounded" style="font-size: 15px; margin-right: 4px;">location_on</span>
-            {{ business.city || business.province }}
-          </div>
-          @if (business.averageRating && business.averageRating > 0) {
-            <div class="badge">
-              <span class="material-symbols-rounded fill" style="font-size: 15px; color: #FFBA49; margin-right: 4px;">star</span>
-              {{ business.averageRating | number:'1.1-1' }}
-              @if (business.reviewCount) { <span style="opacity:.7">({{ business.reviewCount }})</span> }
-            </div>
+      <div class="cover__info">
+        <h1 class="cover__title">{{ business.name }}</h1>
+        <div class="cover__meta">
+          <span class="badge badge--photo">
+            <span class="material-symbols-rounded cover__meta-icon">location_on</span>
+            {{ locationDisplay }}
+          </span>
+          @if (hasRating) {
+            <span class="badge badge--photo">
+              <span class="material-symbols-rounded fill cover__meta-icon" style="color: var(--clr-warn);">star</span>
+              {{ ratingDisplay }} ({{ business.reviewCount }})
+            </span>
           }
-          @if (business.autonomous) {
-            <div class="badge badge--mint">Autónomo</div>
+          @if (categoryName) {
+            <span class="badge badge--photo">{{ categoryName }}</span>
           }
         </div>
       </div>
     </div>
 
-    <!-- ── Main content 2-column layout ── -->
-    <div class="detail-body">
-      <div class="detail-main">
+    <!-- ══════════ CUERPO ══════════ -->
+    <div class="detail__body">
+      <div class="detail__main">
 
-        <!-- About section -->
         @if (business.description) {
-          <section class="detail-section glass-card">
-            <h2 class="detail-section-title">
-              <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 6px; color: var(--clr-mint);">info</span>
+          <section class="card">
+            <h2 class="card__title">
+              <span class="material-symbols-rounded card__title-icon">info</span>
               Acerca del negocio
             </h2>
-            <p class="detail-desc">{{ business.description }}</p>
+            <p class="card__text">{{ business.description }}</p>
             @if (business.phone) {
-              <div class="detail-contact">
-                <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px;">phone</span>
+              <p class="card__meta">
+                <span class="material-symbols-rounded card__meta-icon">phone</span>
                 {{ business.phone }}
-              </div>
+              </p>
             }
           </section>
         }
 
-        <!-- Services section -->
-        <section class="detail-section">
-          <h2 class="detail-section-title">
-            <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 6px; color: var(--clr-mint);">content_cut</span>
+        <!-- Políticas: posición fija, antes que el escaparate. Es lo que el
+             cliente necesita para decidir. -->
+        @if (totalPolicies > 0) {
+          <section class="card">
+            <h2 class="card__title">
+              <span class="material-symbols-rounded card__title-icon">rule</span>
+              Antes de reservar
+            </h2>
+            @for (group of visiblePolicies; track group.categoryId) {
+              @if (group.policies.length > 0) {
+                <p class="policy__group">{{ group.name }}</p>
+                <ul class="policy__list">
+                  @for (policy of group.policies; track policy.id) {
+                    <li>{{ policy.text }}</li>
+                  }
+                </ul>
+              }
+            }
+            @if (totalPolicies > 5) {
+              <button type="button" class="card__more" (click)="allPoliciesOpen = !allPoliciesOpen">
+                {{ allPoliciesOpen ? 'Ver menos' : 'Ver las ' + totalPolicies + ' normas' }}
+              </button>
+            }
+          </section>
+        }
+
+        <!-- Galería -->
+        @if (portfolio.length > 0) {
+          <section class="card">
+            <h2 class="card__title">
+              <span class="material-symbols-rounded card__title-icon">photo_library</span>
+              Trabajos
+            </h2>
+            <div class="gallery">
+              @for (item of portfolio; track item.id) {
+                <img
+                  class="gallery__img"
+                  [src]="portfolioUrl(item)"
+                  [alt]="item.caption || business.name"
+                  loading="lazy"
+                  (error)="onPortfolioError(item)"
+                />
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Servicios -->
+        <section class="card">
+          <h2 class="card__title">
+            <span class="material-symbols-rounded card__title-icon">content_cut</span>
             Servicios
           </h2>
 
-          <div class="services-list">
-            @for (srv of services; track srv.id) {
-              <div class="service-row glass-card">
-                <div class="service-icon">
-                  <span class="material-symbols-rounded" style="font-size: 22px;">content_cut</span>
-                </div>
-                <div class="service-info">
-                  <h3 class="service-name">{{ srv.name }}</h3>
-                  @if (srv.description) {
-                    <p class="service-desc">{{ srv.description }}</p>
-                  }
-                  <div class="service-meta">
-                    <span class="service-duration">
-                      <span class="material-symbols-rounded" style="font-size: 14px; margin-right: 4px;">schedule</span>
-                      {{ srv.duration }} min
-                    </span>
+          @if (services.length === 0) {
+            <p class="card__text">Este negocio todavía no ha publicado su catálogo.</p>
+          } @else {
+            <div class="services">
+              @for (srv of services; track srv.id) {
+                <div class="service">
+                  <div class="service__info">
+                    <p class="service__name">{{ srv.name }}</p>
+                    @if (srv.description) {
+                      <p class="service__desc">{{ srv.description }}</p>
+                    }
+                    <p class="service__meta">
+                      <span class="material-symbols-rounded service__meta-icon">schedule</span>
+                      {{ durationLabel(srv) }}
+                    </p>
+                  </div>
+                  <div class="service__right">
+                    <span class="service__price">{{ price(srv) }}</span>
+                    <app-button variant="primary" size="small" [overCard]="true" (onClick)="book(srv)">
+                      Reservar
+                    </app-button>
                   </div>
                 </div>
-                <div class="service-right">
-                  <span class="service-price">{{ srv.price }} €</span>
-                  <app-button
-                    variant="primary"
-                    size="small"
-                    (onClick)="openBookingModal(srv)"
-                  >
-                    Reservar
-                  </app-button>
-                </div>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         </section>
 
-        <!-- Reviews section -->
+        <!-- Reseñas -->
         @if (reviews.length > 0) {
-          <section class="detail-section">
-            <h2 class="detail-section-title">
-              <span class="material-symbols-rounded fill" style="font-size: 20px; color: #FFBA49; margin-right: 6px;">star</span>
-              Valoraciones
+          <section class="card">
+            <h2 class="card__title">
+              <span class="material-symbols-rounded card__title-icon">reviews</span>
+              Reseñas
             </h2>
-            <div class="reviews-list">
-              @for (rev of reviews; track rev.id) {
-                <div class="review-card glass-card">
-                  <div class="review-header">
-                    <div class="review-avatar">{{ (rev.authorName || 'U').slice(0,2).toUpperCase() }}</div>
-                    <div>
-                      <p class="review-author">{{ rev.authorName || 'Cliente' }}</p>
-                      <div class="review-stars">
-                        @for (s of [1,2,3,4,5]; track s) {
-                          <span class="material-symbols-rounded" [class.fill]="s <= rev.rating" [style.color]="s <= rev.rating ? '#FFBA49' : 'rgba(255,255,255,0.2)'" style="font-size: 14px;">star</span>
+            <div class="reviews">
+              @for (review of reviews; track review.id) {
+                <article class="review">
+                  <header class="review__head">
+                    <span class="review__avatar">{{ (review.authorName || '?')[0] }}</span>
+                    <span class="review__who">
+                      <strong>{{ review.authorName || 'Cliente' }}</strong>
+                      <span class="review__stars">
+                        @for (filled of stars(review.rating); track $index) {
+                          <span class="material-symbols-rounded review__star" [class.fill]="filled">star</span>
                         }
-                      </div>
-                    </div>
-                  </div>
-                  @if (rev.comment) {
-                    <p class="review-comment">{{ rev.comment }}</p>
+                      </span>
+                    </span>
+                  </header>
+                  @if (review.comment) {
+                    <p class="review__text">{{ review.comment }}</p>
                   }
-                </div>
+                  @if (review.reply) {
+                    <p class="review__reply">
+                      <strong>Respuesta del negocio:</strong> {{ review.reply }}
+                    </p>
+                  }
+                </article>
               }
             </div>
           </section>
         }
       </div>
 
-      <!-- ── Sidebar: Quick Book ── -->
-      <aside class="detail-sidebar">
-        <div class="sidebar-card glass-card">
-          <h3 class="sidebar-title">Reservar cita</h3>
-          <p class="sidebar-sub">Selecciona un servicio de la lista para reservar</p>
-          <div class="sidebar-services-mini">
-            @for (srv of services.slice(0,3); track srv.id) {
-              <button type="button" class="sidebar-srv-btn" (click)="openBookingModal(srv)">
-                <span class="sidebar-srv-name">{{ srv.name }}</span>
-                <span class="sidebar-srv-price">{{ srv.price }} €</span>
+      <!-- ══════════ LATERAL ══════════ -->
+      <aside class="detail__aside">
+        <div class="card card--sticky">
+          <h2 class="card__title">Reservar</h2>
+          <p class="card__text">Elige un servicio y te enseñamos los huecos libres.</p>
+
+          <app-button
+            variant="primary"
+            size="large"
+            [fullWidth]="true"
+            icon="event_available"
+            [overCard]="true"
+            (onClick)="book()"
+          >
+            Pedir cita
+          </app-button>
+
+          @if (chargesCancellation) {
+            <p class="card__note">
+              <span class="material-symbols-rounded card__meta-icon">credit_card</span>
+              Este negocio cobra el {{ business.cancellationFeePercent }} % si cancelas con menos de
+              {{ business.cancellationWindowHours }} h de antelación.
+            </p>
+          }
+
+          <!-- Las acciones de apoyo van como filas: apiladas con el mismo peso
+               que "Pedir cita", la columna entera parecía tres llamadas a la
+               acción y ninguna destacaba. -->
+          <div class="side-actions">
+            @if (business.chatEnabled !== false) {
+              <button type="button" class="side-action" [disabled]="chatBusy" (click)="openChat()">
+                <span class="material-symbols-rounded side-action__icon">forum</span>
+                Escribir al negocio
               </button>
             }
+
+            @if (business.phone) {
+              <a class="side-action" [href]="'tel:' + business.phone">
+                <span class="material-symbols-rounded side-action__icon">phone</span>
+                Llamar
+              </a>
+            }
+
+            @if (scheduleRows.length > 0) {
+              <button type="button" class="side-action" (click)="scheduleOpen = !scheduleOpen">
+                <span class="material-symbols-rounded side-action__icon">schedule</span>
+                Horario
+                <span class="material-symbols-rounded side-action__chevron">
+                  {{ scheduleOpen ? 'expand_less' : 'expand_more' }}
+                </span>
+              </button>
+              @if (scheduleOpen) {
+                <ul class="schedule">
+                  @for (row of scheduleRows; track row.day) {
+                    <li class="schedule__row" [class.schedule__row--closed]="row.closed">
+                      <span>{{ row.day }}</span>
+                      <span>{{ row.hours }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            }
           </div>
-          @if (business.phone) {
-            <a [href]="'tel:' + business.phone" class="btn-ghost sidebar-call-btn">
-              <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px;">phone</span>
-              Llamar
-            </a>
+
+          @if (chatError) {
+            <p class="flow__error">
+              <span class="material-symbols-rounded fill">error</span>{{ chatError }}
+            </p>
           }
         </div>
       </aside>
     </div>
   }
 </div>
-
-<!-- ── BOOKING MODAL ── -->
-@if (selectedServiceForBooking) {
-  <div class="modal-backdrop anim-fade-up" (click)="closeBookingModal()">
-    <div class="modal-box glass-card" (click)="$event.stopPropagation()">
-      <button type="button" class="modal-close" (click)="closeBookingModal()">
-        <span class="material-symbols-rounded">close</span>
-      </button>
-
-      @if (!bookingSuccess) {
-        <div class="booking-modal-inner">
-          <h2 class="modal-title">Reservar cita</h2>
-
-          <!-- Service summary pill -->
-          <div class="booking-service-pill">
-            <span class="booking-srv-name">{{ selectedServiceForBooking.name }}</span>
-            <span class="booking-srv-price">{{ selectedServiceForBooking.price }} €</span>
-          </div>
-
-          <!-- Date picker -->
-          <div class="booking-group">
-            <label class="booking-label">
-              <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px; color: var(--clr-mint);">calendar_month</span>
-              Fecha
-            </label>
-            <div class="booking-chips">
-              @for (d of availableDates; track d) {
-                <app-chip [label]="d" [selected]="selectedDate === d" (onClick)="selectedDate = d" />
-              }
-            </div>
-          </div>
-
-          <!-- Time picker -->
-          <div class="booking-group">
-            <label class="booking-label">
-              <span class="material-symbols-rounded" style="font-size: 16px; margin-right: 6px; color: var(--clr-mint);">schedule</span>
-              Hora
-            </label>
-            <div class="booking-time-grid">
-              @for (t of timeSlots; track t) {
-                <app-chip [label]="t" [selected]="selectedTime === t" (onClick)="selectedTime = t" />
-              }
-            </div>
-          </div>
-
-          <app-button
-            variant="primary"
-            [fullWidth]="true"
-            (onClick)="confirmBooking()"
-          >
-            Confirmar reserva
-          </app-button>
-        </div>
-      } @else {
-        <div class="booking-success">
-          <div class="success-check">✓</div>
-          <h3 class="success-title">¡Cita confirmada!</h3>
-          <p class="success-sub">
-            <strong>{{ selectedServiceForBooking.name }}</strong> —
-            {{ selectedDate }} a las {{ selectedTime }}
-          </p>
-          <div class="success-actions">
-            <app-button routerLink="/appointments" variant="primary" (onClick)="closeBookingModal()">Ver mis citas</app-button>
-            <app-button variant="secondary" (onClick)="closeBookingModal()">Cerrar</app-button>
-          </div>
-        </div>
-      }
-    </div>
-  </div>
-}

@@ -1,0 +1,112 @@
+.bd { min-height: 100vh; }
+
+.bd__inner { max-width: 620px; margin: 0 auto; padding: 32px 24px 96px; }
+
+.bd__head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+
+.bd__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--ff-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+}
+
+/* ── Filas de datos ── */
+.bd__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.bd__row + .bd__row { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+
+.bd__row--link { cursor: pointer; transition: background-color .15s ease; }
+.bd__row--link:hover { background: var(--clr-surface-hover); }
+
+.bd__row-icon { font-size: 20px; color: var(--clr-mint); flex-shrink: 0; }
+
+.bd__row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bd__row-text strong { color: var(--clr-text); font-weight: 600; }
+.bd__row-text small { font-size: 0.75rem; color: var(--clr-text-2); }
+
+.bd__chevron { font-size: 16px; color: var(--clr-text-3); }
+
+/* ── Reseña propia ── */
+.bd__review { padding: 16px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.bd__stars { display: flex; gap: 2px; }
+.bd__star { font-size: 18px; color: var(--clr-star); opacity: .3; }
+.bd__star.fill { opacity: 1; }
+
+.bd__review-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text-2);
+}
+
+.bd__review-reply {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--r-xs);
+  background: var(--clr-field);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+/* ── Acciones ── */
+.bd__actions { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+
+.bd__fee {
+  margin-top: 12px;
+  padding: 0 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+/* ── Hoja de reseña ── */
+.bd__rating-picker { display: flex; gap: 4px; justify-content: center; margin: 20px 0 16px; }
+
+.bd__rating-star {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--clr-text-3);
+  transition: color .15s ease, transform .12s ease;
+}
+
+.bd__rating-star .material-symbols-rounded { font-size: 36px; }
+.bd__rating-star--on { color: var(--clr-star); }
+.bd__rating-star:active { transform: scale(0.9); }
+
+.bd__review-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: vertical;
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  background: var(--clr-field);
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text);
+}
+
+.bd__review-input::placeholder { color: var(--clr-text-3); }
+
+@media (max-width: 640px) {
+  .bd__inner { padding: 24px 20px 96px; }
+}

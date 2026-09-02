@@ -1,0 +1,182 @@
+<div class="bd anim-fade-up">
+  <div class="bd__inner">
+
+    <button type="button" class="flow__back" (click)="goBack()">
+      <span class="material-symbols-rounded">arrow_back</span>
+      Volver
+    </button>
+
+    @if (isLoading) {
+      <div class="loading-state"><div class="spinner"></div><span>Cargando la cita…</span></div>
+    } @else if (loadError || !booking) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">{{ loadError?.networkError ? 'wifi_off' : 'event_busy' }}</span>
+        <h3>{{ loadError?.networkError ? 'Sin conexión' : 'No hemos encontrado esta cita' }}</h3>
+        <p>{{ loadError?.message }}</p>
+        <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+      </div>
+    } @else {
+
+      <div class="bd__head">
+        <h1 class="bd__title">{{ booking.serviceName }}</h1>
+        <app-booking-status-pill [status]="booking.status" />
+      </div>
+
+      <!-- Cuándo, con quién y dónde. Es a lo que se entra. -->
+      <div class="form-group">
+        <div class="form-group__box">
+          <div class="bd__row">
+            <span class="material-symbols-rounded bd__row-icon">calendar_today</span>
+            <span class="bd__row-text"><strong>{{ dateLabel }}</strong></span>
+          </div>
+          <div class="bd__row">
+            <span class="material-symbols-rounded bd__row-icon">schedule</span>
+            <span class="bd__row-text">{{ timeRange }}</span>
+          </div>
+          @if (business) {
+            <div class="bd__row bd__row--link" (click)="openBusiness()">
+              <span class="material-symbols-rounded bd__row-icon">storefront</span>
+              <span class="bd__row-text">
+                <strong>{{ business.name }}</strong>
+                @if (locationDisplay) {
+                  <small>{{ locationDisplay }}</small>
+                }
+              </span>
+              <span class="material-symbols-rounded bd__chevron">chevron_right</span>
+            </div>
+          }
+          @if (booking.notes) {
+            <div class="bd__row">
+              <span class="material-symbols-rounded bd__row-icon">sticky_note_2</span>
+              <span class="bd__row-text">{{ booking.notes }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (actionError) {
+        <p class="flow__error" role="alert">
+          <span class="material-symbols-rounded fill">error</span>{{ actionError }}
+        </p>
+      }
+
+      <!-- Tu reseña de esta cita -->
+      @if (myReview) {
+        <div class="form-group">
+          <p class="form-group__header">Tu reseña</p>
+          <div class="form-group__box bd__review">
+            <span class="bd__stars">
+              @for (filled of stars(myReview.rating); track $index) {
+                <span class="material-symbols-rounded bd__star" [class.fill]="filled">star</span>
+              }
+            </span>
+            @if (myReview.comment) {
+              <p class="bd__review-text">{{ myReview.comment }}</p>
+            }
+            @if (myReview.reply) {
+              <p class="bd__review-reply">
+                <strong>Respuesta del negocio:</strong> {{ myReview.reply }}
+              </p>
+            }
+            <app-button variant="text" size="small" [disabled]="busy" (onClick)="deleteReview()">
+              Eliminar reseña
+            </app-button>
+          </div>
+        </div>
+      }
+
+      <!-- ══════════ ACCIONES ══════════ -->
+      <div class="bd__actions">
+        @if (canReview) {
+          <app-button variant="primary" icon="star" [fullWidth]="true" (onClick)="openReview()">
+            Dejar reseña
+          </app-button>
+        }
+
+        <app-button variant="secondary" icon="forum" [fullWidth]="true" [disabled]="busy" (onClick)="openChat()">
+          Escribir al negocio
+        </app-button>
+
+        @if (canCancel) {
+          <app-button variant="secondary" icon="edit_calendar" [fullWidth]="true" (onClick)="reschedule()">
+            Cambiar día u hora
+          </app-button>
+
+          <!-- Con cargo el botón lo dice y lleva el importe: enterarse al
+               pulsar de que cancelar cuesta dinero es enterarse tarde. -->
+          <app-button
+            variant="destructive"
+            [icon]="willCharge ? 'credit_card' : 'cancel'"
+            [fullWidth]="true"
+            [loading]="busy"
+            (onClick)="cancel()"
+          >
+            {{ cancelLabel }}
+          </app-button>
+        }
+      </div>
+
+      <!-- La letra pequeña de las dos acciones, no el pie de una sola. -->
+      @if (canCancel && fee) {
+        <p class="bd__fee">
+          @if (willCharge) {
+            Quedan menos de {{ fee.windowHours }} h: cancelar o cambiar la cita ahora cuesta
+            {{ feeAmount }} ({{ fee.feePercent }} % del servicio).
+          } @else if (fee.feePercent > 0) {
+            Cancelar es gratis hasta {{ fee.windowHours }} h antes de la cita. A partir de ahí
+            cuesta el {{ fee.feePercent }} % del servicio.
+          } @else {
+            No se cobra nada por cancelar.
+          }
+        </p>
+      }
+    }
+  </div>
+
+  <!-- ══════════ HOJA DE RESEÑA ══════════ -->
+  @if (reviewOpen) {
+    <div class="sheet-backdrop" (click)="reviewOpen = false">
+      <div class="sheet" (click)="$event.stopPropagation()">
+        <h2 class="sheet__title">¿Qué tal fue?</h2>
+        <p class="sheet__sub">{{ booking?.serviceName }} · {{ business?.name }}</p>
+
+        <div class="bd__rating-picker">
+          @for (n of [1, 2, 3, 4, 5]; track n) {
+            <button
+              type="button"
+              class="bd__rating-star"
+              [class.bd__rating-star--on]="n <= reviewRating"
+              [attr.aria-label]="n + ' de 5'"
+              (click)="reviewRating = n"
+            >
+              <span class="material-symbols-rounded fill">star</span>
+            </button>
+          }
+        </div>
+
+        <textarea
+          class="bd__review-input"
+          rows="4"
+          maxlength="1000"
+          placeholder="Cuenta cómo fue (opcional)"
+          [(ngModel)]="reviewComment"
+        ></textarea>
+
+        @if (actionError) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ actionError }}
+          </p>
+        }
+
+        <div class="sheet__actions">
+          <app-button variant="primary" [fullWidth]="true" [loading]="busy" (onClick)="submitReview()">
+            Publicar reseña
+          </app-button>
+          <app-button variant="ghost" [fullWidth]="true" (onClick)="reviewOpen = false">
+            Cancelar
+          </app-button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
