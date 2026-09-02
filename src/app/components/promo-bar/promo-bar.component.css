@@ -1,0 +1,83 @@
+:host { display: block; }
+
+/* Menta sobre pizarra en oscuro, pizarra sobre menta en claro: es el par
+   primary/onPrimary del tema, el mismo que usan el botón principal y los
+   chips seleccionados. Así la tira se lee como acento de marca y no como
+   una alerta. */
+.promobar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 6px 48px;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+}
+
+.promobar__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  padding: 4px 8px;
+  color: inherit;
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  text-align: left;
+}
+
+.promobar__icon { font-size: 18px; }
+
+.promobar__text strong {
+  font-weight: 800;
+  /* Un filo por debajo en vez de subrayado: el subrayado del navegador se
+     parte con el icono al lado y queda sucio. */
+  box-shadow: inset 0 -2px 0 currentColor;
+  padding-bottom: 1px;
+  margin-left: 4px;
+}
+
+.promobar__arrow {
+  font-size: 17px;
+  transition: transform .2s ease;
+}
+
+.promobar__cta:hover .promobar__arrow { transform: translateX(3px); }
+
+.promobar__close {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  opacity: .65;
+  cursor: pointer;
+  transition: opacity .2s ease, background-color .2s ease;
+}
+
+.promobar__close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, .08);
+}
+
+.promobar__close .material-symbols-rounded { font-size: 18px; }
+
+@media (max-width: 640px) {
+  .promobar { padding: 8px 40px; }
+  .promobar__cta { font-size: 0.75rem; gap: 6px; }
+  /* La flecha sobra cuando el texto ya ocupa toda la línea. */
+  .promobar__arrow { display: none; }
+}

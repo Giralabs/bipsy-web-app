@@ -1,0 +1,485 @@
+:host { display: contents; }
+
+/* Fijo y por encima de la barra `sticky` (z-index 100): la tapa en vez de
+   sustituirla, así el header de siempre no se toca. */
+.sheader {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 101;
+  background: var(--clr-base);
+  box-shadow: inset 0 -0.5px 0 var(--clr-border);
+  transform: translateY(-100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform .28s cubic-bezier(.4, 0, .2, 1), opacity .2s ease, visibility .28s;
+}
+
+.sheader--visible {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.sheader__inner {
+  width: min(1240px, 100% - 48px);
+  margin: 0 auto;
+  height: 64px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Un pelín más pequeño que el del header normal (34px). */
+.sheader__logo img { height: 26px; width: auto; display: block; }
+
+/* ─── La barra de tres campos ─── */
+
+.sbar {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: min(620px, 100%);
+  padding: 4px 4px 4px 6px;
+  border-radius: var(--r-pill);
+  background: var(--clr-surface);
+  box-shadow: inset 0 0 0 0.5px var(--clr-border);
+  transition: box-shadow .2s ease;
+}
+
+.sbar:hover { box-shadow: inset 0 0 0 0.5px var(--clr-border-strong, var(--clr-border)); }
+
+.sbar__field {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .18s ease;
+}
+
+.sbar__field:hover,
+.sbar__field--open { background: var(--clr-surface-hover); }
+
+/* El texto es el campo principal: se le da más sitio que a los otros dos. */
+.sbar__field--text { flex: 1.35 1 0; cursor: text; }
+
+.sbar__label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+  line-height: 1.2;
+}
+
+.sbar__value,
+.sbar__input {
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--clr-text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* En cuanto vale algo deja de ser un marcador de posición. */
+.sbar__value--set { color: var(--clr-text); }
+
+.sbar__input {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--clr-text);
+}
+
+.sbar__input::placeholder { color: var(--clr-text-3); font-weight: 600; }
+.sbar__input:focus { outline: none; }
+
+.sbar__sep {
+  width: 0.5px;
+  height: 22px;
+  background: var(--clr-border);
+  flex: 0 0 auto;
+}
+
+.sbar__go {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.sbar__go:hover { background: var(--clr-mint-hover); }
+.sbar__go .material-symbols-rounded { font-size: 20px; }
+
+/* ─── Sesión ─── */
+
+/* Flex y no solo `justify-self`: un <a> es en linea, se alinea por la linea
+   base del texto y quedaba 1,5 px por debajo del centro de la barra. */
+.sheader__actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+}
+
+.sheader__login {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--clr-text-2);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: var(--r-pill);
+  transition: color .2s ease, background-color .2s ease;
+}
+
+.sheader__login:hover { color: var(--clr-text); background: var(--clr-surface); }
+
+.sheader__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--clr-surface);
+  color: var(--clr-text-2);
+  text-decoration: none;
+}
+
+.sheader__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sheader__avatar .material-symbols-rounded { font-size: 20px; }
+
+/* ─── Paneles ─── */
+
+.pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, calc(100vw - 32px));
+  padding: 18px;
+  border-radius: var(--r-lg);
+  background: var(--clr-surface);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .28), inset 0 0 0 0.5px var(--clr-border);
+  animation: pop-in .18s ease;
+}
+
+.pop--when { width: min(460px, calc(100vw - 32px)); }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.pop__geo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-family: var(--ff);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.pop__geo:hover:not(:disabled) { background: var(--clr-mint-hover); }
+.pop__geo:disabled { opacity: .6; cursor: default; }
+.pop__geo .material-symbols-rounded { font-size: 22px; flex: 0 0 auto; }
+.pop__geo strong { display: block; font-size: 0.875rem; font-weight: 700; }
+.pop__geo small { display: block; margin-top: 2px; font-size: 0.75rem; opacity: .75; }
+
+.pop__or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 12px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+}
+
+.pop__or::before,
+.pop__or::after {
+  content: '';
+  flex: 1;
+  height: 0.5px;
+  background: var(--clr-border);
+}
+
+.pop__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--clr-field);
+}
+
+.pop__search > .material-symbols-rounded { font-size: 18px; color: var(--clr-text-3); }
+
+.pop__search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-family: var(--ff);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text);
+}
+
+.pop__search input:focus { outline: none; }
+
+.pop__search-go {
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-family: var(--ff);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pop__search-go:disabled { opacity: .6; cursor: default; }
+
+.pop__error {
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--clr-warn, var(--clr-text-2));
+}
+
+.pop__results {
+  margin-top: 10px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.pop__results button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pop__results button:hover { background: var(--clr-surface-hover); }
+.pop__results .material-symbols-rounded { font-size: 18px; color: var(--clr-text-3); flex: 0 0 auto; }
+
+.pop__clear {
+  margin-top: 12px;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  color: var(--clr-text-2);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.pop__clear:hover { color: var(--clr-text); }
+
+.pop__divider {
+  height: 0.5px;
+  background: var(--clr-border);
+  margin: 18px 0 14px;
+}
+
+.pop__section {
+  margin-bottom: 10px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+}
+
+.pop__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.pop__footer .pop__clear { margin-top: 0; }
+
+.pop__apply {
+  padding: 10px 22px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pop__apply:hover { background: var(--clr-mint-hover); }
+
+/* ─── Calendario ─── */
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cal__month {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.cal__nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--clr-text-2);
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.cal__nav:hover:not(:disabled) { background: var(--clr-surface-hover); }
+.cal__nav:disabled { opacity: .3; cursor: default; }
+.cal__nav .material-symbols-rounded { font-size: 20px; }
+
+.cal__weekdays,
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal__weekdays {
+  margin-bottom: 4px;
+}
+
+.cal__weekdays span {
+  text-align: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--clr-text-3);
+}
+
+.cal__day {
+  aspect-ratio: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+
+.cal__day:hover:not(:disabled) { background: var(--clr-surface-hover); }
+.cal__day--past { color: var(--clr-text-3); opacity: .4; cursor: default; }
+
+.cal__day--on,
+.cal__day--on:hover {
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+}
+
+.cal__slots { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.cal__slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-field);
+  color: var(--clr-text-2);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .18s ease, color .18s ease;
+}
+
+.cal__slot:hover { background: var(--clr-surface-hover); color: var(--clr-text); }
+.cal__slot .material-symbols-rounded { font-size: 17px; }
+
+.cal__slot--on,
+.cal__slot--on:hover {
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+}
+
+/* ─── Estrecho ─── */
+
+@media (max-width: 1080px) {
+  .sheader__inner { width: calc(100% - 32px); gap: 12px; }
+  .sbar { width: 100%; }
+  .sbar__label { display: none; }
+  .sbar__field { padding: 10px 12px; }
+}
+
+/* Por debajo de esto la barra de tres campos no cabe y el header compacto
+   deja de aportar: la navegación inferior ya lleva a Buscar. */
+@media (max-width: 720px) {
+  .sheader { display: none; }
+}

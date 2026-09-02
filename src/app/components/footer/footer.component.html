@@ -1,0 +1,85 @@
+<footer class="footer">
+  <div class="footer__inner">
+
+    <!-- ── Marca ── -->
+    <div class="footer__brand">
+      <img src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
+           alt="Bipsy" class="footer__logo theme-dark-only" />
+      <img src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
+           alt="Bipsy" class="footer__logo theme-light-only" />
+
+      <p class="footer__claim">
+        Pide cita en cualquier negocio que trabaje con agenda. Sin llamadas y sin esperas.
+      </p>
+
+      <div class="footer__stores">
+        <a href="https://www.youtube.com" target="_blank" rel="noopener" class="footer__store">
+          <img src="assets_apps/donwload_play_store.webp" alt="Consíguelo en Google Play" />
+        </a>
+        <a href="https://www.youtube.com" target="_blank" rel="noopener" class="footer__store">
+          <img src="assets_apps/download_app_store.webp" alt="Descárgalo en el App Store" />
+        </a>
+      </div>
+    </div>
+
+    <!-- ── Navegación ── -->
+    <nav class="footer__col" aria-label="Bipsy">
+      <h2 class="footer__title">Bipsy</h2>
+      <a routerLink="/home">Explorar</a>
+      <a routerLink="/search">Buscar</a>
+      <a routerLink="/appointments">Mis citas</a>
+      <a routerLink="/favoritos">Favoritos</a>
+    </nav>
+
+    <nav class="footer__col" aria-label="Cuenta">
+      <h2 class="footer__title">Cuenta</h2>
+      <a routerLink="/acceder">Iniciar sesión</a>
+      <a routerLink="/crear-cuenta">Crear cuenta</a>
+      <a routerLink="/profile">Ajustes</a>
+      <a routerLink="/pagos">Pagos</a>
+    </nav>
+
+    <!-- ── Legal ──
+         Accesible desde cualquier página, que es lo que pide la LSSI-CE:
+         enlazarlo solo desde el registro deja fuera a quien entra a mirar. -->
+    <nav class="footer__col" aria-label="Legal">
+      <h2 class="footer__title">Legal</h2>
+      @for (doc of legalDocs; track doc.slug) {
+        <a [routerLink]="['/legal', doc.slug]">{{ doc.title }}</a>
+      }
+    </nav>
+
+    <!-- ── Ayuda ──
+         Contacto y seguridad salen de la columna legal: debajo de «Política de
+         cookies» los esconde justo de quien los está buscando. -->
+    <nav class="footer__col" aria-label="Ayuda">
+      <h2 class="footer__title">Ayuda</h2>
+      @for (doc of helpDocs; track doc.slug) {
+        <a [routerLink]="['/legal', doc.slug]">{{ doc.title }}</a>
+      }
+      <a [href]="'mailto:' + company.email">{{ company.email }}</a>
+    </nav>
+  </div>
+
+  <!-- ── Quién está detrás ── -->
+  <div class="footer__bottom">
+    <a class="footer__by" href="https://giralabs.es" target="_blank" rel="noopener">
+      <span>Una aplicación de</span>
+      <!-- Los originales del kit de marca vienen con dos tercios de aire alrededor:
+           a 20 px de alto el logotipo salía ilegible. Estas son las mismas
+           imágenes recortadas a su contenido. La variante "black" tiene el texto
+           en blanco (fondo oscuro) y la "apricot" en negro (fondo claro). -->
+      <img src="assets_giralabs/giralabs_wordmark_dark.webp"
+           alt="Giralabs" class="footer__by-logo theme-dark-only" />
+      <img src="assets_giralabs/giralabs_wordmark_light.webp"
+           alt="Giralabs" class="footer__by-logo theme-light-only" />
+    </a>
+
+    <p class="footer__legalline">
+      <!-- La marca, no el nombre del titular: quien firma de cara al usuario es
+           Giralabs. El titular real va identificado en el aviso legal, que es
+           donde la ley lo pide. -->
+      © {{ year }} {{ company.name }}. Todos los derechos reservados.
+    </p>
+  </div>
+</footer>
