@@ -1,21 +1,27 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BipsyService } from '../../services/bipsy.service';
+import { ApiError } from '../../core/api-error';
 import { BusinessResponse, CategoryResponse } from '../../models/bipsy.models';
+import { categoryIcon } from '../../shared/category-icons';
+import { businessBookingPath, businessPath } from '../../shared/slug';
+import { DragScrollDirective } from '../../shared/drag-scroll.directive';
 import { BusinessCardComponent } from '../../components/business-card/business-card.component';
+import { BusinessRowComponent } from '../../components/business-row/business-row.component';
+import { SessionService } from '../../core/session.service';
 import { ButtonComponent } from '../../components/button/button.component';
 import { ChipComponent } from '../../components/chip/chip.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, BusinessCardComponent, ButtonComponent, ChipComponent],
+  imports: [CommonModule, RouterLink, FormsModule, BusinessCardComponent, BusinessRowComponent, ButtonComponent, ChipComponent, DragScrollDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit {
   selectedCategoryCode: string = 'ALL';
   selectedCategoryId?: number;
   searchQuery: string = '';
@@ -23,61 +29,90 @@ export class HomeComponent implements OnInit, OnDestroy {
   categories: CategoryResponse[] = [];
   businesses: BusinessResponse[] = [];
   featuredBusinesses: BusinessResponse[] = [];
+
+  favoriteBusinesses: BusinessResponse[] = [];
+  isAuthenticated = false;
   isLoading: boolean = true;
+  loadError: ApiError | null = null;
 
-  @ViewChild('featuredScroll') featuredScrollRef?: ElementRef;
-  
-  // Chips drag state
-  private isDragging = false;
-  private startX = 0;
-  private startScrollLeft = 0;
-
-  // Carousel continuous animation frame ID
-  private animationFrameId?: number;
+  /** Cuántos esqueletos pintar mientras carga. Seis llenan la fila. */
+  readonly skeletons = [1, 2, 3, 4, 5, 6];
 
   constructor(
     private bipsyService: BipsyService,
+    private session: SessionService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.loadData();
+    // Las filas personales dependen de la sesión, y la sesión tarda un
+    // instante en resolverse al arrancar: sin esperar a que se sepa, la
+    // portada se pintaba siempre como si nadie hubiera entrado.
+    this.session.status$.subscribe(status => {
+      if (status === 'unknown') {
+        return;
+      }
+      this.isAuthenticated = status === 'authenticated';
+      void this.loadData();
+    });
   }
 
-  ngOnDestroy(): void {
-    this.stopContinuousScroll();
-  }
-
-  loadData(): void {
+  async loadData(): Promise<void> {
     this.isLoading = true;
+    this.loadError = null;
 
-    this.bipsyService.getCategories().subscribe(cats => {
+    try {
+      const [cats, featured, favorites, rebook] = await Promise.all([
+        this.bipsyService.getCategories(),
+        this.bipsyService.getFeaturedBusinesses(12),
+        this.bipsyService.getFavoriteBusinesses(),
+        this.bipsyService.getRebookableBusinesses(),
+      ]);
       this.categories = [{ id: 0, code: 'ALL', name: 'Todo', active: true }, ...cats];
-    });
-
-    this.bipsyService.getFeaturedBusinesses(12).subscribe(data => {
-      this.featuredBusinesses = data.slice(0, 6);
-      this.businesses = data;
+      this.featuredBusinesses = withRebookablesFirst(featured, rebook);
+      this.businesses = featured;
+      this.favoriteBusinesses = favorites;
+    } catch (error) {
+      this.loadError = ApiError.from(error);
+    } finally {
       this.isLoading = false;
-      this.startContinuousScroll();
-    });
+    }
   }
 
-  selectCategory(cat: CategoryResponse): void {
+  async selectCategory(cat: CategoryResponse): Promise<void> {
     this.selectedCategoryCode = cat.code;
     this.selectedCategoryId = cat.id === 0 ? undefined : cat.id;
-    this.stopContinuousScroll();
-
     if (cat.id === 0) {
-      this.loadData();
-    } else {
-      this.isLoading = true;
-      this.bipsyService.searchBusinesses(undefined, undefined, cat.id).subscribe(res => {
-        this.businesses = res;
-        this.featuredBusinesses = res.slice(0, 6);
-        this.isLoading = false;
-      });
+      await this.loadData();
+      return;
     }
+
+    this.isLoading = true;
+    this.loadError = null;
+    try {
+      const res = await this.bipsyService.searchBusinesses({ categoryId: cat.id });
+      this.businesses = res;
+    } catch (error) {
+      this.loadError = ApiError.from(error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  /**
+   * Volver a reservar lo mismo. No abre la ficha: entra directo al flujo con
+   * el servicio de la última cita, que es el trabajo que este botón ahorra.
+   * Sin ese dato no se puede repetir nada y se cae a la ficha.
+   */
+  onRebook(business: BusinessResponse): void {
+    const serviceId = business.discovery?.lastServiceId;
+    if (!serviceId) {
+      this.router.navigate(businessPath(business));
+      return;
+    }
+    this.router.navigate(businessBookingPath(business), {
+      queryParams: { serviceId, workerId: business.discovery?.lastWorkerId },
+    });
   }
 
   executeSearch(): void {
@@ -92,108 +127,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   getCategoryIcon(code: string): string {
-    const icons: Record<string, string> = {
-      'ALL': 'grid_view',
-      'BARBER': 'content_cut',
-      'BARBERSHOP': 'content_cut',
-      'HAIRDRESSER': 'face',
-      'ESTHETIC': 'spa',
-      'NAILS': 'brush',
-      'MASSAGE': 'self_improvement',
-      'TATTOO': 'draw',
-      'MAKEUP': 'palette',
-      'EYEBROWS': 'visibility',
-      'PHYSIO': 'healing',
-      'PERSONAL_TRAINER': 'fitness_center',
-      'LASER': 'bolt',
-      'NUTRITION': 'restaurant',
-      'COACHING': 'psychology',
-      'PHOTOGRAPHY': 'photo_camera',
-      'TUTORING': 'school',
-      'PILATES': 'accessibility_new',
-      'OTHER': 'more_horiz',
-    };
-    return icons[code] || 'spa';
-  }
-
-  scroll(element: HTMLElement, amount: number): void {
-    element.scrollBy({ left: amount, behavior: 'smooth' });
-  }
-
-  // Tags Drag & Drop scroll logic
-  onDragStart(e: MouseEvent, el: HTMLElement): void {
-    this.isDragging = true;
-    el.classList.add('grabbing');
-    this.startX = e.pageX - el.offsetLeft;
-    this.startScrollLeft = el.scrollLeft;
-  }
-
-  onDragEnd(el: HTMLElement): void {
-    this.isDragging = false;
-    el.classList.remove('grabbing');
-  }
-
-  onDragMove(e: MouseEvent, el: HTMLElement): void {
-    if (!this.isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = (x - this.startX) * 1.5; // scroll-speed multiplier
-    el.scrollLeft = this.startScrollLeft - walk;
-  }
-
-  // Buttery-smooth requestAnimationFrame continuous horizontal auto-scroll
-  private pollInterval: any;
-
-  startContinuousScroll(): void {
-    this.stopContinuousScroll();
-    
-    let attempts = 0;
-    this.pollInterval = setInterval(() => {
-      const el = document.querySelector('.featured-scroll') as HTMLElement;
-      attempts++;
-      
-      if (el) {
-        clearInterval(this.pollInterval);
-        this.pollInterval = undefined;
-
-        let currentScroll = el.scrollLeft;
-
-        const step = () => {
-          const maxScroll = el.scrollWidth - el.clientWidth;
-          if (maxScroll <= 0) {
-            this.animationFrameId = requestAnimationFrame(step);
-            return;
-          }
-
-          currentScroll += 0.55; // Accumulate float value
-          el.scrollLeft = currentScroll; // Assign to browser scrollLeft
-
-          const halfWidth = el.scrollWidth / 2;
-          if (el.scrollLeft >= halfWidth) {
-            currentScroll = el.scrollLeft - halfWidth;
-            el.scrollLeft = currentScroll;
-          }
-
-          this.animationFrameId = requestAnimationFrame(step);
-        };
-
-        this.animationFrameId = requestAnimationFrame(step);
-      } else if (attempts > 30) {
-        clearInterval(this.pollInterval);
-        this.pollInterval = undefined;
-      }
-    }, 100);
-  }
-
-  stopContinuousScroll(): void {
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
-      this.pollInterval = undefined;
-    }
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = undefined;
-    }
+    return categoryIcon(code);
   }
 
   clientEmail: string = '';
@@ -206,4 +140,30 @@ export class HomeComponent implements OnInit, OnDestroy {
       alert('Por favor, introduce tu correo electrónico.');
     }
   }
+}
+
+/**
+ * Los sitios donde ya has reservado, delante de los destacados.
+ *
+ * No son una fila aparte: "volver a reservar" no es una categoría, es una
+ * acción sobre un negocio que ya conoces. Puesto como fila propia repetía los
+ * mismos negocios dos veces y partía la portada en trozos que dicen lo mismo.
+ * Aquí van primeros y con su icono, que es lo que los distingue.
+ *
+ * Se marcan con `discovery.previouslyBooked` para que la tarjeta saque el
+ * reloj y el botón redondo sin que la fila tenga que saber de dónde salieron.
+ */
+function withRebookablesFirst(
+  featured: BusinessResponse[],
+  rebookable: BusinessResponse[],
+): BusinessResponse[] {
+  if (rebookable.length === 0) {
+    return featured;
+  }
+  const first = rebookable.map(business => ({
+    ...business,
+    discovery: { featured: false, recentlyOpened: false, ...business.discovery, previouslyBooked: true },
+  }));
+  const seen = new Set(first.map(b => b.id));
+  return [...first, ...featured.filter(b => !seen.has(b.id))];
 }

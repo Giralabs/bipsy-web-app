@@ -40,13 +40,15 @@
 .hero {
   position: relative;
   z-index: 1;
-  padding: 30px 28px 25px;
+  padding: 30px 24px 25px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.015);
 }
 
+/* La misma columna que el resto de la página: con 1320 aquí y 1240 debajo,
+   el titular arrancaba 18 px a la izquierda de las categorías. */
 .hero-inner {
-  max-width: 1320px;
+  width: min(1240px, 100%);
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -246,29 +248,25 @@
 .section-wrap {
   position: relative;
   z-index: 1;
-  max-width: 1440px;
+  width: min(1240px, 100% - 48px);
   margin: 0 auto;
-  padding: 40px 48px 80px;
+  padding: 28px 0 80px;
 }
 
 /* ── Chips row ── */
 .chips-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding: 14px 48px;
-  margin-left: -48px;
-  margin-right: -48px;
-  margin-top: -14px;
-  margin-bottom: 26px;
+  padding-bottom: 6px;
+  margin-bottom: 28px;
   scrollbar-width: none;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
 }
-.chips-row.grabbing {
-  cursor: grabbing;
-}
+.chips-row.is-dragging { cursor: grabbing; }
+.chips-row app-chip { flex-shrink: 0; }
 .chips-row::-webkit-scrollbar { display: none; }
 
 /* ── Section Header ── */
@@ -279,9 +277,12 @@
   margin-bottom: 20px;
 }
 
+/* headlineMedium: Bricolage Grotesque 24 px, 700, tracking -0,6. */
 .section-title {
-  font-size: 1.8rem;
-  font-weight: 800;
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
   letter-spacing: -.6px;
 }
 
@@ -300,14 +301,15 @@
 /* ── Featured horizontal scroll ── */
 .featured-scroll {
   display: flex;
-  gap: 20px;
+  /* GipsiSpacing.md: el hueco que deja `_GlassHomeCard` hasta la siguiente. */
+  gap: 12px;
   overflow-x: auto;
-  /* Top/bottom padding prevents card hover translates and shadows from being clipped.
-     Right padding gives scrollable breathing room to the last card. */
-  padding: 16px 28px 16px 4px;
-  margin: -16px -28px 32px -4px;
+  align-items: stretch;
+  /* Aire a la derecha para que la última tarjeta no muera pegada al canto. */
+  padding: 0 28px 0 0;
+  margin: 0 -28px 32px 0;
   scrollbar-width: none;
-  
+
   /* Mask gradient for smooth left/right fading */
   mask-image: linear-gradient(
     to right,
@@ -326,9 +328,24 @@
 }
 .featured-scroll::-webkit-scrollbar { display: none; }
 
+/* Mientras carga la fila no se arrastra: el desplazamiento automático
+   arranca cuando ya hay tarjetas. */
+.featured-scroll--static { overflow-x: hidden; }
+
+/* La misma proporción que la tarjeta: 16:9 de foto más el pie. */
+.featured-skeleton { height: 223px; border-radius: var(--r-xl); }
+
+.chip-skeleton {
+  flex: 0 0 118px;
+  height: 39px;
+  border-radius: var(--r-pill);
+}
+
+/* 263 px = los 275 de `_GlassHomeCard.width` menos el margen de 12 que aquí
+   pone el `gap`. */
 .featured-item {
-  flex: 0 0 260px;
-  min-width: 260px;
+  flex: 0 0 263px;
+  min-width: 263px;
 }
 
 /* ── Businesses grid ── */
@@ -417,8 +434,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
-  margin-top: 48px;
-  margin-bottom: 32px;
+  margin-top: 40px;
   width: 100%;
 }
 
@@ -676,81 +692,121 @@
   .promo-action-link { font-size: 0.9rem; }
 }
 
-/* ── Info Section ── */
-.info-section {
+/* ── Cómo funciona ──
+   Tres pasos con su icono en lugar de tres párrafos: la prosa decía en cuatro
+   líneas lo que aquí se lee de un vistazo, y la mascota se quedaba de adorno
+   al lado del texto. Ahora ocupa media columna y sostiene el bloque. */
+.steps {
   position: relative;
   z-index: 1;
-  margin-top: 54px; /* un poquito de margen superior, no demasiado */
-  margin-bottom: 54px;
-  width: 100%;
+  margin-top: 32px;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   align-items: center;
   gap: 64px;
+  padding: 64px 56px;
+  border-radius: var(--r-xxl);
+  background: var(--clr-surface);
 }
 
-.info-section--reversed {
-  grid-template-columns: 0.8fr 1.2fr;
+/* La mascota al otro lado: dos bloques idénticos seguidos se leen como uno
+   repetido. Se invierte el orden de las columnas, no el contenido. */
+.steps--mirrored .steps__art { order: 2; }
+
+.steps__art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.info-text {
+/* Halo difuminado, no un disco: el círculo opaco de antes parecía una
+   pegatina pegada detrás. */
+.steps__art::before {
+  content: '';
+  position: absolute;
+  width: min(380px, 100%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--clr-mint-dim) 0%, transparent 68%);
+}
+
+.steps__img {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.steps__eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-mint);
+}
+
+/* headlineLarge: Bricolage Grotesque, 700, tracking -0,8. */
+.steps__title {
+  margin-top: 8px;
+  font-family: var(--ff-display);
+  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  color: var(--clr-text);
+}
+
+.steps__list { list-style: none; margin-top: 32px; display: grid; gap: 26px; }
+
+.step { display: flex; align-items: flex-start; gap: 16px; }
+
+/* El icono en su disco de marca: es lo que separa un paso del siguiente sin
+   necesidad de una línea ni de un número. */
+.step__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--clr-mint-dim);
+  color: var(--clr-mint);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step__text {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  text-align: left;
-}
-
-.info-title {
-  font-size: clamp(2.0rem, 3.5vw, 2.6rem);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -1.5px;
-  color: var(--clr-text);
-  margin-bottom: 8px;
-}
-
-.info-paragraph {
-  font-size: 1.05rem;
-  line-height: 1.65;
+  gap: 3px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.55;
   color: var(--clr-text-2);
-  margin: 0;
+  max-width: 46ch;
 }
 
-.info-showcase {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
-.info-image {
-  width: 100%;
-  max-width: 440px;
-  height: auto;
-  border-radius: var(--r-lg);
-  object-fit: contain;
-  transition: transform 0.3s ease;
-}
-
-.info-image:hover {
-  transform: scale(1.02);
+.step__text strong {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  color: var(--clr-text);
 }
 
 @media (max-width: 960px) {
-  .info-section {
+  .steps {
     grid-template-columns: 1fr;
-    gap: 40px;
-    margin-top: 40px;
-    margin-bottom: 24px;
+    gap: 32px;
+    padding: 40px 24px;
+    margin-top: 24px;
   }
-  
-  .info-showcase {
-    order: -1;
-  }
-  
-  .info-image {
-    max-width: 320px;
-  }
+
+  /* La mascota primero: dice de qué va el bloque antes de leer nada. */
+  .steps--mirrored .steps__art { order: 0; }
+  .steps__img { max-width: 220px; }
+  .steps__art::before { width: min(260px, 100%); }
+  .step__text { max-width: none; }
 }
-
-
