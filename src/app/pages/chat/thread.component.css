@@ -274,3 +274,26 @@
   justify-content: center;
   cursor: pointer;
 }
+
+/* ── Móvil: el hilo es una pantalla completa, no una sección de una página ──
+   En la app el hilo va FUERA del ShellRoute, textualmente «para que el teclado
+   y el compositor tengan todo el alto». Aquí igual: se sale del flujo y ocupa
+   la ventana entera, con lo que desaparece el cálculo de altos —era
+   `100vh - 84`, restando un header que en móvil ni se pinta— y el compositor
+   deja de quedarse por debajo del pliegue. */
+@media (max-width: 1024px) {
+  .th {
+    position: fixed;
+    inset: 0;
+    z-index: 95;
+    /* dvh y no vh: en el móvil la barra del navegador se recoge al bajar y
+       con vh el compositor se quedaba tapado por ella. */
+    height: 100dvh;
+    background: var(--clr-base);
+  }
+
+  /* El gesto de inicio del iPhone no puede comerse el campo de escribir. */
+  .composer {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+}

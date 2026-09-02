@@ -18,18 +18,26 @@
       </a>
     </div>
 
-    <form class="mhead__search" (submit)="executeSearch(); $event.preventDefault()">
-      <span class="material-symbols-rounded">search</span>
-      <input
-        type="text"
-        placeholder="Busca un servicio o un negocio"
-        [(ngModel)]="searchQuery"
-        name="bipsy-mobile-search"
-        autocomplete="off"
-        autocorrect="off"
-        spellcheck="false"
-      />
-    </form>
+    <!-- Buscador y filtros en la MISMA fila, pegados, como en Android: los
+         cuatro botones sueltos debajo no caben en un móvil y «Filtros» se
+         quedaba fuera de pantalla. -->
+    <div class="mhead__row">
+      <form class="mhead__search" (submit)="executeSearch(); $event.preventDefault()">
+        <span class="material-symbols-rounded">search</span>
+        <input
+          type="text"
+          placeholder="Nombre, servicio, categoría..."
+          [(ngModel)]="searchQuery"
+          name="bipsy-mobile-search"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+        />
+      </form>
+      <button type="button" class="mhead__filters" (click)="openFilters()" aria-label="Filtros">
+        <span class="material-symbols-rounded">tune</span>
+      </button>
+    </div>
   </header>
 
   <!-- ══════════════════════════════════════════
@@ -89,7 +97,32 @@
        CATEGORY CHIPS — matches Flutter _CategoryChips with GipsiChip
        ══════════════════════════════════════════ -->
   <div class="section-wrap">
-    <div class="chips-row" appDragScroll>
+    <!-- ── Móvil: cuadros, no píldoras ──
+         Es lo que pinta `_CategoryTiles` en Android: un cuadrado con el icono
+         arriba y el nombre debajo, y 4,5 a la vista para que el último quede
+         partido por el borde. Ese corte es lo único que dice que la fila se
+         arrastra. -->
+    <div class="tiles-row only-touch" appDragScroll>
+      @if (categories.length === 0 && isLoading) {
+        @for (i of skeletons; track i) {
+          <div class="skeleton tile-skeleton"></div>
+        }
+      } @else {
+        @for (cat of tileCategories; track cat.id) {
+          <button
+            type="button"
+            class="tile"
+            [class.tile--on]="selectedCategoryCode === cat.code"
+            (click)="toggleCategory(cat)"
+          >
+            <span class="material-symbols-rounded">{{ getCategoryIcon(cat.code) }}</span>
+            <span class="tile__label">{{ cat.name }}</span>
+          </button>
+        }
+      }
+    </div>
+
+    <div class="chips-row only-desk" appDragScroll>
       @if (categories.length === 0 && isLoading) {
         @for (i of skeletons; track i) {
           <div class="skeleton chip-skeleton"></div>

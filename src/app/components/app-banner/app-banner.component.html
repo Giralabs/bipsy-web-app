@@ -1,4 +1,4 @@
-@if (!dismissed) {
+@if (available && !dismissed) {
   <aside class="appbanner">
     <button type="button" class="appbanner__close" (click)="dismiss()" aria-label="Cerrar">
       <span class="material-symbols-rounded">close</span>
@@ -17,10 +17,6 @@
       <small>Pide cita sin llamar</small>
     </span>
 
-    @if (comingSoon) {
-      <span class="appbanner__soon" title="Todavía no está publicada">Próximamente</span>
-    } @else {
-      <a class="appbanner__go" [href]="store.url" target="_blank" rel="noopener">Obtener</a>
-    }
+    <a class="appbanner__go" [href]="store.url" target="_blank" rel="noopener">Obtener</a>
   </aside>
 }

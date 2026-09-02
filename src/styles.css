@@ -849,20 +849,25 @@ html, body {
    1024 y no 900 para que el iPad en vertical (768-1024) entre.
    ============================================================ */
 
-/* `!important` en las dos: los componentes traen su propio `:host { display }`
-   y, al inyectarse después que estas reglas globales, ganaban por orden con
-   la misma especificidad. Un ayudante de visibilidad tiene que ganar siempre. */
-.only-touch { display: none !important; }
+/* ⚠️ Estos ayudantes solo ESCONDEN, nunca imponen un `display`.
+   La primera versión ponía `.only-touch { display: block }` en móvil y eso
+   pisaba el `display: flex` de la fila de categorías: los cuadros salían uno
+   debajo de otro. Un ayudante de visibilidad no puede decidir el layout de lo
+   que enseña. */
+@media (min-width: 1025px) {
+  .only-touch { display: none !important; }
+}
 
 @media (max-width: 1024px) {
   .only-desk { display: none !important; }
-  .only-touch { display: block !important; }
 
   /* Hueco para la barra flotante: sin esto la última tarjeta de cualquier
      lista queda debajo. Es el `floatingTabBarGap` de la app, adaptado: la
      barra ocupa 88 (68 + 12 + 8) y el resto es aire para que la lista no
-     muera pegada al cristal. */
+     muera pegada al cristal.
+     El valor lo publica la propia barra, que es quien sabe si se pinta: en el
+     hilo de chat o en la ficha no hay barra, y ahí el hueco sobra. */
   .page-content {
-    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: var(--tabbar-space, 0px);
   }
 }

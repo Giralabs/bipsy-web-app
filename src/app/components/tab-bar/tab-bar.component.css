@@ -17,8 +17,11 @@
 /* 68 de alto y radio xxl: los de GipsiAdaptiveTabBar. El desenfoque es lo que
    la hace flotar sobre la lista en vez de taparla. */
 .tabbar__pill {
+  position: relative;
   pointer-events: auto;
   display: flex;
+  /* El arrastre horizontal es nuestro, no del navegador. */
+  touch-action: none;
   /* En un iPad, estirada a 820 px el «blob» medía 273 y parecía un botón
      gigante. La barra es un mando, no una cabecera: se queda del ancho de un
      pulgar y centrada. */
@@ -45,6 +48,10 @@
 
 .tabbar__tab {
   position: relative;
+  /* Ni arrastre de enlace ni selección de texto: el gesto es nuestro. */
+  -webkit-user-drag: none;
+  user-select: none;
+  touch-action: none;
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
@@ -58,25 +65,32 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* El «blob» de la app: 52 de alto detrás de la pestaña activa, con su filo
-   claro y su resplandor. Va en ::before para que no empuje al icono. */
-.tabbar__tab::before {
-  content: '';
+/* La gota: UNA sola, colocada en píxeles desde el componente. Las curvas y
+   las duraciones son las de la app —350 ms easeOutCubic para el sitio, 250 ms
+   easeOutBack para el tamaño—, que es lo que da el rebote al soltar. */
+.tabbar__blob {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 6px;
-  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
   border-radius: var(--r-xxl);
   background: var(--clr-mint);
-  border: 1.2px solid rgba(255, 255, 255, .55);
+  border: 1.2px solid rgba(255, 255, 255, .65);
   box-shadow: 0 0 16px var(--clr-mint-glow);
-  opacity: 0;
-  transform: scale(.9);
-  transition: opacity .22s ease, transform .22s cubic-bezier(.34, 1.3, .64, 1);
+  pointer-events: none;
+  transition:
+    left .35s cubic-bezier(.33, 1, .68, 1),
+    width .25s cubic-bezier(.34, 1.56, .64, 1),
+    height .25s cubic-bezier(.34, 1.56, .64, 1);
 }
 
-.tabbar__tab--on::before { opacity: 1; transform: scale(1); }
+/* Siguiendo al dedo no hay transición: la gota tiene que ir pegada, no
+   perseguirlo con un cuarto de segundo de retraso. */
+.tabbar__blob--dragging {
+  transition:
+    width .25s cubic-bezier(.34, 1.56, .64, 1),
+    height .25s cubic-bezier(.34, 1.56, .64, 1);
+}
+
 .tabbar__tab--on { color: var(--clr-mint-text); }
 
 .tabbar__icon-wrap { position: relative; display: inline-flex; }

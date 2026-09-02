@@ -68,8 +68,7 @@
   line-height: 1.3;
 }
 
-.appbanner__go,
-.appbanner__soon {
+.appbanner__go {
   flex: 0 0 auto;
   padding: 7px 16px;
   border-radius: var(--r-pill);
@@ -82,11 +81,4 @@
 .appbanner__go {
   background: var(--clr-mint);
   color: var(--clr-mint-text);
-}
-
-/* Sin ficha todavía: se enseña el hueco pero no se finge un enlace. */
-.appbanner__soon {
-  background: var(--clr-field);
-  color: var(--clr-text-3);
-  cursor: default;
 }
