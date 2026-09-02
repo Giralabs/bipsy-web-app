@@ -214,3 +214,35 @@
   .tool-btn { padding: 0 14px; }
   .tool-btn__label { display: none; }
 }
+
+/* ── Botón flotante del mapa (móvil) ──
+   Sobre la barra de pestañas, no debajo: la barra ocupa 88 px desde el borde
+   y el botón se quedaba detrás del cristal. */
+.map-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  z-index: 89;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.map-fab .material-symbols-rounded { font-size: 22px; }
+
+/* En móvil la cabecera no es una portada: es el buscador y poco más. En la
+   app no existe una pantalla «Buscar» aparte —buscar es un estado de
+   Explorar—, así que aquí tampoco se anuncia como tal. */
+@media (max-width: 1024px) {
+  .search-header { padding-top: 12px; }
+  .search-tools { width: 100%; }
+}

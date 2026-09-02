@@ -6,7 +6,7 @@
        pantalla antes del primer resultado. -->
   <header class="search-header">
     <div class="search-top">
-      <div class="search-intro">
+      <div class="search-intro only-desk">
         <h1 class="page-title">Buscar</h1>
         <p class="page-sub">Negocios y profesionales con cita previa, cerca de ti</p>
       </div>
@@ -47,7 +47,7 @@
         </button>
 
         @if (mapAvailable) {
-          <button type="button" class="tool-btn" [class.tool-btn--on]="showMap" (click)="showMap = !showMap">
+          <button type="button" class="tool-btn only-desk" [class.tool-btn--on]="showMap" (click)="showMap = !showMap">
             <span class="material-symbols-rounded">{{ showMap ? 'view_list' : 'map' }}</span>
             <span class="tool-btn__label">{{ showMap ? 'Lista' : 'Mapa' }}</span>
           </button>
@@ -261,4 +261,24 @@
       }
     </div>
   </div>
+}
+
+<!-- ── El mapa, abajo y flotando ──
+   ⚠️ FUERA de .search-page a propósito: esa capa lleva `anim-fade-up`, y un
+   ancestro con `transform` pasa a ser el bloque contenedor de los
+   `position: fixed`. Dentro, el botón se anclaba al final de la lista.
+     En la app es un FloatingActionButton que está SIEMPRE: mirar dónde caen
+     los negocios es una forma de buscar por sí misma, no el remate de haber
+     elegido categoría. 46 px y en color de acento, como allí: era material
+     translúcido y sobre una lista opaca se leía como un círculo gris que no
+     encontraba nadie. -->
+@if (mapAvailable) {
+  <button
+    type="button"
+    class="map-fab only-touch"
+    (click)="showMap = !showMap"
+    [attr.aria-label]="showMap ? 'Ver la lista' : 'Ver el mapa'"
+  >
+    <span class="material-symbols-rounded">{{ showMap ? 'format_list_bulleted' : 'map' }}</span>
+  </button>
 }
