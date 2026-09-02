@@ -1,0 +1,86 @@
+.inbox { min-height: 100vh; }
+.inbox__inner { max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+
+.inbox__heading {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.2px;
+}
+
+.inbox__sub {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.inbox__list { display: flex; flex-direction: column; gap: 8px; }
+.inbox__skeleton { height: 76px; border-radius: var(--r-sm); }
+
+.conv {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.conv:hover { background: var(--clr-surface-hover); }
+
+.conv__avatar,
+.conv__avatar-img { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
+
+.conv__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-field);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.conv__avatar-img { object-fit: cover; }
+
+.conv__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.conv__top { display: flex; align-items: baseline; gap: 8px; }
+.conv__name { flex: 1; min-width: 0; font-size: 0.9375rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv__when { font-size: 0.6875rem; font-weight: 600; color: var(--clr-text-3); flex-shrink: 0; }
+
+.conv__preview {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv__preview--unread { color: var(--clr-text); font-weight: 600; }
+
+.conv__badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) { .inbox__inner { padding: 32px 20px 96px; } }
