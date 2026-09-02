@@ -47,9 +47,16 @@ export class AppBannerComponent {
 
   readonly store = this.detectStore();
 
-  /** True mientras no haya ficha: el botón se enseña, pero no lleva a nada. */
-  get comingSoon(): boolean {
-    return this.store.url === null;
+  /**
+   * Si se pinta la tira.
+   *
+   * **Sin ficha en la tienda no se pinta nada.** Un «Próximamente» ocupa el
+   * sitio y no ofrece nada: es un anuncio de algo que no se puede descargar.
+   * En cuanto `STORE_LINKS` tenga la URL, la tira aparece sola y funcionando,
+   * sin tocar una línea más.
+   */
+  get available(): boolean {
+    return this.store.url !== null;
   }
 
   dismiss(): void {

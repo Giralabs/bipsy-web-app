@@ -110,6 +110,11 @@ export class SearchComponent implements OnInit {
     // recargar la página no lo pierda.
     this.route.queryParams.subscribe(params => {
       this.searchQuery = params['q'] ?? '';
+      // El botón de filtros de Explorar entra por aquí: en la app abre la
+      // hoja sin salir de la pantalla, y esta es la misma hoja.
+      if (params['filtros']) {
+        this.filtersOpen = true;
+      }
       this.date = params['date'] ?? null;
       this.slot = (params['slot'] as DaySlot) ?? 'any';
       this.cityQuery = params['city'] ?? null;

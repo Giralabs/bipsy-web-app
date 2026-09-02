@@ -1,20 +1,44 @@
-<nav class="tabbar" aria-label="Secciones">
-  <div class="tabbar__pill">
-    @for (tab of tabs; track tab.route) {
-      <a
-        [routerLink]="tab.route"
-        routerLinkActive="tabbar__tab--on"
-        class="tabbar__tab"
-        [attr.aria-label]="tab.label"
-      >
-        <span class="tabbar__icon-wrap">
-          <span class="material-symbols-rounded">{{ tab.icon }}</span>
-          @if (tab.badge && unread > 0) {
-            <span class="tabbar__badge">{{ unread > 99 ? '99+' : unread }}</span>
-          }
-        </span>
-        <span class="tabbar__label">{{ tab.label }}</span>
-      </a>
-    }
-  </div>
-</nav>
+@if (visible) {
+  <nav class="tabbar" aria-label="Secciones">
+    <div
+      #pill
+      class="tabbar__pill"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp()"
+      (pointercancel)="onPointerCancel()"
+    >
+      <!-- La gota. Una sola, colocada por posición continua: mientras se
+           arrastra vale 1.37 y queda entre dos pestañas. -->
+      <span
+        class="tabbar__blob"
+        [class.tabbar__blob--dragging]="dragging"
+        [style.left.px]="blobLeft"
+        [style.width.px]="blobWidth"
+        [style.height.px]="blobHeight"
+        aria-hidden="true"
+      ></span>
+
+      @for (tab of tabs; track tab.route; let i = $index) {
+        <!-- `draggable="false"`: arrastrar un <a> arranca el arrastre nativo
+             del enlace, el navegador lanza `pointercancel` y el gesto de la
+             gota se moría en el primer píxel. -->
+        <a
+          draggable="false"
+          [routerLink]="tab.route"
+          class="tabbar__tab"
+          [class.tabbar__tab--on]="active === i"
+          [attr.aria-current]="active === i ? 'page' : null"
+        >
+          <span class="tabbar__icon-wrap">
+            <span class="material-symbols-rounded">{{ tab.icon }}</span>
+            @if (tab.badge && unread > 0) {
+              <span class="tabbar__badge">{{ unread > 99 ? '99+' : unread }}</span>
+            }
+          </span>
+          <span class="tabbar__label">{{ tab.label }}</span>
+        </a>
+      }
+    </div>
+  </nav>
+}

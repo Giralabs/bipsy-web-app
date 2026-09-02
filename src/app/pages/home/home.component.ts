@@ -80,6 +80,33 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  /**
+   * Las categorías como las pinta Android: **sin cuadro «Todo»** y con
+   * barbería primero, que es la que más negocios tiene.
+   *
+   * En la app no hay tarjeta de «todas»: se vuelve a las filas de
+   * descubrimiento tocando otra vez la categoría ya elegida.
+   */
+  get tileCategories(): CategoryResponse[] {
+    const real = this.categories.filter(c => c.code !== 'ALL');
+    const isBarber = (code: string) => code === 'BARBER' || code === 'BARBERSHOP';
+    return [...real].sort((a, b) => Number(isBarber(b.code)) - Number(isBarber(a.code)));
+  }
+
+  /** Toca la ya elegida y se deselecciona, como en la app. */
+  toggleCategory(cat: CategoryResponse): void {
+    if (this.selectedCategoryCode === cat.code) {
+      void this.selectCategory({ id: 0, code: 'ALL', name: 'Todo', active: true });
+      return;
+    }
+    void this.selectCategory(cat);
+  }
+
+  /** El botón de filtros abre la hoja de Buscar, que es la misma de la app. */
+  openFilters(): void {
+    void this.router.navigate(['/search'], { queryParams: { filtros: 1 } });
+  }
+
   async selectCategory(cat: CategoryResponse): Promise<void> {
     this.selectedCategoryCode = cat.code;
     this.selectedCategoryId = cat.id === 0 ? undefined : cat.id;
