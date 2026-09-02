@@ -1,0 +1,101 @@
+<div class="pay anim-fade-up">
+  <div class="pay__inner">
+    <h1 class="pay__heading">Pagos</h1>
+    <p class="pay__sub">Tus tarjetas y los cobros por cancelar tarde</p>
+
+    @if (!isAuthenticated) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">credit_card</span>
+        <h3>Entra para ver tus pagos</h3>
+        <p>Aquí guardas la tarjeta que piden algunos negocios para poder reservar.</p>
+        <app-button variant="primary" icon="login" (onClick)="goToLogin()">Iniciar sesión</app-button>
+      </div>
+    } @else if (isLoading) {
+      <div class="loading-state"><div class="spinner"></div><span>Cargando…</span></div>
+    } @else if (loadError) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+        <h3>No hemos podido cargar tus pagos</h3>
+        <p>{{ loadError.message }}</p>
+        <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+      </div>
+    } @else if (!enabled) {
+      <!-- Sin Stripe configurado se explica y se sale, en vez de enseñar una
+           sección vacía que no lleva a ninguna parte. -->
+      <div class="empty-state">
+        <span class="material-symbols-rounded">credit_card_off</span>
+        <h3>Los pagos no están activos</h3>
+        <p>Bipsy todavía no cobra nada por aquí. Cuando algún negocio lo pida, podrás guardar tu tarjeta.</p>
+      </div>
+    } @else {
+
+      @if (error) {
+        <p class="flow__error" role="alert">
+          <span class="material-symbols-rounded fill">error</span>{{ error }}
+        </p>
+      }
+
+      <!-- ══════════ TARJETAS ══════════ -->
+      <app-grouped-section
+        header="Tus tarjetas"
+        footer="El número de tu tarjeta nunca pasa por Bipsy: lo guarda la pasarela de pago."
+      >
+        @if (methods.length === 0) {
+          <app-grouped-row label="Todavía no tienes ninguna" icon="credit_card" [disabled]="true" />
+        }
+        @for (method of methods; track method.id) {
+          <app-grouped-row
+            [label]="label(method)"
+            [subtitle]="expiry(method)"
+            icon="credit_card"
+          >
+            <span class="pay__card-actions">
+              @if (method.isDefault) {
+                <span class="badge badge--mint">Predeterminada</span>
+              } @else {
+                <button type="button" class="pay__link" [disabled]="busyId !== null"
+                        (click)="setDefault(method)">Usar esta</button>
+              }
+              <button type="button" class="pay__link pay__link--bad" [disabled]="busyId !== null"
+                      (click)="remove(method)">Quitar</button>
+            </span>
+          </app-grouped-row>
+        }
+      </app-grouped-section>
+
+      <div class="pay__add">
+        <app-button variant="primary" icon="add_card" (onClick)="openAdd()">
+          Añadir tarjeta
+        </app-button>
+      </div>
+
+      <!-- ══════════ HISTORIAL ══════════ -->
+      @if (history.length > 0) {
+        <app-grouped-section header="Cobros">
+          @for (payment of history; track payment.id) {
+            <app-grouped-row
+              [label]="kindLabel(payment) + ' · ' + (payment.businessName || 'Bipsy')"
+              [subtitle]="when(payment)"
+            >
+              <span class="pay__amount">
+                <strong>{{ amount(payment) }}</strong>
+                <span class="badge" [ngClass]="'badge--' + statusTone(payment)">
+                  {{ statusLabel(payment) }}
+                </span>
+              </span>
+            </app-grouped-row>
+          }
+        </app-grouped-section>
+      }
+    }
+  </div>
+
+  <!-- ══════════ HOJA DE NUEVA TARJETA ══════════ -->
+  @if (addOpen) {
+    <app-add-card-sheet
+      [publishableKey]="publishableKey"
+      (saved)="onCardSaved($event)"
+      (closed)="closeAdd()"
+    ></app-add-card-sheet>
+  }
+</div>
