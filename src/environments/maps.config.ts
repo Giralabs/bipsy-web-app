@@ -7,14 +7,23 @@
  * (`gipsi.maps-api-key`) es de servidor y **no puede salir de ahí** — puesta
  * en la web, cualquiera podría gastar cuota de Places a nuestra cuenta.
  *
- * Hay que crear una tercera, propia de la web:
- *   1. Google Cloud Console → APIs y servicios → Credenciales → Crear clave.
- *   2. Habilitar **Maps JavaScript API** en ese proyecto.
- *   3. Restringirla por **referente HTTP**: `localhost:*` y el dominio de la
- *      web. Sin esa restricción, la clave es pública y la gasta cualquiera.
+ * Esta es la tercera, propia de la web. APIs que usa y que tienen que estar
+ * habilitadas en el proyecto de Google Cloud:
+ *   - **Maps JavaScript API** — el mapa de Buscar y el de la ficha.
+ *   - **Geocoding API** — el campo «Dónde» del header compacto, que resuelve
+ *     una dirección escrita a mano y traduce unas coordenadas a un nombre.
  *
- * Es pública por diseño —viaja en el navegador—; lo que la protege es la
- * restricción por dominio, no el secreto.
+ * ⚠️ **PENDIENTE: restringirla por referente HTTP.**
+ *
+ *   Google Cloud Console → APIs y servicios → Credenciales → esta clave →
+ *   «Restricciones de aplicación» → Sitios web → añadir `http://localhost:*`
+ *   y el dominio de producción (`https://bipsy.es/*` y el de Vercel).
+ *   Y en «Restricciones de API», dejar solo esas dos.
+ *
+ *   Esto NO se puede hacer desde el código: es una opción de la consola. La
+ *   clave es pública por diseño —viaja en el navegador de cualquiera que abra
+ *   la web—, así que lo único que la protege es la restricción por dominio.
+ *   Sin ella, quien la copie del bundle gasta tu cuota y tu factura.
  */
 export const googleMapsApiKey = 'AIzaSyAwY1YNRKma7gzcCx1wgvoCqC-PKFLfdk8';
 

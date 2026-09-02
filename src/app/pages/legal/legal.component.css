@@ -40,15 +40,32 @@
 
 /* ─── Barra lateral ─── */
 
+/* Pegada bajo la cabecera y con scroll propio.
+   Sin el `max-height` + `overflow`, un documento largo —los Términos tienen
+   catorce apartados— dejaba el final de la lista por debajo del borde de la
+   pantalla y sin forma de llegar: al estar `sticky`, no baja con la página. */
 .legal-side {
   position: sticky;
   /* Bajo la cabecera fija. */
   top: 96px;
-  padding-top: 48px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  /* El scroll de la lista no arrastra la página al llegar al final. */
+  overscroll-behavior: contain;
+  padding: 48px 10px 32px 0;
   display: flex;
   flex-direction: column;
   gap: 26px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--clr-border) transparent;
 }
+
+/* La barra solo cuando hace falta mirarla: en reposo se funde con el fondo. */
+.legal-side::-webkit-scrollbar { width: 4px; }
+.legal-side::-webkit-scrollbar-track { background: transparent; }
+.legal-side::-webkit-scrollbar-thumb { background: transparent; border-radius: 2px; }
+.legal-side:hover::-webkit-scrollbar-thumb { background: var(--clr-border); }
+.legal-side::-webkit-scrollbar-thumb:hover { background: var(--clr-text-3); }
 
 .legal-side__group {
   display: flex;
@@ -91,6 +108,8 @@
 .legal-side__toc {
   padding-left: 12px;
   box-shadow: inset 1px 0 0 var(--clr-border);
+  /* El último apartado no debe quedar pegado al borde inferior del scroll. */
+  padding-bottom: 4px;
 }
 
 .legal-side__anchor {
@@ -291,6 +310,16 @@
 .legal-cross-link .material-symbols-rounded { font-size: 18px; }
 
 /* ─── Móvil ─── */
+
+/* Pantalla baja (un portátil de 13", el navegador con dos barras): pegarla
+   arriba la deja de 400 px con scroll dentro de scroll. Mejor que acompañe. */
+@media (max-height: 700px) {
+  .legal-side {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
 
 /* Sin sitio para la barra lateral: la lista se va al pie del documento, que
    ya tiene los enlaces cruzados, y vuelve el índice en línea. */
