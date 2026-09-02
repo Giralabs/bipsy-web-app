@@ -1,0 +1,75 @@
+:host { display: block; }
+
+.row { margin-bottom: 32px; }
+
+.row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* headlineMedium: Bricolage Grotesque 24 px, 700, tracking -0,6. */
+.row__title {
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.6px;
+}
+
+.row__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--clr-mint);
+  text-decoration: none;
+  transition: opacity .2s ease;
+}
+
+.row__link:hover { opacity: .7; }
+.row__link-icon { font-size: 18px; }
+
+/* La fila se arrastra en horizontal. El aire de la derecha evita que la
+   última tarjeta muera pegada al canto. */
+.row__scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  align-items: stretch;
+  padding: 0 28px 4px 0;
+  margin-right: -28px;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.row__scroll::-webkit-scrollbar { display: none; }
+.row__scroll--static { overflow-x: hidden; }
+
+/* En una pantalla ancha caben más y más pequeñas: la tarjeta de 275 del móvil
+   ocupaba aquí un tercio de la fila y todo pesaba el doble de lo que dice. */
+.row__item {
+  flex: 0 0 244px;
+  min-width: 244px;
+  scroll-snap-align: start;
+}
+
+.row__skeleton { height: 200px; border-radius: var(--r-lg); }
+
+.row__empty {
+  padding: 16px 20px;
+  border-radius: var(--r-sm);
+  background: var(--clr-surface);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text-2);
+}
+
+@media (max-width: 560px) {
+  .row__item { flex-basis: 214px; min-width: 214px; }
+}

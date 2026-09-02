@@ -1,0 +1,68 @@
+:host { display: block; }
+
+/* Separador sangrado, como el del sistema: empieza donde empieza el texto,
+   no en el borde del bloque. */
+:host(:not(:last-child)) .row {
+  box-shadow: inset 0 -0.5px 0 var(--clr-border);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  min-height: 48px;
+  transition: background-color .15s ease;
+}
+
+.row--interactive { cursor: pointer; }
+.row--interactive:hover { background: var(--clr-surface-hover); }
+.row--interactive:focus-visible {
+  outline: 2px solid var(--clr-mint);
+  outline-offset: -2px;
+}
+
+.row--disabled { opacity: .4; pointer-events: none; }
+
+.row__icon { font-size: 22px; color: var(--clr-mint); flex-shrink: 0; }
+
+/* La etiqueta ocupa lo que mide, no la mitad de la fila: con un ancho fijo,
+   el valor se quedaba sin sitio y partía en dos líneas habiendo hueco al lado. */
+.row__label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text);
+}
+
+.row__label--destructive { color: var(--clr-danger-text); }
+
+.row__subtitle {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.row__trailing {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.row__value {
+  margin-left: auto;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+
+.row__trailing:not(:empty) ~ .row__value { margin-left: 8px; }
+
+.row__chevron { font-size: 16px; color: var(--clr-text-3); flex-shrink: 0; }

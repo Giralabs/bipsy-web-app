@@ -14,13 +14,16 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: rgba(36, 42, 50, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* La barra FLOTA sobre el contenido, así que aquí el cristal sigue
+     haciendo algo: desenfoca lo que pasa por debajo. Es el mismo criterio
+     que GipsiAdaptiveTabBar. */
+  background: color-mix(in srgb, var(--clr-surface) 75%, transparent);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  border: none;
   padding: 8px 12px;
-  border-radius: 40px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-radius: var(--r-xxl);
+  box-shadow: var(--shadow-float);
 }
 
 .nav-item {
@@ -28,7 +31,7 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  color: #8e96a3;
+  color: var(--clr-text-2);
   padding: 4px;
   border-radius: 30px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -45,19 +48,18 @@
 }
 
 .nav-item:hover .icon-circle {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--clr-text);
+  background: var(--clr-field);
 }
 
 .nav-item.active .icon-circle {
-  background-color: var(--primary-mint);
-  color: var(--primary-mint-text);
-  box-shadow: 0 0 20px rgba(185, 235, 208, 0.5);
+  background-color: var(--clr-mint);
+  color: var(--clr-mint-text);
   transform: scale(1.05);
 }
 
 .nav-item.active svg {
-  stroke: var(--primary-mint-text);
+  stroke: var(--clr-mint-text);
 }
 
 /* Hide on desktop if desktop header is present */

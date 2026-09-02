@@ -1,0 +1,26 @@
+:host { display: block; margin-bottom: 24px; }
+
+.grp__header {
+  padding: 0 4px 6px;
+  font-size: 0.6875rem;   /* labelSmall: 11 px */
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--clr-text-2);
+}
+
+.grp__box {
+  background: var(--clr-surface);
+  border-radius: var(--r-sm);   /* 16, el radio de la casa */
+  overflow: hidden;
+}
+
+/* El pie explica una consecuencia, no es parte de la caja: con 4 px se leía
+   pegado a la última fila, como si fuera otra más. */
+.grp__footer {
+  padding: 10px 4px 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text-2);
+  max-width: 60ch;
+}

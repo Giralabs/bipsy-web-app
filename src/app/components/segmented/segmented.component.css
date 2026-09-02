@@ -1,0 +1,58 @@
+:host { display: block; }
+
+/* 36 px de alto, el mismo que deja el control del sistema. */
+.seg {
+  position: relative;
+  display: flex;
+  height: 36px;
+  padding: 2px;
+  border-radius: var(--r-xs);
+  background: var(--clr-subtle);
+  isolation: isolate;
+}
+
+.seg--disabled { opacity: .5; pointer-events: none; }
+
+.seg__thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  border-radius: 8px;
+  background: var(--clr-surface-hover);
+  transition: transform .2s cubic-bezier(.4, 0, .2, 1);
+  z-index: 0;
+}
+
+@media (prefers-color-scheme: light) {
+  .seg__thumb { background: #fff; }
+}
+
+.seg__item {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  border: none;
+  background: none;
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--clr-text-2);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color .2s ease;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Menta sobre los dos grises de oscuro, pizarra sobre los dos claros. */
+.seg__item--selected { color: var(--clr-mint); font-weight: 700; }
+@media (prefers-color-scheme: light) {
+  .seg__item--selected { color: var(--clr-text); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seg__thumb { transition: none; }
+}

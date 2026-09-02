@@ -1,0 +1,62 @@
+@if (hasSomething) {
+  <div class="wl">
+
+    @if (error) {
+      <p class="flow__error" role="alert">
+        <span class="material-symbols-rounded fill">error</span>{{ error }}
+      </p>
+    }
+
+    <!-- Los avisos primero: caducan en horas. -->
+    @for (offer of offers; track offer.id) {
+      <div class="wl__offer">
+        <div class="wl__offer-head">
+          <span class="badge badge--mint">
+            <span class="material-symbols-rounded wl__icon">bolt</span>
+            Hueco libre
+          </span>
+          <span class="wl__timer">Te quedan {{ timeLeft(offer) }}</span>
+        </div>
+
+        <p class="wl__title">{{ offer.serviceName }}</p>
+        <p class="wl__sub">{{ offer.businessName }} · {{ slotLabel(offer) }}</p>
+
+        @if (offer.requiresPolicyConsent && offer.policyText) {
+          <p class="wl__policy">{{ offer.policyText }}</p>
+        }
+
+        <div class="wl__actions">
+          <app-button
+            variant="primary"
+            size="small"
+            [overCard]="true"
+            [loading]="busyId === offer.id"
+            (onClick)="accept(offer)"
+          >
+            Quedármelo
+          </app-button>
+          <app-button variant="ghost" size="small" [disabled]="busyId !== null" (onClick)="decline(offer)">
+            Rechazar
+          </app-button>
+        </div>
+      </div>
+    }
+
+    <!-- Y debajo, en lo que estás esperando. -->
+    @for (entry of waitingEntries; track entry.id) {
+      <div class="wl__entry">
+        <span class="material-symbols-rounded wl__entry-icon">hourglass_top</span>
+        <span class="wl__entry-text">
+          <strong>{{ entry.serviceName }}</strong>
+          <small>{{ entry.businessName }} · {{ rangeLabel(entry) }}</small>
+        </span>
+        <button
+          type="button"
+          class="wl__leave"
+          [disabled]="busyId !== null"
+          (click)="leave(entry)"
+        >Salir</button>
+      </div>
+    }
+  </div>
+}

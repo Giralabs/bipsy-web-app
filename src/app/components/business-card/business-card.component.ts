@@ -1,8 +1,19 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { BusinessResponse } from '../../models/bipsy.models';
+import { BusinessResponse, businessLocationDisplay, primaryCategory } from '../../models/bipsy.models';
+import { businessPath } from '../../shared/slug';
+import { fixImageUrl, placeholderImage } from '../../shared/image-url';
 
+/**
+ * Tarjeta de un negocio. Port de `_GlassHomeCard` (Explorar, app cliente).
+ *
+ * "Elevación por luz": ni desenfoque, ni borde, ni sombra. La tarjeta se
+ * distingue por ser más clara que el suelo. La foto llega a los cantos —con
+ * margen se veían dos rectángulos, uno dentro de otro, y parecía un marco— y
+ * las insignias que van encima llevan su propio fondo oscuro, así que no hace
+ * falta oscurecer media imagen para que se lean.
+ */
 @Component({
   selector: 'app-business-card',
   standalone: true,
@@ -12,43 +23,42 @@ import { BusinessResponse } from '../../models/bipsy.models';
 })
 export class BusinessCardComponent {
   @Input() business!: BusinessResponse;
-  @Input() compact: boolean = false;
+
+  /** En la fila horizontal. Hoy solo condiciona el ancho, que pone el padre. */
+  @Input() compact = false;
+
+  /** Ya has reservado aquí: sale el reloj y el botón de repetir. */
+  @Input() previouslyBooked = false;
+
+  /** Negocio recién abierto. Puede salir a la vez que el reloj. */
+  @Input() isNew = false;
+
+  /** Kilómetros hasta el negocio. Solo llega en la fila ordenada por distancia. */
+  @Input() distanceKm: number | null = null;
+
+  /** Volver a reservar lo mismo. El padre decide a dónde lleva. */
+  @Output() rebook = new EventEmitter<BusinessResponse>();
 
   get imageUrl(): string {
-    const rawUrl = this.business?.coverImageUrl || this.business?.profileImageUrl;
-    if (rawUrl && rawUrl.trim().length > 0) {
-      if (rawUrl.startsWith('http')) {
-        return rawUrl;
-      }
-      if (rawUrl.startsWith('/')) {
-        return `http://localhost:8080${rawUrl}`;
-      }
-      return `http://localhost:8080/${rawUrl}`;
+    const fixed = fixImageUrl(this.business?.coverImageUrl || this.business?.profileImageUrl);
+    if (fixed) {
+      return fixed;
     }
+    return placeholderImage(this.business?.id ?? 0, primaryCategory(this.business)?.code);
+  }
 
-    const name = (this.business?.name ?? '').toLowerCase();
-    let cat = 'salon';
-    if (name.includes('barber') || name.includes('maestro')) {
-      cat = 'barber';
-    } else if (name.includes('pelu') || name.includes('style') || name.includes('hair')) {
-      cat = 'hairdresser';
-    } else if (name.includes('nail') || name.includes('unas') || name.includes('manicura')) {
-      cat = 'nails';
-    } else if (name.includes('spa') || name.includes('bienestar') || name.includes('masaje')) {
-      cat = 'massage';
-    } else if (name.includes('estet') || name.includes('clinica') || name.includes('belleza') || name.includes('andaluz')) {
-      cat = 'esthetic';
-    }
+  /** `/business/barberia-el-maestro-3`: el id al final y el nombre delante. */
+  get link(): string[] {
+    return businessPath(this.business);
+  }
 
-    const seed = this.business?.id ?? 1;
-    return `https://picsum.photos/seed/gipsi-${cat}-${seed}/800/500`;
+  get locationDisplay(): string {
+    return businessLocationDisplay(this.business);
   }
 
   get hasRating(): boolean {
     return typeof this.business?.averageRating === 'number' &&
-           this.business.averageRating > 0 &&
-           typeof this.business.reviewCount === 'number' &&
-           this.business.reviewCount > 0;
+           this.business.averageRating > 0;
   }
 
   get ratingDisplay(): string {
@@ -57,5 +67,21 @@ export class BusinessCardComponent {
 
   get reviewCount(): number {
     return this.business?.reviewCount ?? 0;
+  }
+
+  /** Un decimal y coma, como `GipsiFormat.distanceKm`. */
+  get distanceDisplay(): string | null {
+    if (this.distanceKm === null) {
+      return null;
+    }
+    return `${this.distanceKm.toFixed(1).replace('.', ',')} km`;
+  }
+
+  onRebookClick(event: MouseEvent): void {
+    // La tarjeta entera es un enlace a la ficha: sin esto, repetir la cita
+    // navegaría también al negocio y el flujo de reserva se abriría encima.
+    event.preventDefault();
+    event.stopPropagation();
+    this.rebook.emit(this.business);
   }
 }

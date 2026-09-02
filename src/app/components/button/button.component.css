@@ -1,19 +1,30 @@
-/* Base styles */
+/* GipsiButton en modo plano.
+   Sin borde y sin halo: el botón se distingue por su relleno, igual que la
+   tarjeta por su claridad. El borde blanco y el resplandor estaban para
+   sostener el cristal; sin cristal solo son suciedad alrededor del botón. */
 .bipsy-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-xl);      /* 28, como GipsiRadii.rXl */
   font-family: var(--ff);
+  font-weight: 700;
+  letter-spacing: -0.1px;
   text-decoration: none;
   cursor: pointer;
-  border: 1.2px solid transparent;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: none;
+  transition: background-color .2s ease, color .2s ease, opacity .2s ease, transform .12s ease;
   box-sizing: border-box;
   white-space: nowrap;
   outline: none;
   user-select: none;
+}
+
+.bipsy-btn:focus-visible {
+  outline: 2px solid var(--clr-mint);
+  outline-offset: 2px;
 }
 
 .bipsy-btn--full-width {
@@ -21,146 +32,105 @@
   display: flex;
 }
 
-/* Size Variants */
+/* ── Tamaños: los mismos que `_GipsiButtonMetrics` ── */
 .bipsy-btn--small {
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  height: 38px;
+  height: 40px;
+  padding: 0 18px;
+  font-size: 0.8125rem;
 }
-.bipsy-btn--small .btn-icon {
-  font-size: 16px;
-}
+.bipsy-btn--small .btn-icon { font-size: 16px; }
 
 .bipsy-btn--medium {
-  padding: 11px 22px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  height: 46px;
+  height: 50px;
+  padding: 0 22px;
+  font-size: 0.875rem;
 }
-.bipsy-btn--medium .btn-icon {
-  font-size: 18px;
-}
+.bipsy-btn--medium .btn-icon { font-size: 18px; }
 
 .bipsy-btn--large {
-  padding: 14px 28px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  height: 56px;
+  height: 58px;
+  padding: 0 28px;
+  font-size: 0.9375rem;
 }
-.bipsy-btn--large .btn-icon {
-  font-size: 20px;
-}
+.bipsy-btn--large .btn-icon { font-size: 20px; }
 
-/* --- Primary Variant (Mint Satin) --- */
+/* ── Primario ── */
 .bipsy-btn--primary {
-  background: var(--clr-btn-prim-bg);
+  background: var(--clr-mint);
   color: var(--clr-mint-text);
-  border: 1.2px solid rgba(255, 255, 255, 0.40);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: var(--clr-btn-prim-shadow);
 }
-.bipsy-btn--primary:hover:not(:disabled) {
-  background: var(--clr-btn-prim-bg-hover);
-  border-color: rgba(255, 255, 255, 0.45);
-  transform: translateY(-2px);
-  box-shadow: var(--clr-btn-prim-shadow-hover);
-}
-.bipsy-btn--primary:active:not(:disabled) {
-  transform: translateY(0) scale(0.97);
-}
+.bipsy-btn--primary:hover:not(:disabled) { background: var(--clr-mint-hover); }
+.bipsy-btn--primary:active:not(:disabled) { transform: scale(0.96); }
 
-/* --- Secondary Variant (Glassmorphic Premium) --- */
+/* ── Secundario ──
+   Se separa como una tarjeta: por ser más claro que el suelo. */
 .bipsy-btn--secondary {
-  background: var(--clr-btn-sec-bg);
-  border: 1.2px solid var(--clr-btn-sec-border);
+  background: var(--clr-surface);
   color: var(--clr-text);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: var(--clr-btn-sec-shadow);
 }
-.bipsy-btn--secondary:hover:not(:disabled) {
-  background: var(--clr-btn-sec-bg-hover);
-  border-color: var(--clr-btn-sec-border-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--clr-btn-sec-shadow-hover);
-}
-.bipsy-btn--secondary:active:not(:disabled) {
-  transform: translateY(0) scale(0.97);
-}
+.bipsy-btn--secondary:hover:not(:disabled) { background: var(--clr-surface-hover); }
+.bipsy-btn--secondary:active:not(:disabled) { transform: scale(0.96); }
 
-/* --- Ghost Variant --- */
+/* Sobre una superficie BLANCA —una tarjeta, una hoja— el relleno de tarjeta
+   sería invisible, así que ahí baja al gris de campo. */
+.bipsy-btn--secondary.bipsy-btn--on-card { background: var(--clr-field); }
+
+/* ── Fantasma / texto ── */
 .bipsy-btn--ghost {
   background: transparent;
-  border: 1.2px solid rgba(255, 255, 255, 0.08);
   color: var(--clr-text-2);
 }
 .bipsy-btn--ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--clr-field);
   color: var(--clr-text);
 }
-.bipsy-btn--ghost:active:not(:disabled) {
-  transform: scale(0.97);
-}
+.bipsy-btn--ghost:active:not(:disabled) { transform: scale(0.96); }
 
-/* --- Text Variant --- */
 .bipsy-btn--text {
   background: transparent;
-  border: none;
   color: var(--clr-mint);
   padding-left: 8px;
   padding-right: 8px;
 }
-.bipsy-btn--text:hover:not(:disabled) {
-  color: var(--clr-mint-hover);
-  background: rgba(185, 235, 208, 0.08);
-}
-.bipsy-btn--text:active:not(:disabled) {
-  transform: scale(0.97);
-}
+.bipsy-btn--text:hover:not(:disabled) { color: var(--clr-mint-hover); }
+.bipsy-btn--text:active:not(:disabled) { transform: scale(0.96); }
 
-/* --- Destructive Variant (Danger Glass) --- */
+/* ── Destructivo ──
+   Relleno rojo al 15 % y texto rojo. Sin borde: el rojo del botón de cerrar
+   sesión también llevaba halo y era el mismo adorno de siempre. */
 .bipsy-btn--destructive {
-  background: rgba(255, 107, 107, 0.15);
-  border: 1.2px solid rgba(255, 107, 107, 0.25);
-  color: #ff6b6b;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(230, 118, 118, 0.15);
+  color: var(--clr-danger);
 }
 .bipsy-btn--destructive:hover:not(:disabled) {
-  background: rgba(255, 107, 107, 0.25);
-  border-color: rgba(255, 107, 107, 0.40);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.2);
+  background: rgba(230, 118, 118, 0.24);
 }
-.bipsy-btn--destructive:active:not(:disabled) {
-  transform: translateY(0) scale(0.97);
-}
+.bipsy-btn--destructive:active:not(:disabled) { transform: scale(0.96); }
 
-/* Disabled State */
+/* Deshabilitado */
 .bipsy-btn:disabled,
 .bipsy-btn.disabled {
   opacity: 0.55;
   cursor: not-allowed;
   transform: none !important;
-  box-shadow: none !important;
 }
 
-/* Spinner for Loading State */
+/* Spinner de carga */
 .btn-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-top-color: currentColor;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: btn-spin 0.8s linear infinite;
   display: inline-block;
+  opacity: .85;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes btn-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner { animation-duration: 2.4s; }
 }
 
 .btn-icon {
@@ -169,6 +139,4 @@
   justify-content: center;
 }
 
-.btn-icon--trailing {
-  order: 2;
-}
+.btn-icon--trailing { order: 2; }
