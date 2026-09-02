@@ -840,3 +840,29 @@ html, body {
   caret-color: var(--clr-text);
   transition: background-color 100000s ease-in-out 0s;
 }
+
+/* ============================================================
+   MÓVIL Y TABLET — la app, no una web encogida
+   Por debajo de 1024 la web deja de ser una web con menú y pasa
+   a ser la app: tira de tienda arriba, barra de pestañas abajo
+   y ni rastro del header, la tira promocional o el pie.
+   1024 y no 900 para que el iPad en vertical (768-1024) entre.
+   ============================================================ */
+
+/* `!important` en las dos: los componentes traen su propio `:host { display }`
+   y, al inyectarse después que estas reglas globales, ganaban por orden con
+   la misma especificidad. Un ayudante de visibilidad tiene que ganar siempre. */
+.only-touch { display: none !important; }
+
+@media (max-width: 1024px) {
+  .only-desk { display: none !important; }
+  .only-touch { display: block !important; }
+
+  /* Hueco para la barra flotante: sin esto la última tarjeta de cualquier
+     lista queda debajo. Es el `floatingTabBarGap` de la app, adaptado: la
+     barra ocupa 88 (68 + 12 + 8) y el resto es aire para que la lista no
+     muera pegada al cristal. */
+  .page-content {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  }
+}

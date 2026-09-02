@@ -1,0 +1,26 @@
+@if (!dismissed) {
+  <aside class="appbanner">
+    <button type="button" class="appbanner__close" (click)="dismiss()" aria-label="Cerrar">
+      <span class="material-symbols-rounded">close</span>
+    </button>
+
+    <!-- El símbolo sobre fondo, como se ve el icono en la pantalla de inicio. -->
+    <span class="appbanner__icon" aria-hidden="true">
+      <img src="assets_bipsy/Resized/256px/Brand Marks/mint_symbol_nobackground.webp"
+           alt="" class="theme-dark-only" />
+      <img src="assets_bipsy/Resized/256px/Brand Marks/carbon_symbol_nobackground.webp"
+           alt="" class="theme-light-only" />
+    </span>
+
+    <span class="appbanner__text">
+      <strong>Bipsy</strong>
+      <small>Pide cita sin llamar</small>
+    </span>
+
+    @if (comingSoon) {
+      <span class="appbanner__soon" title="Todavía no está publicada">Próximamente</span>
+    } @else {
+      <a class="appbanner__go" [href]="store.url" target="_blank" rel="noopener">Obtener</a>
+    }
+  </aside>
+}

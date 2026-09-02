@@ -22,8 +22,12 @@ import { fixImageUrl } from '../../shared/image-url';
   template: `
     @if (src && !broken) {
       <img [src]="src" [alt]="name || 'Foto'" (error)="broken = true" />
-    } @else {
+    } @else if (initials) {
       <span class="avatar__initials">{{ initials }}</span>
+    } @else {
+      <!-- Ni foto ni nombre: sin sesión. Un icono dice eso; un «?» parece
+           que la foto ha fallado. -->
+      <span class="material-symbols-rounded">person</span>
     }
   `,
   styleUrl: './avatar.component.css',
@@ -60,11 +64,13 @@ export class AvatarComponent {
   /**
    * Dos letras como mucho: la del nombre y la del primer apellido. Con nombres
    * compuestos, tres iniciales no caben en un círculo de 40.
+   *
+   * Cadena vacía si no hay nombre: la plantilla cae entonces al icono.
    */
   get initials(): string {
     const parts = (this.name ?? '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) {
-      return '?';
+      return '';
     }
     const first = parts[0][0] ?? '';
     const second = parts.length > 1 ? parts[1][0] ?? '' : '';

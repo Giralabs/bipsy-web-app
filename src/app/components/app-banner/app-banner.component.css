@@ -1,0 +1,92 @@
+:host { display: block; }
+
+/* La tira de la tienda: fila corta, alta densidad y sin adornos. Es lo que
+   hacen X o Reddit, y se reconoce justo por eso. */
+.appbanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--clr-surface);
+  box-shadow: inset 0 -0.5px 0 var(--clr-border);
+}
+
+.appbanner__close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--clr-text-3);
+  cursor: pointer;
+}
+
+.appbanner__close .material-symbols-rounded { font-size: 18px; }
+
+.appbanner__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  /* El radio del icono de app de iOS, que es lo que la vista espera aquí. */
+  border-radius: 11px;
+  background: var(--clr-base);
+  overflow: hidden;
+}
+
+.appbanner__icon img { width: 68%; height: 68%; object-fit: contain; }
+/* Las dos variantes ocupan la misma celda: el helper de tema esconde una. */
+.appbanner__icon .theme-light-only,
+.appbanner__icon .theme-dark-only { grid-area: 1 / 1; }
+.appbanner__icon { display: grid; place-items: center; }
+
+.appbanner__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.appbanner__text strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  line-height: 1.2;
+}
+
+.appbanner__text small {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--clr-text-3);
+  line-height: 1.3;
+}
+
+.appbanner__go,
+.appbanner__soon {
+  flex: 0 0 auto;
+  padding: 7px 16px;
+  border-radius: var(--r-pill);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.appbanner__go {
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+}
+
+/* Sin ficha todavía: se enseña el hueco pero no se finge un enlace. */
+.appbanner__soon {
+  background: var(--clr-field);
+  color: var(--clr-text-3);
+  cursor: default;
+}

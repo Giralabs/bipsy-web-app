@@ -5,9 +5,37 @@
   <div class="orb orb--2"></div>
 
   <!-- ══════════════════════════════════════════
+       CABECERA DE MÓVIL — la de Explorar en la app
+       Saludo a la izquierda y tu foto en la esquina, que es por donde se
+       entra a Perfil: en la app dejó de ser pestaña justo por esto, y está
+       en el mismo sitio en las tres pantallas.
+       ══════════════════════════════════════════ -->
+  <header class="mhead only-touch">
+    <div class="mhead__top">
+      <p class="mhead__greeting">{{ greeting }}</p>
+      <a [routerLink]="avatarLink" class="mhead__avatar" aria-label="Tu perfil">
+        <app-avatar [photoUrl]="avatarPhoto" [name]="avatarName" [size]="40"></app-avatar>
+      </a>
+    </div>
+
+    <form class="mhead__search" (submit)="executeSearch(); $event.preventDefault()">
+      <span class="material-symbols-rounded">search</span>
+      <input
+        type="text"
+        placeholder="Busca un servicio o un negocio"
+        [(ngModel)]="searchQuery"
+        name="bipsy-mobile-search"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+    </form>
+  </header>
+
+  <!-- ══════════════════════════════════════════
        HERO SECTION — matching Flutter _Header
        ══════════════════════════════════════════ -->
-  <section class="hero">
+  <section class="hero only-desk">
     <div class="hero-inner">
       <div class="hero-text">
         <h1 class="hero-title">
@@ -126,7 +154,7 @@
     <!-- ══════════════════════════════════════════
          DOWNLOAD APP PROMO SECTION
          ══════════════════════════════════════════ -->
-      <div class="apps-promo-section">
+      <div class="apps-promo-section only-desk">
         <!-- Bipsy App (Client) -->
         <div class="app-promo-card client-promo-card">
           <div class="promo-card-top">
@@ -217,7 +245,7 @@
            La prosa de antes decía en cuatro líneas lo que aquí se lee de un
            vistazo, y la mascota se quedaba de adorno al lado del texto.
            ══════════════════════════════════════════ -->
-      <section class="steps">
+      <section class="steps only-desk">
         <div class="steps__art">
           <img src="assets_bip/bip_booking.webp" alt="" class="steps__img" />
         </div>
@@ -254,7 +282,7 @@
 
       <!-- La mascota al otro lado: dos bloques idénticos seguidos se leen
            como uno repetido. -->
-      <section class="steps steps--mirrored">
+      <section class="steps steps--mirrored only-desk">
         <div class="steps__art">
           <img src="assets_bip/bip_support.webp" alt="" class="steps__img" />
         </div>

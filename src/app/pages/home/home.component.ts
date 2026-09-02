@@ -11,13 +11,14 @@ import { DragScrollDirective } from '../../shared/drag-scroll.directive';
 import { BusinessCardComponent } from '../../components/business-card/business-card.component';
 import { BusinessRowComponent } from '../../components/business-row/business-row.component';
 import { SessionService } from '../../core/session.service';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
 import { ButtonComponent } from '../../components/button/button.component';
 import { ChipComponent } from '../../components/chip/chip.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, BusinessCardComponent, BusinessRowComponent, ButtonComponent, ChipComponent, DragScrollDirective],
+  imports: [AvatarComponent, CommonModule, RouterLink, FormsModule, BusinessCardComponent, BusinessRowComponent, ButtonComponent, ChipComponent, DragScrollDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
@@ -113,6 +114,30 @@ export class HomeComponent implements OnInit {
     this.router.navigate(businessBookingPath(business), {
       queryParams: { serviceId, workerId: business.discovery?.lastWorkerId },
     });
+  }
+
+  /**
+   * El saludo de la cabecera de Explorar.
+   *
+   * Sin sesión, «Bienvenido»: un «Hola» a secas suena a que deberíamos saber
+   * quién eres y no lo sabemos. Es literal de la app.
+   */
+  get greeting(): string {
+    const name = this.session.currentUser?.name?.trim().split(/\s+/)[0];
+    return name ? `Hola, ${name}` : 'Bienvenido';
+  }
+
+  get avatarPhoto(): string | null {
+    return this.session.currentUser?.profileImageUrl ?? null;
+  }
+
+  get avatarName(): string | null {
+    return this.session.currentUser?.name ?? null;
+  }
+
+  /** Con sesión, a los ajustes; sin ella, a entrar. Igual que en la app. */
+  get avatarLink(): string {
+    return this.session.currentUser ? '/profile' : '/acceder';
   }
 
   executeSearch(): void {
