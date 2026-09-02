@@ -1,0 +1,114 @@
+<div class="flow anim-fade-up">
+  <div class="flow__inner">
+
+    @if (step === 'email') {
+      <a class="flow__back" routerLink="/acceder">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Volver
+      </a>
+    } @else {
+      <button type="button" class="flow__back" (click)="back()">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Atrás
+      </button>
+    }
+
+    @if (step === 'email') {
+      <h1 class="flow__title">¿Cuál es tu correo?</h1>
+      <p class="flow__subtitle">Te enviaremos un código para poder cambiarla.</p>
+
+      <form (submit)="submitEmail(); $event.preventDefault()" novalidate>
+        <div class="form-group">
+          <div class="form-group__box">
+            <div class="form-row">
+              <label class="form-row__label" for="rec-email">Correo</label>
+              <input id="rec-email" class="form-row__input" type="email" name="email"
+                     autocomplete="email" placeholder="tu@correo.com" maxlength="120"
+                     [disabled]="loading" [(ngModel)]="email" />
+            </div>
+          </div>
+        </div>
+
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ error }}
+          </p>
+        }
+
+        <div class="flow__actions">
+          <app-button type="submit" variant="primary" size="large" [fullWidth]="true" [loading]="loading">
+            Continuar
+          </app-button>
+        </div>
+      </form>
+    }
+
+    @if (step === 'code') {
+      <h1 class="flow__title">Revisa tu correo</h1>
+      <p class="flow__subtitle">Si hay una cuenta con ese correo, le hemos enviado un código.</p>
+
+      <form (submit)="submitCode(); $event.preventDefault()" novalidate>
+        <div class="form-group">
+          <div class="form-group__box">
+            <div class="form-row">
+              <label class="form-row__label" for="rec-code">Código</label>
+              <input id="rec-code" class="form-row__input code-input" type="text"
+                     inputmode="numeric" autocomplete="one-time-code" name="code"
+                     placeholder="000000" maxlength="6"
+                     [disabled]="loading" [(ngModel)]="code" />
+            </div>
+          </div>
+        </div>
+
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ error }}
+          </p>
+        }
+
+        <div class="flow__actions">
+          <app-button type="submit" variant="primary" size="large" [fullWidth]="true" [loading]="loading">
+            Continuar
+          </app-button>
+        </div>
+      </form>
+    }
+
+    @if (step === 'password') {
+      <h1 class="flow__title">Elige una nueva</h1>
+      <p class="flow__subtitle">Al guardarla se cerrarán las sesiones abiertas en otros dispositivos.</p>
+
+      <form (submit)="submitPassword(); $event.preventDefault()" novalidate>
+        <div class="form-group">
+          <div class="form-group__box">
+            <div class="form-row form-row--with-eye">
+              <label class="form-row__label" for="rec-pass">Contraseña</label>
+              <input id="rec-pass" class="form-row__input"
+                     [type]="showPassword ? 'text' : 'password'" name="new-password"
+                     autocomplete="new-password" placeholder="Tu contraseña nueva" maxlength="100"
+                     [disabled]="loading" [(ngModel)]="password" />
+              <button type="button" class="form-row__eye"
+                      [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
+                      (click)="showPassword = !showPassword">
+                <span class="material-symbols-rounded">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+          </div>
+          <p class="form-group__footer">Al menos 8 caracteres, con letras y números.</p>
+        </div>
+
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ error }}
+          </p>
+        }
+
+        <div class="flow__actions">
+          <app-button type="submit" variant="primary" size="large" [fullWidth]="true" [loading]="loading">
+            Guardar
+          </app-button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<div class="seg" role="tablist" [class.seg--disabled]="disabled">
+  <span class="seg__thumb" [ngStyle]="thumbStyle" aria-hidden="true"></span>
+  @for (label of labels; track label; let i = $index) {
+    <button
+      type="button"
+      role="tab"
+      class="seg__item"
+      [class.seg__item--selected]="i === selectedIndex"
+      [attr.aria-selected]="i === selectedIndex"
+      [disabled]="disabled"
+      (click)="select(i)"
+    >{{ label }}</button>
+  }
+</div>

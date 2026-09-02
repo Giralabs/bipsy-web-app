@@ -1,0 +1,61 @@
+<div class="inbox anim-fade-up">
+  <div class="inbox__inner">
+    <h1 class="inbox__heading">Mensajes</h1>
+    <p class="inbox__sub">Tus conversaciones con los negocios</p>
+
+    @if (!isAuthenticated) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">chat_bubble</span>
+        <h3>Entra para ver tus mensajes</h3>
+        <p>Aquí hablas con los negocios donde tienes o has tenido cita.</p>
+        <app-button variant="primary" icon="login" (onClick)="goToLogin()">Iniciar sesión</app-button>
+      </div>
+    } @else if (isLoading) {
+      <div class="inbox__list">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="skeleton inbox__skeleton"></div>
+        }
+      </div>
+    } @else if (loadError) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+        <h3>No hemos podido cargar tus mensajes</h3>
+        <p>{{ loadError.message }}</p>
+        <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+      </div>
+    } @else if (conversations.length === 0) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">forum</span>
+        <h3>Todavía no tienes mensajes</h3>
+        <p>Cuando escribas a un negocio desde su ficha o desde una cita, la conversación aparecerá aquí.</p>
+        <app-button variant="primary" icon="explore" (onClick)="goExplore()">Explorar negocios</app-button>
+      </div>
+    } @else {
+      <div class="inbox__list">
+        @for (c of conversations; track c.id) {
+          <button type="button" class="conv" (click)="open(c)">
+            @if (avatar(c)) {
+              <img class="conv__avatar-img" [src]="avatar(c)" [alt]="c.otherPartyName" />
+            } @else {
+              <span class="conv__avatar">{{ (c.otherPartyName || '?')[0] }}</span>
+            }
+
+            <span class="conv__main">
+              <span class="conv__top">
+                <strong class="conv__name">{{ c.otherPartyName }}</strong>
+                <span class="conv__when">{{ when(c) }}</span>
+              </span>
+              <span class="conv__preview" [class.conv__preview--unread]="c.unread > 0">
+                {{ c.lastMessagePreview || 'Sin mensajes todavía' }}
+              </span>
+            </span>
+
+            @if (c.unread > 0) {
+              <span class="conv__badge">{{ c.unread }}</span>
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,85 @@
+.rs { min-height: 100vh; }
+.rs__inner { max-width: 620px; margin: 0 auto; padding: 32px 24px 96px; }
+
+.rs__fee {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  background: rgba(232, 182, 87, .14);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text);
+}
+
+.rs__fee .material-symbols-rounded { font-size: 18px; color: var(--clr-warn); flex-shrink: 0; }
+
+.rs__label {
+  margin: 24px 0 8px;
+  padding: 0 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-text-2);
+}
+
+.rs__days {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.rs__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.rs__day:hover { background: var(--clr-surface-hover); }
+.rs__day--on { background: var(--clr-mint); color: var(--clr-mint-text); }
+
+.rs__day-label { font-size: 0.75rem; font-weight: 600; opacity: .8; }
+.rs__day-num { font-family: var(--ff-display); font-size: 1.25rem; font-weight: 700; }
+
+.rs__slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+}
+
+.rs__slot {
+  padding: 14px 8px;
+  border: none;
+  border-radius: var(--r-xs);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.rs__slot:hover:not(:disabled) { background: var(--clr-mint); color: var(--clr-mint-text); }
+.rs__slot:disabled { opacity: .5; cursor: not-allowed; }
+
+.rs__done { text-align: center; padding-top: 40px; }
+.rs__done-icon { font-size: 72px; color: var(--clr-mint); margin-bottom: 16px; }
+
+@media (max-width: 640px) {
+  .rs__inner { padding: 24px 20px 96px; }
+}

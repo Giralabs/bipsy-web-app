@@ -1,0 +1,31 @@
+<div
+  class="row"
+  [class.row--disabled]="disabled"
+  [class.row--interactive]="interactive"
+  [attr.role]="interactive ? 'button' : null"
+  [attr.tabindex]="interactive ? 0 : null"
+  (click)="onClick()"
+  (keydown.enter)="onClick()"
+  (keydown.space)="onClick(); $event.preventDefault()"
+>
+  @if (icon) {
+    <span class="material-symbols-rounded row__icon">{{ icon }}</span>
+  }
+
+  <span class="row__label" [class.row__label--destructive]="destructive">
+    {{ label }}
+    @if (subtitle) {
+      <small class="row__subtitle">{{ subtitle }}</small>
+    }
+  </span>
+
+  <span class="row__trailing"><ng-content></ng-content></span>
+
+  @if (value) {
+    <span class="row__value">{{ value }}</span>
+  }
+
+  @if (navigates) {
+    <span class="material-symbols-rounded row__chevron">chevron_right</span>
+  }
+</div>

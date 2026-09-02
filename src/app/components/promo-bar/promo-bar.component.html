@@ -1,0 +1,16 @@
+@if (!dismissed) {
+  <aside class="promobar">
+    <button type="button" class="promobar__cta" (click)="goToBusiness()">
+      <span class="material-symbols-rounded promobar__icon">storefront</span>
+      <span class="promobar__text">
+        Añade ya tu negocio a Bipsy
+        <strong>{{ trialLabel }}</strong>
+      </span>
+      <span class="material-symbols-rounded promobar__arrow">arrow_forward</span>
+    </button>
+
+    <button type="button" class="promobar__close" (click)="dismiss()" aria-label="Ocultar el aviso">
+      <span class="material-symbols-rounded">close</span>
+    </button>
+  </aside>
+}

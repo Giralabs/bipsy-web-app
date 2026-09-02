@@ -1,116 +1,159 @@
-/* Business Card — matches Flutter BusinessCard widget exactly */
+/* Tarjeta de negocio — port de `_GlassHomeCard` (Explorar, app cliente).
+   Modo plano: la tarjeta se distingue por ser más clara que el suelo.
+   Nada de cristal, borde ni sombra. */
 :host { display: block; }
 
 .biz-card {
   display: flex;
   flex-direction: column;
-  border-radius: var(--r-xl);
-  background: var(--clr-chip-bg);
-  border: 1.2px solid var(--clr-chip-border);
-  backdrop-filter: var(--blur-glass);
-  -webkit-backdrop-filter: var(--blur-glass);
-  box-shadow: var(--clr-btn-sec-shadow);
+  height: 100%;
+  border-radius: var(--r-lg);          /* 24, el mismo en el clip y el fondo */
+  background: var(--clr-surface);
+  border: none;
+  box-shadow: none;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: border-color .25s ease, box-shadow .25s ease, transform .25s cubic-bezier(.4,0,.2,1);
   cursor: pointer;
+  transition: background-color .2s ease;
 }
 
-.biz-card:hover {
-  border-color: var(--clr-border-hover);
-  box-shadow: var(--clr-btn-sec-shadow-hover);
-  transform: translateY(-5px);
-}
+.biz-card:hover { background: var(--clr-surface-hover); }
 
-/* ── Image wrapper: 10px inner padding + clipped radius ── */
-.biz-card__img-wrap {
-  margin: 10px 10px 0 10px;
-  border-radius: var(--r-lg);
-  height: 210px;
+/* ── Foto a sangre, 16:9 ──
+   Es la proporción única de `GipsiImageRatios.businessCover`: la misma foto
+   se pinta en la fila, en la lista y en la ficha, y con alturas distintas se
+   recortaba de tres formas. */
+.biz-card__photo {
   position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
-  background: rgba(255,255,255,0.05);
+  background: var(--clr-surface-hover);
+  flex-shrink: 0;
 }
-
-.biz-card--compact .biz-card__img-wrap { height: 150px; }
 
 .biz-card__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
   transition: transform .45s ease;
 }
 
-.biz-card:hover .biz-card__img { transform: scale(1.06); }
+.biz-card:hover .biz-card__img { transform: scale(1.04); }
 
-/* Bottom gradient */
-.biz-card__gradient {
+/* ── Insignias sobre la foto ──
+   16 y no 8: así su curva es concéntrica con la esquina de la tarjeta. */
+.biz-card__flags {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, transparent 45%, rgba(29,41,47,0.70) 100%);
-  pointer-events: none;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-/* Rating Badge — glassmorphism top-right */
+.biz-card__flag { padding: 5px 8px; }
+.biz-card__flag-icon { font-size: 14px; color: var(--clr-mint); }
+
+/* Menta fija y no el acento del tema: la pastilla lleva foto debajo y es
+   oscura en los dos temas. */
+.biz-card__new {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: #C0EED3;
+  color: #44544B;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .biz-card__rating {
   position: absolute;
   top: 12px;
   right: 12px;
+  padding: 4px 9px;
+  font-size: 0.75rem;
+}
+
+.biz-card__star { font-size: 14px; color: var(--clr-warn); }
+.biz-card__score { color: #fff; font-weight: 800; font-size: 0.75rem; }
+.biz-card__count { color: rgba(255,255,255,.85); font-size: 0.6875rem; font-weight: 600; }
+
+/* ── Pie ──
+   14 a los lados y abajo, 10 arriba porque la propia foto ya hace de tope.
+   Se apretó respecto al móvil: en una rejilla de cinco columnas el pie de
+   antes hacía que cada tarjeta pesara el doble de lo que dice. */
+.biz-card__foot {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: rgba(29,33,39,0.70);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,.25);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--clr-text);
+  gap: 10px;
+  padding: 10px 14px 14px;
+  flex: 1;
 }
 
-.rating-score { color: #fff; font-weight: 800; font-size: 0.78rem; }
-.rating-count { color: rgba(255,255,255,.75); font-size: 0.72rem; font-weight: 600; }
+.biz-card__text { flex: 1; min-width: 0; }
 
-/* ── Info section ── */
-.biz-card__info {
-  padding: 14px 16px 18px 16px;
-}
-
-.biz-card--compact .biz-card__info { padding: 10px 14px 14px 14px; }
-
+/* Una línea y puntos suspensivos: un nombre largo que saltara de línea
+   desplazaría la ubicación y descuadraría la tarjeta respecto a las demás. */
 .biz-card__name {
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-size: 0.9375rem;          /* 15 px: un punto por debajo del móvil */
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  line-height: 1.3;
   color: var(--clr-text);
-  margin-bottom: 5px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  letter-spacing: -.3px;
 }
 
 .biz-card__loc {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.83rem;
-  color: var(--clr-text-2);
+  margin-top: 5px;
+  font-size: 0.75rem;            /* bodySmall: 12 px */
   font-weight: 500;
-  margin-bottom: 6px;
+  line-height: 1.45;
+  color: var(--clr-text-2);
+  min-width: 0;
 }
 
-.biz-card__loc svg { flex-shrink: 0; color: var(--clr-text-2); }
+.biz-card__pin { font-size: 13px; flex-shrink: 0; }
 
-.biz-card__desc {
-  font-size: 0.85rem;
-  color: var(--clr-text-2);
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.biz-card__loc-text {
+  white-space: nowrap;
   overflow: hidden;
-  margin-top: 4px;
+  text-overflow: ellipsis;
+}
+
+.biz-card__distance { flex-shrink: 0; margin-left: 4px; }
+
+/* ── Volver a reservar ──
+   44 px, el objetivo táctil mínimo de Apple. No se baja aunque quepa. */
+.biz-card__rebook {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.biz-card__rebook .material-symbols-rounded { font-size: 18px; }
+.biz-card__rebook:hover { background: var(--clr-mint-hover); }
+.biz-card__rebook:active { transform: scale(0.94); }
+
+@media (prefers-reduced-motion: reduce) {
+  .biz-card__img { transition: none; }
+  .biz-card:hover .biz-card__img { transform: none; }
 }

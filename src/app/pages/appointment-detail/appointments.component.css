@@ -1,144 +1,34 @@
-.appts-page { position: relative; min-height: 100vh; }
-
-.appts-orb {
-  position: fixed;
-  top: 80px; right: -150px;
-  width: 500px; height: 500px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(185,235,208,0.06) 0%, transparent 65%);
-  z-index: 0;
-}
+.appts-page { min-height: 100vh; }
 
 .appts-inner {
-  position: relative;
-  z-index: 1;
   max-width: 900px;
   margin: 0 auto;
-  padding: 48px 28px 80px;
+  padding: 48px 28px 96px;
 }
 
-.appts-heading { font-size: 2.4rem; font-weight: 800; letter-spacing: -.8px; margin-bottom: 6px; }
-.appts-sub { font-size: 1rem; color: var(--clr-text-2); margin-bottom: 28px; }
-
-/* ── Tabs ── */
-.appts-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid var(--clr-border);
-  margin-bottom: 28px;
+/* displaySmall: Bricolage Grotesque 32 px, 800, tracking -1,2. */
+.appts-heading {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.2px;
 }
 
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: none;
-  border: none;
-  color: var(--clr-text-2);
-  font-size: 1rem;
-  font-weight: 600;
-  font-family: var(--ff);
-  padding: 12px 6px 16px;
-  cursor: pointer;
-  position: relative;
-  transition: color .2s ease;
-  margin-right: 20px;
-}
-
-.tab-btn.tab-btn--active { color: var(--clr-text); }
-
-.tab-btn.tab-btn--active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: var(--clr-mint);
-  border-radius: 3px 3px 0 0;
-  box-shadow: 0 0 10px rgba(185,235,208,0.5);
-}
-
-/* ── Appointment Cards ── */
-.appts-list { display: flex; flex-direction: column; gap: 16px; }
-
-.appt-card {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 22px 24px;
-  justify-content: space-between;
-}
-
-.appt-card-left { display: flex; align-items: center; gap: 18px; flex: 1; }
-
-.appt-icon-box {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--r-lg);
-  background: var(--clr-mint-dim);
-  border: 1px solid rgba(185,235,208,0.15);
-  color: var(--clr-mint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.appt-info { flex: 1; }
-.appt-biz-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 3px; }
-.appt-srv-name { font-size: 0.9rem; color: var(--clr-mint); font-weight: 600; margin-bottom: 8px; }
-
-.appt-meta { display: flex; gap: 16px; }
-
-.appt-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.85rem;
-  color: var(--clr-text-2);
+.appts-sub {
+  margin-top: 8px;
+  font-size: 0.875rem;
   font-weight: 500;
-}
-
-.appt-card-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.appt-price { font-size: 1.35rem; font-weight: 800; }
-.appt-view-btn { font-size: 0.82rem; padding: 8px 16px; }
-
-/* ── Empty state ── */
-.appts-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 80px 20px;
-  gap: 12px;
   color: var(--clr-text-2);
 }
 
-.appts-empty-icon {
-  width: 90px; height: 90px;
-  border-radius: 50%;
-  background: var(--clr-input);
-  border: 1px solid var(--clr-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--clr-text-3);
-  margin-bottom: 8px;
-}
+.appts-segmented { display: block; margin: 20px 0 12px; max-width: 340px; }
 
-.appts-empty h3 { font-size: 1.3rem; font-weight: 700; color: var(--clr-text); }
-.appts-empty p { font-size: 0.92rem; max-width: 380px; line-height: 1.5; }
+.appts-list { display: flex; flex-direction: column; gap: 12px; }
 
-@media (max-width: 600px) {
-  .appt-card { flex-direction: column; align-items: flex-start; }
-  .appt-card-right { align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.appts-skeleton { height: 104px; border-radius: var(--r-lg); }
+
+@media (max-width: 640px) {
+  .appts-inner { padding: 32px 20px 96px; }
+  .appts-segmented { max-width: none; }
 }

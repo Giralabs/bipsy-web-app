@@ -1,0 +1,104 @@
+:host { display: block; }
+
+/* 104 px de alto, que es también el lado de la foto: cuadrada, como en la
+   fila de negocios. Fijo y no medido del contenido para que la lista tenga un
+   ritmo regular — tres líneas o dos, todas las citas ocupan lo mismo. */
+.bk-card {
+  display: flex;
+  align-items: stretch;
+  min-height: 104px;
+  border-radius: var(--r-lg);
+  background: var(--clr-surface);
+  overflow: hidden;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.bk-card:hover { background: var(--clr-surface-hover); }
+.bk-card:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+
+.bk-card__photo {
+  width: 104px;
+  flex-shrink: 0;
+  background: var(--clr-field);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bk-card__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bk-card__fallback { font-size: 24px; color: var(--clr-text-3); }
+
+.bk-card__info {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bk-card__service {
+  font-size: 0.875rem;      /* titleSmall: 14 px */
+  font-weight: 600;
+  color: var(--clr-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-card__business {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bk-card__when {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--clr-text-2);
+  flex-wrap: wrap;
+}
+
+.bk-card__when-icon { font-size: 13px; }
+.bk-card__when span + .bk-card__when-icon { margin-left: 4px; }
+
+.bk-card__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 12px 0;
+  flex-shrink: 0;
+}
+
+.bk-card__rebook {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.bk-card__rebook .material-symbols-rounded { font-size: 20px; }
+.bk-card__rebook:hover { background: var(--clr-mint-hover); }
+.bk-card__rebook:active { transform: scale(0.94); }
+
+@media (max-width: 560px) {
+  .bk-card__photo { width: 88px; }
+}

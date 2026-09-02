@@ -1,0 +1,46 @@
+.pay { min-height: 100vh; }
+.pay__inner { max-width: 680px; margin: 0 auto; padding: 48px 24px 96px; }
+
+.pay__heading {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.2px;
+}
+
+.pay__sub {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.pay__card-actions { display: inline-flex; align-items: center; gap: 10px; }
+
+.pay__link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--clr-mint);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pay__link:hover { text-decoration: underline; }
+.pay__link:disabled { opacity: .5; cursor: not-allowed; }
+.pay__link--bad { color: var(--clr-danger-text); }
+
+.pay__amount { display: inline-flex; align-items: center; gap: 8px; }
+.pay__amount strong { font-size: 0.9375rem; font-weight: 800; }
+
+.pay__add { margin: -12px 0 24px; }
+
+/* Hueco del formulario de Stripe. El alto mínimo evita que la hoja pegue un
+   salto cuando el iframe termina de cargar. */
+.pay__element { margin: 20px 0 4px; min-height: 220px; }
+
+@media (max-width: 640px) { .pay__inner { padding: 32px 20px 96px; } }

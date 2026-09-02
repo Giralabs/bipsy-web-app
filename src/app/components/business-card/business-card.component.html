@@ -1,38 +1,64 @@
-<a [routerLink]="['/business', business.id]" class="biz-card" [class.biz-card--compact]="compact">
-  <!-- Image with inner padding radius — matches Flutter impl -->
-  <div class="biz-card__img-wrap">
+<a [routerLink]="link" class="biz-card" [class.biz-card--compact]="compact">
+
+  <!-- La foto llega a los cantos: sin margen ni radio propio. -->
+  <div class="biz-card__photo">
     <img [src]="imageUrl" [alt]="business.name" class="biz-card__img" loading="lazy" />
 
-    <!-- Bottom gradient overlay -->
-    <div class="biz-card__gradient"></div>
+    <!-- Insignias de la izquierda. Las dos pueden salir a la vez: un negocio
+         recién abierto donde ya has reservado es las dos cosas. -->
+    @if (previouslyBooked || isNew) {
+      <div class="biz-card__flags">
+        @if (previouslyBooked) {
+          <span class="badge badge--photo biz-card__flag" title="Ya has reservado aquí">
+            <span class="material-symbols-rounded biz-card__flag-icon">history</span>
+          </span>
+        }
+        @if (isNew) {
+          <span class="biz-card__new">Nuevo</span>
+        }
+      </div>
+    }
 
-    <!-- Rating Badge — glassmorphism, top-right — matches Flutter _RatingBadge -->
-    <div class="biz-card__rating badge">
-      <span class="material-symbols-rounded fill" style="font-size: 15px; color: #FFBA49;">star</span>
+    <!-- Valoración, arriba a la derecha. -->
+    <div class="badge badge--photo biz-card__rating">
+      <span class="material-symbols-rounded fill biz-card__star">star</span>
       @if (hasRating) {
-        <span class="rating-score">{{ ratingDisplay }}</span>
+        <span class="biz-card__score">{{ ratingDisplay }}</span>
         @if (reviewCount > 0) {
-          <span class="rating-count">({{ reviewCount }})</span>
+          <span class="biz-card__count">({{ reviewCount }})</span>
         }
       } @else {
-        <span class="rating-score">Nuevo</span>
+        <span class="biz-card__score">Nuevo</span>
       }
     </div>
   </div>
 
-  <!-- Info section -->
-  <div class="biz-card__info">
-    <h3 class="biz-card__name">{{ business.name }}</h3>
-
-    <!-- Location row -->
-    <div class="biz-card__loc">
-      <span class="material-symbols-rounded" style="font-size: 16px;">location_on</span>
-      <span>{{ business.city || business.province || 'Sevilla' }}</span>
+  <!-- Con la foto a sangre, el pie es lo único que separa el texto del canto. -->
+  <div class="biz-card__foot">
+    <div class="biz-card__text">
+      <h3 class="biz-card__name">{{ business.name }}</h3>
+      <div class="biz-card__loc">
+        <span class="material-symbols-rounded biz-card__pin">location_on</span>
+        <span class="biz-card__loc-text">{{ locationDisplay }}</span>
+        @if (distanceDisplay) {
+          <span class="biz-card__distance">{{ distanceDisplay }}</span>
+        }
+      </div>
     </div>
 
-    <!-- Description — only on non-compact -->
-    @if (!compact && business.description) {
-      <p class="biz-card__desc">{{ business.description }}</p>
+    <!-- Redondo y al lado, no de ancho completo debajo: el botón ancho
+         alargaba la tarjeta y, como en una fila todas comparten alto,
+         obligaba a estirar también las que no lo llevan. -->
+    @if (previouslyBooked) {
+      <button
+        type="button"
+        class="biz-card__rebook"
+        title="Volver a reservar"
+        aria-label="Volver a reservar"
+        (click)="onRebookClick($event)"
+      >
+        <span class="material-symbols-rounded">event_repeat</span>
+      </button>
     }
   </div>
 </a>

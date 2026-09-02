@@ -1,0 +1,152 @@
+<div class="flow anim-fade-up">
+  <div class="flow__inner">
+
+    <img src="assets_bipsy/Combination Marks/combinationmark_mint_vertical_nobackground.webp"
+         alt="Bipsy" class="flow__logo theme-dark-only" />
+    <img src="assets_bipsy/Combination Marks/combinationmark_carbon_vertical_nobackground.webp"
+         alt="Bipsy" class="flow__logo theme-light-only" />
+
+    @if (needsPhone) {
+
+      <!-- Cuenta nueva con Google: solo falta el teléfono, y se pide aquí en
+           vez de mandar a otra pantalla. -->
+      <h1 class="flow__title">Solo un dato más</h1>
+      <p class="flow__subtitle">
+        Necesitamos tu teléfono para que los negocios puedan avisarte de tus citas.
+      </p>
+
+      <form (submit)="submitPhone(); $event.preventDefault()" novalidate>
+        <div class="form-group">
+          <div class="form-group__box">
+            <div class="form-row">
+              <label class="form-row__label" for="google-phone">Teléfono</label>
+              <input
+                id="google-phone"
+                class="form-row__input"
+                type="tel"
+                name="phone"
+                autocomplete="tel"
+                placeholder="612 345 678"
+                maxlength="20"
+                [disabled]="googleLoading"
+                [(ngModel)]="phone"
+              />
+            </div>
+          </div>
+        </div>
+
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ error }}
+          </p>
+        }
+
+        <div class="flow__actions">
+          <app-button type="submit" variant="primary" size="large" [fullWidth]="true" [loading]="googleLoading">
+            Continuar
+          </app-button>
+        </div>
+      </form>
+
+    } @else {
+
+      <form (submit)="submit(); $event.preventDefault()" novalidate>
+        <div class="form-group">
+          <div class="form-group__box">
+            <div class="form-row">
+              <label class="form-row__label" for="login-user">Correo</label>
+              <input
+                id="login-user"
+                class="form-row__input"
+                type="email"
+                name="username"
+                autocomplete="username"
+                placeholder="tu@correo.com"
+                maxlength="120"
+                [disabled]="busy"
+                [(ngModel)]="username"
+              />
+            </div>
+
+            <div class="form-row form-row--with-eye">
+              <label class="form-row__label" for="login-pass">Contraseña</label>
+              <input
+                id="login-pass"
+                class="form-row__input"
+                [type]="showPassword ? 'text' : 'password'"
+                name="password"
+                autocomplete="current-password"
+                placeholder="tu contraseña"
+                maxlength="100"
+                [disabled]="busy"
+                [(ngModel)]="password"
+              />
+              <button
+                type="button"
+                class="form-row__eye"
+                [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
+                (click)="showPassword = !showPassword"
+              >
+                <span class="material-symbols-rounded">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        @if (notice) {
+          <p class="flow__notice">
+            <span class="material-symbols-rounded fill">check_circle</span>{{ notice }}
+          </p>
+        }
+
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ error }}
+          </p>
+        }
+
+        <div class="flow__actions">
+          <app-button type="submit" variant="primary" size="large" [fullWidth]="true" [loading]="loading">
+            Iniciar sesión
+          </app-button>
+
+          <!-- Debajo del botón de entrar, que es donde se busca justo después
+               de que la contraseña no funcione. -->
+          <a class="flow__link" [routerLink]="['/recuperar']" [queryParams]="recoverQuery">
+            He olvidado mi contraseña
+          </a>
+        </div>
+
+        @if (googleAvailable) {
+          <div class="or-divider">o</div>
+
+          <!-- Botón propio: el logotipo oficial de Google no se puede
+               sustituir por un icono de Material. -->
+          <button
+            type="button"
+            class="google-btn"
+            [disabled]="busy"
+            (click)="signInWithGoogle()"
+          >
+            @if (googleLoading) {
+              <span class="btn-spinner"></span>
+            } @else {
+              <svg class="google-btn__logo" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+              Continuar con Google
+            }
+          </button>
+        }
+
+        <p class="flow__foot">
+          ¿Aún no tienes cuenta?
+          <a class="flow__link" [routerLink]="['/crear-cuenta']">Crear cuenta</a>
+        </p>
+      </form>
+    }
+  </div>
+</div>

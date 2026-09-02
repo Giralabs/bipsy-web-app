@@ -1,0 +1,28 @@
+.fav { min-height: 100vh; }
+.fav__inner { max-width: 1320px; margin: 0 auto; padding: 48px 28px 96px; }
+
+.fav__heading {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.2px;
+}
+
+.fav__sub {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.fav__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+.fav__skeleton { height: 223px; border-radius: var(--r-xl); }
+
+@media (max-width: 960px) { .fav__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) {
+  .fav__grid { grid-template-columns: 1fr; }
+  .fav__inner { padding: 32px 20px 96px; }
+}

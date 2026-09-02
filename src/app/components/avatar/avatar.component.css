@@ -1,0 +1,28 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--clr-field);
+  color: var(--clr-text-2);
+  /* El alto y el ancho los pone el componente según `size`. */
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar__initials {
+  font-family: var(--ff);
+  font-weight: 700;
+  line-height: 1;
+  /* El tamaño lo hereda del host, que lo calcula a partir de `size`. */
+  font-size: inherit;
+  letter-spacing: 0.3px;
+  user-select: none;
+}

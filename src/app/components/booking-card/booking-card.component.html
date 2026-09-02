@@ -1,0 +1,43 @@
+<div
+  class="bk-card"
+  role="button"
+  tabindex="0"
+  (click)="open.emit(booking)"
+  (keydown.enter)="open.emit(booking)"
+>
+  <!-- Foto cuadrada y a sangre por el lado izquierdo. -->
+  <div class="bk-card__photo">
+    @if (imageUrl) {
+      <img [src]="imageUrl" [alt]="booking.serviceName" loading="lazy" />
+    } @else {
+      <span class="material-symbols-rounded bk-card__fallback">storefront</span>
+    }
+  </div>
+
+  <div class="bk-card__info">
+    <h3 class="bk-card__service">{{ booking.serviceName }}</h3>
+    <p class="bk-card__business">{{ businessName || booking.businessName || 'Negocio' }}</p>
+    <div class="bk-card__when">
+      <span class="material-symbols-rounded bk-card__when-icon">calendar_today</span>
+      <span>{{ dateLabel }}</span>
+      <span class="material-symbols-rounded bk-card__when-icon">schedule</span>
+      <span>{{ timeLabel }}</span>
+    </div>
+  </div>
+
+  <!-- El estado arriba y, si la cita ya pasó, repetirla abajo. -->
+  <div class="bk-card__aside">
+    <app-booking-status-pill [status]="booking.status" />
+    @if (canRebook) {
+      <button
+        type="button"
+        class="bk-card__rebook"
+        title="Volver a reservar"
+        aria-label="Volver a reservar"
+        (click)="onRebookClick($event)"
+      >
+        <span class="material-symbols-rounded">event_repeat</span>
+      </button>
+    }
+  </div>
+</div>

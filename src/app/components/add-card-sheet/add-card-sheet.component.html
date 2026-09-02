@@ -1,0 +1,24 @@
+<div class="sheet-backdrop" (click)="close()">
+  <div class="sheet" (click)="$event.stopPropagation()" role="dialog" aria-label="Añadir tarjeta">
+    <h2 class="sheet__title">Añadir tarjeta</h2>
+    <p class="sheet__sub">
+      {{ reason || 'Tu banco puede pedirte confirmarla. Se hace ahora, una sola vez, y así los cobros posteriores no te interrumpen.' }}
+    </p>
+
+    <!-- El formulario lo pinta Stripe dentro de su propio iframe. -->
+    <div class="pay__element" #cardHost></div>
+
+    @if (error) {
+      <p class="flow__error" role="alert">
+        <span class="material-symbols-rounded fill">error</span>{{ error }}
+      </p>
+    }
+
+    <div class="sheet__actions">
+      <app-button variant="primary" [fullWidth]="true" [loading]="busy" (onClick)="submit()">
+        Guardar tarjeta
+      </app-button>
+      <app-button variant="ghost" [fullWidth]="true" (onClick)="close()">Cancelar</app-button>
+    </div>
+  </div>
+</div>

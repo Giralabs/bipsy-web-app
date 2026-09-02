@@ -1,0 +1,89 @@
+<div class="rs anim-fade-up">
+  <div class="rs__inner">
+
+    @if (isLoading) {
+      <div class="loading-state"><div class="spinner"></div><span>Cargando…</span></div>
+    } @else if (loadError || !booking) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">event_busy</span>
+        <h3>No hemos encontrado esta cita</h3>
+        <p>{{ loadError?.message }}</p>
+      </div>
+    } @else if (done) {
+      <div class="rs__done">
+        <span class="material-symbols-rounded fill rs__done-icon">check_circle</span>
+        <h1 class="flow__title">Cita cambiada</h1>
+        <p class="flow__subtitle">{{ currentWhen }}</p>
+        <div class="flow__actions">
+          <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToDetail()">
+            Ver la cita
+          </app-button>
+        </div>
+      </div>
+    } @else {
+
+      <button type="button" class="flow__back" (click)="goBack()">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Volver
+      </button>
+
+      <h1 class="flow__title">Cambiar día u hora</h1>
+      <p class="flow__subtitle">
+        {{ booking.serviceName }}<br />
+        Ahora: {{ currentWhen }}
+      </p>
+
+      <!-- Cambiar dentro de la ventana cuesta lo mismo que cancelar. Se dice
+           antes de elegir hueco, no después. -->
+      @if (willCharge) {
+        <p class="rs__fee">
+          <span class="material-symbols-rounded fill">credit_card</span>
+          Quedan menos de {{ fee!.windowHours }} h: cambiar la cita ahora tiene un coste de
+          {{ feeAmount }} ({{ fee!.feePercent }} % del servicio).
+        </p>
+      }
+
+      <p class="rs__label">Elige un día</p>
+      <div class="rs__days">
+        @for (d of days; track d.getTime()) {
+          <button
+            type="button"
+            class="rs__day"
+            [class.rs__day--on]="day && d.getTime() === day.getTime()"
+            (click)="chooseDay(d)"
+          >
+            <span class="rs__day-label">{{ dayShort(d) }}</span>
+            <span class="rs__day-num">{{ d.getDate() }}</span>
+          </button>
+        }
+      </div>
+
+      @if (day) {
+        <p class="rs__label">Elige una hora</p>
+        @if (slotsLoading) {
+          <div class="loading-state"><div class="spinner"></div><span>Buscando huecos…</span></div>
+        } @else if (availableSlots.length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-rounded">event_busy</span>
+            <h3>Sin huecos ese día</h3>
+            <p>Prueba con otra fecha.</p>
+          </div>
+        } @else {
+          <div class="rs__slots">
+            @for (slot of availableSlots; track slot.start) {
+              <button type="button" class="rs__slot" [disabled]="saving" (click)="confirm(slot)">
+                {{ slot.start }}
+              </button>
+            }
+          </div>
+        }
+      }
+
+      @if (error) {
+        <p class="flow__error" role="alert">
+          <span class="material-symbols-rounded fill">error</span>{{ error }}
+        </p>
+      }
+    }
+  </div>
+</div>

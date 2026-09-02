@@ -22,12 +22,19 @@
         <form class="hero-search" (submit)="executeSearch(); $event.preventDefault()">
           <div class="hero-search-input-wrap">
             <span class="material-symbols-rounded hero-search-icon">search</span>
+            <!-- `autocomplete="off"` y un nombre propio: con `name="q"` el
+                 navegador ofrecía su historial de TODOS los formularios que
+                 hayan usado ese nombre, así que salían correos y nombres de
+                 otras webs colgando del buscador. -->
             <input
               type="text"
               class="hero-search-input"
               placeholder="Busca un servicio, barbería, peluquería..."
               [(ngModel)]="searchQuery"
-              name="q"
+              name="bipsy-hero-search"
+              autocomplete="off"
+              autocorrect="off"
+              spellcheck="false"
             />
           </div>
           <app-button
@@ -54,78 +61,65 @@
        CATEGORY CHIPS — matches Flutter _CategoryChips with GipsiChip
        ══════════════════════════════════════════ -->
   <div class="section-wrap">
-    <div class="chips-row" #chipsRow
-         (mousedown)="onDragStart($event, chipsRow)"
-         (mouseleave)="onDragEnd(chipsRow)"
-         (mouseup)="onDragEnd(chipsRow)"
-         (mousemove)="onDragMove($event, chipsRow)">
-      @for (cat of categories; track cat.id) {
-        <app-chip
-          [label]="cat.name"
-          [selected]="selectedCategoryCode === cat.code"
-          [icon]="getCategoryIcon(cat.code)"
-          (onClick)="selectCategory(cat)"
-        />
+    <div class="chips-row" appDragScroll>
+      @if (categories.length === 0 && isLoading) {
+        @for (i of skeletons; track i) {
+          <div class="skeleton chip-skeleton"></div>
+        }
+      } @else {
+        @for (cat of categories; track cat.id) {
+          <app-chip
+            [label]="cat.name"
+            [selected]="selectedCategoryCode === cat.code"
+            [icon]="getCategoryIcon(cat.code)"
+            (onClick)="selectCategory(cat)"
+          />
+        }
       }
     </div>
 
     <!-- ══════════════════════════════════════════
-         FEATURED SECTION — Horizontal carousel
+         LAS FILAS DE EXPLORAR — tus favoritos y destacados.
+         Los sitios donde ya has reservado van los PRIMEROS de
+         destacados, con su icono: no son una categoría aparte.
          ══════════════════════════════════════════ -->
-    @if (!isLoading && featuredBusinesses.length > 0 && selectedCategoryCode === 'ALL') {
-      <div class="section-header">
-        <h2 class="section-title">En tu zona</h2>
-        <a routerLink="/search" class="section-link">
-          Ver todos
-          <span class="material-symbols-rounded" style="font-size: 18px;">chevron_right</span>
-        </a>
-      </div>
+    @if (selectedCategoryCode === 'ALL') {
 
-      <div class="featured-scroll" #featuredScroll
-           (mouseenter)="stopContinuousScroll()"
-           (mouseleave)="startContinuousScroll()">
-        <!-- First set -->
-        @for (biz of featuredBusinesses; track biz.id) {
-          <div class="featured-item">
-            <app-business-card [business]="biz" [compact]="true" />
-          </div>
-        }
-        <!-- Second set for seamless infinite loop -->
-        @for (biz of featuredBusinesses; track biz.id + '_dup') {
-          <div class="featured-item">
-            <app-business-card [business]="biz" [compact]="true" />
-          </div>
-        }
-      </div>
-    }
-
-    <!-- ══════════════════════════════════════════
-         MAIN BUSINESSES LIST / GRID (Category views only)
-         ══════════════════════════════════════════ -->
-    @if (selectedCategoryCode !== 'ALL') {
-      <div class="section-header">
-        <h2 class="section-title">
-          {{ getSelectedCategoryName() }}
-        </h2>
-      </div>
-
-      @if (isLoading) {
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <span>Cargando establecimientos...</span>
-        </div>
-      } @else if (businesses.length === 0) {
+      @if (loadError) {
         <div class="empty-state">
-          <span class="material-symbols-rounded" style="font-size: 48px; color: var(--clr-text-3);">storefront</span>
-          <h3>Sin resultados</h3>
-          <p>No hay negocios que coincidan con este filtro.</p>
+          <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+          <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido cargar Bipsy' }}</h3>
+          <p>{{ loadError.message }}</p>
+          <app-button variant="secondary" icon="refresh" (onClick)="loadData()">Reintentar</app-button>
         </div>
       } @else {
-        <div class="businesses-grid">
-          @for (biz of businesses; track biz.id) {
-            <app-business-card [business]="biz" />
-          }
-        </div>
+
+        <!-- Las dos filas personales solo con sesión: sin ella los endpoints
+             responden 401 y el cartel no tendría a quién hablarle. -->
+        @if (isAuthenticated) {
+          <app-business-row
+            title="Tus favoritos"
+            [businesses]="favoriteBusinesses"
+            [loading]="isLoading"
+            [markPreviouslyBooked]="true"
+            emptyMessage="Guarda un negocio con el corazón y aparecerá aquí, el último que marques primero."
+            seeAllLink="/favoritos"
+            (rebook)="onRebook($event)"
+          />
+
+        }
+
+        <!-- Puede contener sitios donde ya has reservado: van los primeros y
+             es su propio `discovery` el que les pone el reloj. -->
+        <app-business-row
+          title="Destacados"
+          [businesses]="featuredBusinesses"
+          [loading]="isLoading"
+          [showDistance]="true"
+          [markPreviouslyBooked]="true"
+          seeAllLink="/search"
+          (rebook)="onRebook($event)"
+        />
       }
     }
 
@@ -219,53 +213,81 @@
       </div>
       
       <!-- ══════════════════════════════════════════
-           EASY BOOKING INFO SECTION
+           CÓMO FUNCIONA — tres pasos, no tres párrafos.
+           La prosa de antes decía en cuatro líneas lo que aquí se lee de un
+           vistazo, y la mascota se quedaba de adorno al lado del texto.
            ══════════════════════════════════════════ -->
-      <section class="info-section">
-        <div class="info-text">
-          <h2 class="info-title">Reserva tus servicios sin complicaciones</h2>
-          <p class="info-paragraph">
-            ¿Necesitas encontrar un estilista, especialista en barbería, terapeuta corporal o profesional de estética cerca de ti? ¿Quieres agendar una sesión para arreglar tu barba, dar forma a tus cejas o disfrutar de un masaje muscular intensivo?
-          </p>
-          <p class="info-paragraph">
-            Bipsy es una plataforma gratuita que te ayuda a localizar profesionales y programar citas de forma rápida y sencilla. Olvídate de las llamadas telefónicas y gestiona tus reservas cuando te resulte más cómodo, desde cualquier lugar y a cualquier hora del día.
-          </p>
-          <p class="info-paragraph">
-            Explora los establecimientos mejor valorados de tu entorno y asegura tu cita de inmediato con Bipsy.
-          </p>
+      <section class="steps">
+        <div class="steps__art">
+          <img src="assets_bip/bip_booking.webp" alt="" class="steps__img" />
         </div>
-        <div class="info-showcase">
-          <img
-            src="assets_bip/bip_booking.webp"
-            alt="Bipsy Booking"
-            class="info-image"
-          />
+
+        <div class="steps__body">
+          <p class="steps__eyebrow">Cómo funciona</p>
+          <h2 class="steps__title">Reservar es así de simple</h2>
+
+          <ol class="steps__list">
+            <li class="step">
+              <span class="material-symbols-rounded step__icon">search</span>
+              <span class="step__text">
+                <strong>Busca</strong>
+                Peluquería, estética, fisio, clases… lo que necesites, cerca de ti.
+              </span>
+            </li>
+            <li class="step">
+              <span class="material-symbols-rounded step__icon">schedule</span>
+              <span class="step__text">
+                <strong>Elige hora</strong>
+                Ves los huecos libres al momento y te quedas el que te venga.
+              </span>
+            </li>
+            <li class="step">
+              <span class="material-symbols-rounded step__icon">check_circle</span>
+              <span class="step__text">
+                <strong>Listo</strong>
+                Confirmas en segundos. Sin llamadas y sin esperas.
+              </span>
+            </li>
+          </ol>
         </div>
       </section>
 
-      <!-- ══════════════════════════════════════════
-           EASY BOOKING SUPPORT SECTION (Image Left, Text Right)
-           ══════════════════════════════════════════ -->
-      <section class="info-section info-section--reversed">
-        <div class="info-showcase">
-          <img
-            src="assets_bip/bip_support.webp"
-            alt="Bipsy Support"
-            class="info-image"
-          />
+      <!-- La mascota al otro lado: dos bloques idénticos seguidos se leen
+           como uno repetido. -->
+      <section class="steps steps--mirrored">
+        <div class="steps__art">
+          <img src="assets_bip/bip_support.webp" alt="" class="steps__img" />
         </div>
-        <div class="info-text">
-          <h2 class="info-title">Las citas ya no tienen por qué ser una preocupación.</h2>
-          <p class="info-paragraph">
-            Con Bipsy puedes organizar todas tus reservas de forma rápida y cómoda desde tu móvil. Encuentra el servicio que necesitas, confirma tu horario en segundos y realiza cualquier cambio sin depender de llamadas ni esperas.
-          </p>
-          <p class="info-paragraph">
-            Si surge un imprevisto, podrás modificar o anular tu reserva con unos pocos toques. Y para que no tengas que estar pendiente de fechas y horas, recibirás notificaciones automáticas antes de cada cita.
-          </p>
-          <p class="info-paragraph">
-            Más comodidad, menos gestiones y todo bajo control con Bipsy.
-          </p>
+
+        <div class="steps__body">
+          <p class="steps__eyebrow">Sin preocuparte</p>
+          <h2 class="steps__title">Y si cambia el plan, no pasa nada</h2>
+
+          <ol class="steps__list">
+            <li class="step">
+              <span class="material-symbols-rounded step__icon">edit_calendar</span>
+              <span class="step__text">
+                <strong>Cambia o cancela</strong>
+                En dos toques, desde donde estés.
+              </span>
+            </li>
+            <li class="step">
+              <span class="material-symbols-rounded step__icon">notifications_active</span>
+              <span class="step__text">
+                <strong>Te avisamos</strong>
+                Un recordatorio antes de cada cita, para no estar pendiente.
+              </span>
+            </li>
+            <li class="step">
+              <span class="material-symbols-rounded step__icon">favorite</span>
+              <span class="step__text">
+                <strong>Todo en un sitio</strong>
+                Tus citas, tus sitios de siempre y tus reseñas.
+              </span>
+            </li>
+          </ol>
         </div>
       </section>
+
   </div>
 </div>

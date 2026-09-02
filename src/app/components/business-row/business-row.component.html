@@ -1,0 +1,38 @@
+@if (visible) {
+  <section class="row">
+    <header class="row__head">
+      <h2 class="row__title">{{ title }}</h2>
+      @if (seeAllLink && businesses.length > 0) {
+        <a [routerLink]="seeAllLink" class="row__link">
+          Ver todos
+          <span class="material-symbols-rounded row__link-icon">chevron_right</span>
+        </a>
+      }
+    </header>
+
+    @if (loading) {
+      <div class="row__scroll row__scroll--static">
+        @for (i of skeletons; track i) {
+          <div class="row__item"><div class="skeleton row__skeleton"></div></div>
+        }
+      </div>
+    } @else if (businesses.length === 0) {
+      <p class="row__empty">{{ emptyMessage }}</p>
+    } @else {
+      <div class="row__scroll">
+        @for (biz of businesses; track biz.id) {
+          <div class="row__item">
+            <app-business-card
+              [business]="biz"
+              [compact]="true"
+              [previouslyBooked]="previouslyBooked(biz)"
+              [isNew]="!!biz.discovery?.recentlyOpened"
+              [distanceKm]="distanceOf(biz)"
+              (rebook)="rebook.emit($event)"
+            />
+          </div>
+        }
+      </div>
+    }
+  </section>
+}

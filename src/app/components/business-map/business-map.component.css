@@ -1,0 +1,108 @@
+:host { display: block; }
+
+.map {
+  position: relative;
+  width: 100%;
+  height: min(70vh, 620px);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--clr-surface);
+}
+
+.map__canvas { position: absolute; inset: 0; }
+
+.map__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Estado sin mapa: un aviso corto y nada más. Un recuadro vacío con los
+   controles encima sería peor que decirlo. */
+.map__notice {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--clr-text-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.map__notice .material-symbols-rounded { font-size: 40px; color: var(--clr-text-3); }
+
+/* ── Control de zona ── */
+.map__zone {
+  position: absolute;
+  z-index: 500;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  max-width: 340px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(46, 52, 59, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+}
+
+.map__zone-row { display: flex; align-items: center; gap: 8px; }
+.map__zone-icon { font-size: 18px; flex-shrink: 0; }
+.map__zone-label { flex: 1; font-size: 0.8125rem; font-weight: 700; }
+
+.map__zone-clear {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #C0EED3;
+  font-family: var(--ff);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map__zone-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.map__slider { width: 100%; margin-top: 10px; accent-color: #C0EED3; }
+
+/* ── Tarjeta del negocio tocado ── */
+.map__card {
+  position: absolute;
+  z-index: 500;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--shadow-float);
+  transition: background-color .2s ease;
+}
+
+.map__card:hover { background: var(--clr-surface-hover); }
+.map__card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.map__card-text strong { font-size: 0.9375rem; font-weight: 700; }
+.map__card-text small { font-size: 0.75rem; font-weight: 500; color: var(--clr-text-2); }
+.map__card-go { font-size: 20px; color: var(--clr-text-3); }

@@ -1,0 +1,276 @@
+/* El hilo ocupa el alto de la ventana menos la barra: el compositor se queda
+   abajo y solo hacen scroll los mensajes, como en cualquier chat. */
+.th {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 84px);
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.th__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  box-shadow: inset 0 -0.5px 0 var(--clr-border);
+}
+
+.th__back {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.th__back:hover { background: var(--clr-surface-hover); }
+
+.th__who {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--ff);
+  color: var(--clr-text);
+}
+
+.th__who strong { font-size: 1rem; font-weight: 700; letter-spacing: -0.1px; }
+.th__who small { font-size: 0.75rem; font-weight: 600; color: var(--clr-mint); }
+
+.th__scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 4px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  /* Barra fina y sin pista: la del sistema partía el hilo en dos con una
+     franja gris del ancho de un dedo. Solo se ve cuando hace falta. */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color .2s ease;
+}
+
+.th__scroll:hover { scrollbar-color: var(--clr-subtle) transparent; }
+
+.th__scroll::-webkit-scrollbar { width: 6px; }
+.th__scroll::-webkit-scrollbar-track { background: transparent; }
+
+.th__scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.th__scroll:hover::-webkit-scrollbar-thumb { background: var(--clr-subtle); }
+
+.th__empty,
+.th__system,
+.th__day {
+  align-self: center;
+  max-width: 90%;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--clr-text-2);
+  padding: 6px 12px;
+  margin: 8px 0;
+}
+
+.th__day {
+  background: var(--clr-subtle);
+  border-radius: var(--r-pill);
+}
+
+/* ── Burbujas ── */
+.bubble-row { display: flex; }
+.bubble-row--mine { justify-content: flex-end; }
+
+.bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--clr-subtle);
+  color: var(--clr-text);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* La propia en menta, como en la app. */
+.bubble--mine { background: var(--clr-mint); color: var(--clr-mint-text); }
+.bubble--failed { opacity: .6; }
+
+.bubble__text {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubble__meta {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  opacity: .7;
+}
+
+.bubble__tick { font-size: 12px; }
+.bubble__tick--bad { color: var(--clr-danger-text); opacity: 1; }
+
+.bubble__booking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: var(--r-xs);
+  background: rgba(0, 0, 0, .12);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.bubble__booking-icon { font-size: 14px; }
+
+/* La foto se ve, no se impone: a tamaño natural una imagen de móvil ocupaba
+   dos pantallas de hilo y había que hacer scroll para leer el mensaje
+   siguiente. Se pulsa para verla entera. */
+.bubble__img {
+  max-width: 100%;
+  max-height: 260px;
+  width: auto;
+  border-radius: var(--r-xs);
+  display: block;
+  cursor: zoom-in;
+  object-fit: cover;
+}
+
+/* La burbuja con foto no necesita los 78 % de una de texto largo. */
+.bubble:has(.bubble__img) { max-width: min(340px, 78%); padding: 6px; }
+.bubble:has(.bubble__img) .bubble__meta { padding: 0 6px 2px; }
+
+.bubble__file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.bubble__file-btn .material-symbols-rounded { font-size: 16px; }
+
+/* ── Compositor ── */
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0 20px;
+}
+
+.composer__attach,
+.composer__send {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.composer__attach { background: var(--clr-surface); color: var(--clr-text); }
+.composer__attach:hover { background: var(--clr-surface-hover); }
+
+.composer__input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  outline: none;
+}
+
+.composer__input::placeholder { color: var(--clr-text-3); }
+
+.composer__send { background: var(--clr-mint); color: var(--clr-mint-text); }
+.composer__send:disabled { opacity: .45; cursor: not-allowed; }
+.composer__send .material-symbols-rounded { font-size: 20px; }
+
+.composer__closed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0 24px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.composer__closed .material-symbols-rounded { font-size: 16px; }
+
+.th__send-error { margin-bottom: 16px; }
+
+@media (max-width: 640px) {
+  .th { height: calc(100vh - 64px); padding: 0 16px; }
+}
+
+/* ── Foto a tamaño completo ── */
+.lightbox { z-index: 950; }
+
+.lightbox__img {
+  max-width: min(92vw, 1100px);
+  max-height: 88vh;
+  border-radius: var(--r-sm);
+  display: block;
+  object-fit: contain;
+}
+
+.lightbox__close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(46, 52, 59, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}

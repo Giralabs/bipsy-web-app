@@ -1,0 +1,5 @@
+:host { display: contents; }
+
+/* Alto mínimo reservado: el formulario de Stripe llega en un iframe y tarda,
+   y sin esto la hoja se abre plana y pega un salto al montarlo. */
+.pay__element { margin: 20px 0 4px; min-height: 220px; }
