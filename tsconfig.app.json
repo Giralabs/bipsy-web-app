@@ -4,7 +4,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": []
+    /* El SDK de Google Maps se carga por <script> en tiempo de ejecución, así
+       que sin estos tipos `google.maps` no existe para TypeScript. */
+    "types": ["google.maps"]
   },
   "files": [
     "src/main.ts"
