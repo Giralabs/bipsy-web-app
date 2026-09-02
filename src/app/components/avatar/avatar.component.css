@@ -26,3 +26,6 @@ img {
   letter-spacing: 0.3px;
   user-select: none;
 }
+
+/* El icono de relleno se escala con el círculo, como las iniciales. */
+:host > .material-symbols-rounded { font-size: 1.25em; }

@@ -1,0 +1,20 @@
+<nav class="tabbar" aria-label="Secciones">
+  <div class="tabbar__pill">
+    @for (tab of tabs; track tab.route) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="tabbar__tab--on"
+        class="tabbar__tab"
+        [attr.aria-label]="tab.label"
+      >
+        <span class="tabbar__icon-wrap">
+          <span class="material-symbols-rounded">{{ tab.icon }}</span>
+          @if (tab.badge && unread > 0) {
+            <span class="tabbar__badge">{{ unread > 99 ? '99+' : unread }}</span>
+          }
+        </span>
+        <span class="tabbar__label">{{ tab.label }}</span>
+      </a>
+    }
+  </div>
+</nav>

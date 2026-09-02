@@ -810,3 +810,62 @@
   .steps__art::before { width: min(260px, 100%); }
   .step__text { max-width: none; }
 }
+
+/* ══════════════════════════════════════════
+   CABECERA DE MÓVIL — port de _ExploreHeader
+   Márgenes de GipsiSpacing: screenHorizontal 20, y el buscador a sm (8)
+   del saludo, igual que en la app.
+   ══════════════════════════════════════════ */
+
+.mhead { padding: 12px 20px 8px; }
+
+.mhead__top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* headlineMedium de la app: es el texto más grande de la pantalla y lo que
+   la ancla, así que no se encoge por mucho nombre que haya. */
+.mhead__greeting {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--ff-display, var(--ff));
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -.6px;
+  line-height: 1.15;
+  color: var(--clr-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mhead__avatar { flex: 0 0 auto; display: inline-flex; text-decoration: none; }
+
+.mhead__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 0 16px;
+  height: 48px;
+  border-radius: var(--r-pill);
+  background: var(--clr-field);
+}
+
+.mhead__search > .material-symbols-rounded { font-size: 20px; color: var(--clr-text-3); }
+
+.mhead__search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--clr-text);
+}
+
+.mhead__search input:focus { outline: none; }
+.mhead__search input::placeholder { color: var(--clr-text-3); }

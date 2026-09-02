@@ -633,8 +633,9 @@ const COOKIES: LegalDocument = {
           'las credenciales.',
         'bipsy_role y bipsy_actor_id — si entras como cliente o como negocio, y a qué cuenta corresponde la ' +
           'sesión. Determinan qué pantallas se te muestran.',
-        'bipsy_promo_business — recuerda que has cerrado el aviso superior para no volver a mostrártelo. ' +
-          'Es una preferencia de interfaz: no identifica a nadie ni se envía a ningún sitio.',
+        'bipsy_promo_business y bipsy_app_banner — recuerdan que has cerrado el aviso superior o la tira ' +
+          'que ofrece la aplicación, para no volver a mostrártelos. Son preferencias de interfaz: no ' +
+          'identifican a nadie ni se envían a ningún sitio.',
       ],
       closingParagraphs: [
         'Si bloqueas este almacenamiento podrás navegar y consultar negocios, pero no mantener la sesión ' +
