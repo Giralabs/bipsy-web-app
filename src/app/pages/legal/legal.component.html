@@ -2,75 +2,124 @@
   <div class="legal-orb" aria-hidden="true"></div>
 
   @if (doc) {
-    <article class="legal-inner anim-fade-up">
-      <!-- ─── Cabecera ─── -->
-      <a routerLink="/home" class="legal-back">
-        <span class="material-symbols-rounded">arrow_back</span>
-        Volver
-      </a>
+    <div class="legal-layout">
 
-      <h1 class="legal-title">{{ doc.title }}</h1>
-      <p class="legal-subtitle">{{ doc.subtitle }}</p>
-
-      <div class="legal-meta">
-        <span class="badge badge--mint">Versión {{ doc.version }}</span>
-        <span class="legal-updated">Actualizado el {{ doc.updatedAt }}</span>
-      </div>
-
-      @if (isDraft) {
-        <div class="legal-draft" role="note">
-          <span class="material-symbols-rounded">gavel</span>
-          <p>
-            Borrador pendiente de revisión jurídica. El texto cubre la estructura
-            exigida por el RGPD y la LSSI-CE, pero debe revisarlo un abogado antes
-            de publicarse.
-            @if (companyIncomplete) {
-              Faltan además el CIF y el domicilio social, que la LSSI-CE exige
-              indicar: rellénalos en <code>legal.models.ts</code>.
+      <!-- ─── Navegación lateral ───
+           Los seis documentos se remiten unos a otros constantemente («ver el
+           apartado 8 de los Términos»), así que tenerlos a la vista ahorra ir
+           y volver al pie en cada salto. -->
+      <aside class="legal-side" aria-label="Documentos">
+        @for (group of groups; track group.label) {
+          <nav class="legal-side__group" [attr.aria-label]="group.label">
+            <p class="legal-side__title">{{ group.label }}</p>
+            @for (entry of group.entries; track entry.slug) {
+              <a
+                [routerLink]="['/legal', entry.slug]"
+                class="legal-side__link"
+                [class.legal-side__link--on]="entry.slug === doc.slug"
+                [attr.aria-current]="entry.slug === doc.slug ? 'page' : null"
+              >{{ entry.title }}</a>
             }
-          </p>
-        </div>
-      }
+          </nav>
+        }
 
-      <!-- ─── Índice ─── -->
-      <nav class="legal-toc glass-card" aria-label="Índice del documento">
-        <p class="legal-toc-title">Contenido</p>
-        <ol>
+        <!-- El índice del documento abierto, bajo la lista: es navegación de
+             segundo nivel y no debe competir con la de primer nivel. -->
+        <nav class="legal-side__group legal-side__toc" aria-label="Índice del documento">
+          <p class="legal-side__title">En esta página</p>
+          <!-- ⚠️ `routerLink` + `fragment`, NUNCA `href="#id"`.
+               Con el <base href="/"> del index.html, el navegador resuelve un
+               ancla suelta contra la BASE y no contra la URL actual: salía
+               `/#tu-cuenta`, el router lo redirigía y acababas en la portada. -->
           @for (section of doc.sections; track section.id) {
-            <li><a [href]="'#' + section.id">{{ section.title }}</a></li>
+            <a
+              [routerLink]="['/legal', doc.slug]"
+              [fragment]="section.id"
+              class="legal-side__anchor"
+            >{{ section.title }}</a>
           }
-        </ol>
-      </nav>
+        </nav>
+      </aside>
 
-      <!-- ─── Secciones ─── -->
-      @for (section of doc.sections; track section.id) {
-        <section class="legal-section" [id]="section.id">
-          <h2>{{ section.title }}</h2>
-          @for (p of section.paragraphs; track $index) {
-            <p>{{ p }}</p>
-          }
-          @if (section.bullets?.length) {
-            <ul>
-              @for (b of section.bullets; track $index) {
-                <li>{{ b }}</li>
-              }
-            </ul>
-          }
-          @for (p of section.closingParagraphs; track $index) {
-            <p>{{ p }}</p>
-          }
-        </section>
-      }
-
-      <!-- ─── Pie ─── -->
-      <div class="divider"></div>
-      <footer class="legal-footer">
-        <a [routerLink]="['/legal', otherSlug]" class="legal-cross-link">
-          <span class="material-symbols-rounded">description</span>
-          Leer también: {{ otherTitle }}
+      <!-- ─── Documento ─── -->
+      <article class="legal-inner anim-fade-up">
+        <!-- Dentro del documento y no en la barra lateral: en estrecho la barra
+             no se pinta, y con el «Volver» ahí no quedaba forma de salir. -->
+        <a routerLink="/home" class="flow__back">
+          <span class="material-symbols-rounded">arrow_back</span>
+          Volver
         </a>
-      </footer>
-    </article>
+
+        <h1 class="legal-title">{{ doc.title }}</h1>
+        <p class="legal-subtitle">{{ doc.subtitle }}</p>
+
+        <div class="legal-meta">
+          <span class="badge badge--mint">Versión {{ doc.version }}</span>
+          <span class="legal-updated">Actualizado el {{ doc.updatedAt }}</span>
+        </div>
+
+        @if (isDraft) {
+          <div class="legal-draft" role="note">
+            <span class="material-symbols-rounded">gavel</span>
+            <p>
+              Borrador pendiente de revisión jurídica. El texto cubre la estructura
+              exigida por el RGPD y la LSSI-CE, pero debe revisarlo un abogado antes
+              de publicarse.
+              @if (companyIncomplete) {
+                Faltan además el CIF y el domicilio social, que la LSSI-CE exige
+                indicar: rellénalos en <code>legal.models.ts</code>.
+              }
+            </p>
+          </div>
+        }
+
+        <!-- Índice en línea solo cuando la barra lateral no cabe. -->
+        <nav class="legal-toc glass-card" aria-label="Índice del documento">
+          <p class="legal-toc-title">Contenido</p>
+          <ol>
+            @for (section of doc.sections; track section.id) {
+              <li>
+                <a [routerLink]="['/legal', doc.slug]" [fragment]="section.id">
+                  {{ section.title }}
+                </a>
+              </li>
+            }
+          </ol>
+        </nav>
+
+        <!-- ─── Secciones ─── -->
+        @for (section of doc.sections; track section.id) {
+          <section class="legal-section" [id]="section.id">
+            <h2>{{ section.title }}</h2>
+            @for (p of section.paragraphs; track $index) {
+              <p>{{ p }}</p>
+            }
+            @if (section.bullets?.length) {
+              <ul>
+                @for (b of section.bullets; track $index) {
+                  <li>{{ b }}</li>
+                }
+              </ul>
+            }
+            @for (p of section.closingParagraphs; track $index) {
+              <p>{{ p }}</p>
+            }
+          </section>
+        }
+
+        <!-- ─── Pie ─── -->
+        <div class="divider"></div>
+        <footer class="legal-footer">
+          <p class="legal-footer-title">Leer también</p>
+          @for (other of otherDocs; track other.slug) {
+            <a [routerLink]="['/legal', other.slug]" class="legal-cross-link">
+              <span class="material-symbols-rounded">description</span>
+              {{ other.title }}
+            </a>
+          }
+        </footer>
+      </article>
+    </div>
   } @else {
     <div class="legal-inner">
       <h1 class="legal-title">Documento no encontrado</h1>

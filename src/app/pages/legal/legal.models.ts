@@ -23,8 +23,18 @@ export interface LegalSection {
   closingParagraphs?: string[];
 }
 
+/** Los documentos publicados. Añadir uno obliga a tocar `legal.index.ts`. */
+export type LegalSlug =
+  | 'aviso-legal'
+  | 'terminos'
+  | 'privacidad'
+  | 'cookies'
+  | 'quienes-somos'
+  | 'seguridad'
+  | 'contacto';
+
 export interface LegalDocument {
-  slug: 'terminos' | 'privacidad';
+  slug: LegalSlug;
   title: string;
   subtitle: string;
   /** Versión del documento. Debe coincidir con la que registra el backend. */
@@ -38,24 +48,37 @@ export interface LegalDocument {
  * Datos de la empresa. Centralizados aquí porque aparecen en los dos
  * documentos y no deben poder divergir entre ellos.
  *
- * `taxId` y `address` siguen sin rellenar A PROPÓSITO: la LSSI-CE obliga a que
- * el aviso legal identifique correctamente al prestador del servicio, así que
- * tienen que ser los reales y no una aproximación. Mientras contengan
- * "PENDIENTE" la página muestra el aviso de arriba.
+ * El prestador es una PERSONA FÍSICA, no una sociedad: `legalName` lleva el
+ * nombre y los apellidos, y `taxId` el NIF. Es lo que exige el artículo 10 de
+ * la LSSI-CE y no depende de estar dado de alta en ningún sitio: identificarse
+ * y darse de alta son cosas distintas.
+ *
+ * Si algún día se constituye la sociedad, aquí cambian los tres valores y hay
+ * que añadir los datos registrales al apartado 1 del aviso legal.
  *
  * Al rellenarlos: si Giralabs es una sociedad, `legalName` debe llevar la
  * denominación completa con su forma jurídica ("Giralabs S.L.", p. ej.); si se
  * opera como autónomo, el nombre y apellidos de la persona física.
+ *
+ * A 2026-09-02 no hay alta ninguna: ni sociedad ni autónomo. Mientras siga así
+ * NO se puede publicar un aviso legal válido (no hay prestador al que
+ * identificar) ni cobrar nada —ni las tarifas de cancelación, que ya están en
+ * el código, ni las suscripciones—: Stripe pide identificación fiscal para
+ * dejar de estar en modo prueba. Ver docs/LEGAL-PENDIENTE.md.
  */
 export const LEGAL_COMPANY = {
   /** Nombre comercial, el que ve el usuario. */
   name: 'Giralabs',
-  /** Denominación social con su forma jurídica. */
-  legalName: 'Giralabs',
-  taxId: '[CIF PENDIENTE]',
-  address: '[DOMICILIO SOCIAL PENDIENTE]',
-  email: 'soporte@gipsi-app.com',
-  privacyEmail: 'privacidad@gipsi-app.com',
+  /** Titular real. Persona física mientras no haya sociedad. */
+  legalName: 'José Ramón López Guisado',
+  taxId: '49386987F',
+  // Codigo postal comprobado con el geocodificador de Google, no de memoria.
+  address: 'Calle Blas Infante 6, 41620 Marchena (Sevilla), España',
+  // Un solo buzón a propósito: cinco direcciones que nadie lee son peores que
+  // una que sí. El asunto encamina (ver la página de Contacto). Si algún día
+  // se separan, se cambia aquí y los seis documentos se enteran solos.
+  email: 'soporte@bipsy.es',
+  privacyEmail: 'soporte@bipsy.es',
 } as const;
 
 /** True mientras falte algún dato obligatorio del prestador. */

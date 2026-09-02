@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LEGAL_DOCUMENTS } from './legal.content';
 import { LegalDocument, LEGAL_COMPANY_INCOMPLETE } from './legal.models';
+import { LEGAL_GROUPS, LEGAL_INDEX, HELP_INDEX } from './legal.index';
 
 /**
- * Página de un documento legal (términos o privacidad).
+ * Página de un documento legal o de ayuda. Seis en total, todas sin sesión.
  *
- * Un solo componente sirve los dos documentos: comparten estructura y estilo,
+ * Un solo componente los sirve todos: comparten estructura y estilo,
  * y lo único que cambia es el contenido, que vive en legal.content.ts. El
  * documento se elige por el parámetro :slug de la ruta.
  *
@@ -32,19 +33,30 @@ export class LegalComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const slug = params.get('slug') ?? 'terminos';
       this.doc = LEGAL_DOCUMENTS[slug] ?? null;
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      // Solo al principio si NO se venía a un apartado concreto: con un
+      // fragmento en la URL, el router ya está saltando allí y subir a la vez
+      // deja al usuario arriba en vez de donde pidió ir.
+      if (!this.route.snapshot.fragment) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
     });
   }
 
-  /** El otro documento, para el enlace cruzado del pie. */
-  get otherSlug(): string {
-    return this.doc?.slug === 'terminos' ? 'privacidad' : 'terminos';
-  }
+  /** Los dos grupos de la barra lateral: lo legal y lo de ayuda. */
+  readonly groups = LEGAL_GROUPS;
 
-  get otherTitle(): string {
-    return this.doc?.slug === 'terminos'
-      ? 'Política de privacidad'
-      : 'Términos y condiciones';
+  /** Todas las páginas de la sección, en el orden en que se enseñan. */
+  private readonly allPages = [...LEGAL_INDEX, ...HELP_INDEX];
+
+  /**
+   * Los demás documentos, para los enlaces cruzados del pie.
+   *
+   * Sale del índice y no de una lista escrita aquí: son cuatro documentos que
+   * se remiten unos a otros, y basta con publicar el quinto para que aparezca
+   * en los cuatro pies sin tocar nada.
+   */
+  get otherDocs(): { slug: string; title: string }[] {
+    return this.allPages.filter(entry => entry.slug !== this.doc?.slug);
   }
 
   /** Marca el documento como borrador mientras no lo revise un abogado. */

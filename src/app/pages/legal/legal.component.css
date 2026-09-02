@@ -13,14 +13,97 @@
   z-index: 0;
 }
 
+/* Barra lateral + documento. El ancho total da 240 + 48 + 760, que es lo que
+   ocupaba antes el texto centrado más su margen: el documento no se mueve de
+   sitio al aparecer la lista. */
+.legal-layout {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, 100% - 56px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
 .legal-inner {
   position: relative;
   z-index: 1;
   /* Ancho de lectura cómodo: un texto legal a todo lo ancho no se lee. */
   max-width: 760px;
-  margin: 0 auto;
-  padding: 48px 28px 96px;
+  padding: 48px 0 96px;
 }
+
+/* Centrado cuando va solo (documento no encontrado). */
+.legal-page > .legal-inner { margin: 0 auto; padding: 48px 28px 96px; }
+
+/* ─── Barra lateral ─── */
+
+.legal-side {
+  position: sticky;
+  /* Bajo la cabecera fija. */
+  top: 96px;
+  padding-top: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.legal-side__group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.legal-side__title {
+  margin-bottom: 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+}
+
+.legal-side__link {
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--clr-text-2);
+  text-decoration: none;
+  transition: background-color .18s ease, color .18s ease;
+}
+
+.legal-side__link:hover { background: var(--clr-surface); color: var(--clr-text); }
+
+/* El documento abierto, marcado con la superficie y no con color de texto:
+   en una lista de seis, el color solo no basta para saber dónde estás. */
+.legal-side__link--on,
+.legal-side__link--on:hover {
+  background: var(--clr-surface);
+  color: var(--clr-text);
+}
+
+/* El índice del documento: segundo nivel, así que más pequeño y con un filo
+   a la izquierda que lo agrupa visualmente. */
+.legal-side__toc {
+  padding-left: 12px;
+  box-shadow: inset 1px 0 0 var(--clr-border);
+}
+
+.legal-side__anchor {
+  padding: 5px 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--clr-text-3);
+  text-decoration: none;
+  transition: color .18s ease;
+}
+
+.legal-side__anchor:hover { color: var(--clr-text); }
 
 /* ─── Cabecera ─── */
 
@@ -93,6 +176,9 @@
 .legal-toc {
   padding: 20px 24px;
   margin-bottom: 40px;
+  /* Solo en estrecho: con la barra lateral a la vista, el mismo índice dos
+     veces en la misma pantalla es ruido. */
+  display: none;
 }
 /* El índice no es interactivo: sin el hover-lift de las tarjetas normales. */
 .legal-toc:hover {
@@ -174,6 +260,24 @@
 
 .legal-footer { margin-top: 28px; }
 
+/* Cuatro documentos que se remiten entre sí: en columna, no en fila, para que
+   no compitan con el botón de volver ni se corten en móvil. */
+.legal-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.legal-footer-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+  margin-bottom: 2px;
+}
+
 .legal-cross-link {
   display: inline-flex;
   align-items: center;
@@ -188,7 +292,19 @@
 
 /* ─── Móvil ─── */
 
+/* Sin sitio para la barra lateral: la lista se va al pie del documento, que
+   ya tiene los enlaces cruzados, y vuelve el índice en línea. */
+@media (max-width: 1000px) {
+  .legal-layout {
+    display: block;
+    width: min(760px, 100% - 40px);
+  }
+  .legal-side { display: none; }
+  .legal-toc { display: block; }
+  .legal-inner { max-width: none; padding: 32px 0 80px; }
+}
+
 @media (max-width: 640px) {
-  .legal-inner { padding: 32px 20px 72px; }
+  .legal-inner { padding: 32px 0 72px; }
   .legal-title { font-size: 1.9rem; }
 }
