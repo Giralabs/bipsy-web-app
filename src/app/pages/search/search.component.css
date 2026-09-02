@@ -1,58 +1,82 @@
-.search-page { position: relative; min-height: 100vh; }
+.search-page { min-height: 100vh; }
 
-.orb-bg {
-  position: fixed;
-  top: -200px; right: -150px;
-  width: 600px; height: 600px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(185,235,208,0.07) 0%, transparent 65%);
-  z-index: 0;
-}
-
-/* ── Header ── */
+/* ── Cabecera ──
+   Corta a propósito: lo que se viene a ver son los resultados, no un titular. */
 .search-header {
   position: relative;
   z-index: 1;
-  background: rgba(255,255,255,0.015);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding: 48px 28px 28px;
+  padding: 28px 0 16px;
+  width: min(1240px, 100% - 48px);
+  margin: 0 auto;
 }
 
-.search-header-inner { max-width: 1320px; margin: 0 auto; }
+/* displaySmall: Bricolage Grotesque 32 px, 800. */
+.page-title {
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.2px;
+}
 
-.page-title { font-size: 2.4rem; font-weight: 800; letter-spacing: -.8px; margin-bottom: 6px; }
-.page-sub { font-size: 1rem; color: var(--clr-text-2); margin-bottom: 24px; }
+.page-sub {
+  margin-top: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
 
-/* Search bar */
+/* Título a un lado, herramientas al otro. */
+.search-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+
+.search-intro { min-width: 0; }
+
+/* El buscador no se estira a todo lo ancho: un campo de mil píxeles con tres
+   palabras dentro es lo que hacía que la cabecera se viera vacía. */
+.search-tools {
+  display: flex;
+  gap: 8px;
+  flex: 0 1 620px;
+  min-width: 0;
+}
+
+/* El campo es una superficie, no un contorno: sin borde en ningún estado,
+   como el resto de campos de la web. */
 .search-bar {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(255,255,255,0.06);
-  border: 1.2px solid rgba(255,255,255,0.10);
-  border-radius: 999px;
-  padding: 14px 20px;
-  margin-bottom: 20px;
-  transition: border-color .2s ease, box-shadow .2s ease;
-  backdrop-filter: blur(10px);
+  gap: 10px;
+  height: 46px;
+  padding: 0 20px;
+  background: var(--clr-surface);
+  border: none;
+  border-radius: var(--r-pill);
+  transition: background-color .2s ease;
 }
 
-.search-bar:focus-within {
-  border-color: var(--clr-mint);
-  box-shadow: 0 0 0 3px var(--clr-mint-dim);
-}
+.search-bar:focus-within { background: var(--clr-surface-hover); }
+.search-bar-icon { color: var(--clr-text-2); flex-shrink: 0; font-size: 20px; }
 
-.search-bar-icon { color: var(--clr-mint); flex-shrink: 0; }
 .search-bar-input {
   flex: 1;
+  min-width: 0;
   background: none;
   border: none;
   outline: none;
   color: var(--clr-text);
   font-family: var(--ff);
-  font-size: 1rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
 }
+
 .search-bar-input::placeholder { color: var(--clr-text-3); }
 
 .search-clear {
@@ -63,56 +87,130 @@
   padding: 2px;
   display: flex;
   border-radius: 50%;
-  transition: color .2s ease;
 }
+
+.search-clear .material-symbols-rounded { font-size: 18px; }
 .search-clear:hover { color: var(--clr-text); }
 
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 46px;
+  padding: 0 18px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.tool-btn:hover { background: var(--clr-surface-hover); }
+.tool-btn--on { background: var(--clr-mint); color: var(--clr-mint-text); }
+.tool-btn .material-symbols-rounded { font-size: 20px; }
+
+.tool-btn__count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint-text);
+  color: var(--clr-mint);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Los cantos se difuminan: así se ve que la fila sigue en vez de cortarse
+   a hachazo contra el borde de la ventana. */
 .chips-row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding: 14px 28px;
-  margin-left: -28px;
-  margin-right: -28px;
-  margin-top: -14px;
-  margin-bottom: 12px;
+  padding-bottom: 4px;
   scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+  mask-image: linear-gradient(to right, transparent 0, black 20px, black calc(100% - 32px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 20px, black calc(100% - 32px), transparent 100%);
+  padding-left: 20px;
+  margin-left: -20px;
 }
-.chips-row::-webkit-scrollbar { display: none; }
 
-/* ── Results ── */
+.chips-row::-webkit-scrollbar { display: none; }
+.chips-row.is-dragging { cursor: grabbing; }
+.chips-row app-chip { flex-shrink: 0; }
+
+/* ── Filtros puestos ── */
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+.active-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px 7px 12px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint-dim);
+  color: var(--clr-mint);
+  font-family: var(--ff);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.active-filter:hover { background: var(--clr-mint); color: var(--clr-mint-text); }
+.active-filter__icon { font-size: 14px; }
+.active-filter__x { font-size: 15px; opacity: .7; }
+
+/* ── Resultados ── */
 .results-wrap {
   position: relative;
   z-index: 1;
-  max-width: 1320px;
+  width: min(1240px, 100% - 48px);
   margin: 0 auto;
-  padding: 32px 28px 80px;
+  padding: 8px 0 80px;
 }
 
 .results-count {
-  font-size: 0.88rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
   color: var(--clr-text-2);
-  font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
+.results-count__extra { font-weight: 600; text-transform: none; letter-spacing: 0; }
+
+/* Auto-fill y no tres columnas fijas: en un monitor ancho, tres tarjetas de
+   400 px eran carteles, no resultados. */
 .results-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+  gap: 16px;
 }
 
-@media (max-width: 960px) { .results-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .results-grid { grid-template-columns: 1fr; } }
+.results-skeleton { height: 200px; border-radius: var(--r-lg); }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 80px 20px;
-  gap: 12px;
-  color: var(--clr-text-2);
-  text-align: center;
+/* La etiqueta del botón sobra en cuanto aprieta: el icono ya lo dice. */
+@media (max-width: 900px) {
+  .search-top { flex-direction: column; align-items: stretch; gap: 16px; }
+  .search-tools { flex: 1 1 auto; }
 }
-.empty-state h3 { font-size: 1.3rem; font-weight: 700; color: var(--clr-text); }
-.empty-state p { font-size: 0.92rem; }
+
+@media (max-width: 560px) {
+  .search-header,
+  .results-wrap { width: calc(100% - 32px); }
+
+  .tool-btn { padding: 0 14px; }
+  .tool-btn__label { display: none; }
+}

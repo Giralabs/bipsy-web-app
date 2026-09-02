@@ -1,70 +1,264 @@
 <div class="search-page anim-fade-up">
-  <!-- Orb -->
-  <div class="orb-bg"></div>
 
-  <!-- ── Header ── -->
-  <div class="search-header">
-    <div class="search-header-inner">
-      <h1 class="page-title">Explorar &amp; Buscar</h1>
-      <p class="page-sub">Encuentra salones, barberías y tratamientos cerca de ti</p>
+  <!-- ── Cabecera ──
+       El título a un lado y las herramientas al otro: en una sola columna, el
+       buscador se estiraba mil píxeles y la banda de arriba se comía media
+       pantalla antes del primer resultado. -->
+  <header class="search-header">
+    <div class="search-top">
+      <div class="search-intro">
+        <h1 class="page-title">Buscar</h1>
+        <p class="page-sub">Negocios y profesionales con cita previa, cerca de ti</p>
+      </div>
 
-      <!-- Search input -->
-      <div class="search-bar">
-        <span class="material-symbols-rounded search-bar-icon">search</span>
-        <input
-          type="text"
-          class="search-bar-input"
-          placeholder="Buscar por nombre, servicio, ciudad..."
-          [(ngModel)]="searchQuery"
-          (ngModelChange)="doSearch()"
-        />
-        @if (searchQuery) {
-          <button type="button" class="search-clear" (click)="searchQuery = ''; doSearch()" aria-label="Limpiar búsqueda">
-            <span class="material-symbols-rounded" style="font-size: 18px;">close</span>
+      <div class="search-tools">
+        <div class="search-bar">
+          <span class="material-symbols-rounded search-bar-icon">search</span>
+          <input
+            type="text"
+            class="search-bar-input"
+            placeholder="Nombre, servicio o ciudad…"
+            name="bipsy-search"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onQueryChange()"
+          />
+          @if (searchQuery) {
+            <button type="button" class="search-clear" (click)="searchQuery = ''; doSearch()"
+                    aria-label="Limpiar búsqueda">
+              <span class="material-symbols-rounded">close</span>
+            </button>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="tool-btn"
+          [class.tool-btn--on]="activeFilterCount > 0"
+          (click)="filtersOpen = !filtersOpen"
+        >
+          <span class="material-symbols-rounded">tune</span>
+          <span class="tool-btn__label">Filtros</span>
+          @if (activeFilterCount > 0) {
+            <span class="tool-btn__count">{{ activeFilterCount }}</span>
+          }
+        </button>
+
+        @if (mapAvailable) {
+          <button type="button" class="tool-btn" [class.tool-btn--on]="showMap" (click)="showMap = !showMap">
+            <span class="material-symbols-rounded">{{ showMap ? 'view_list' : 'map' }}</span>
+            <span class="tool-btn__label">{{ showMap ? 'Lista' : 'Mapa' }}</span>
           </button>
         }
       </div>
+    </div>
 
-      <!-- Category filter chips -->
-      <div class="chips-row">
+    <!-- Categorías. Se arrastran con el ratón: en un ordenador, la mitad
+         quedaban fuera y no había forma de llegar a ellas. -->
+    <div class="chips-row" appDragScroll>
+      <app-chip
+        label="Todas"
+        [selected]="!selectedCategoryId"
+        icon="grid_view"
+        (onClick)="selectCategoryFilter(undefined)"
+      />
+      @for (c of categories; track c.id) {
         <app-chip
-          label="Todas"
-          [selected]="!selectedCategoryId"
-          icon="grid_view"
-          (onClick)="selectCategoryFilter(undefined)"
+          [label]="c.name"
+          [selected]="selectedCategoryId === c.id"
+          [icon]="getCategoryIcon(c.code)"
+          (onClick)="selectCategoryFilter(c.id)"
         />
-        @for (c of categories; track c.id) {
-          <app-chip
-            [label]="c.name"
-            [selected]="selectedCategoryId === c.id"
-            [icon]="getCategoryIcon(c.code)"
-            (onClick)="selectCategoryFilter(c.id)"
-          />
+      }
+    </div>
+
+    <!-- Lo que hay puesto, a la vista y quitable de uno en uno. -->
+    @if (activeFilterCount > 0) {
+      <div class="active-filters">
+        @if (dateLabel) {
+          <button type="button" class="active-filter" (click)="setDate(null)">
+            <span class="material-symbols-rounded active-filter__icon">calendar_today</span>
+            {{ dateLabel }}
+            <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
+        }
+        @if (area) {
+          <button type="button" class="active-filter" (click)="onAreaChange(null)">
+            <span class="material-symbols-rounded active-filter__icon">location_on</span>
+            {{ areaLabel ? areaLabel + ' · ' + area.radiusKm + ' km' : 'A ' + area.radiusKm + ' km' }}
+            <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
+        }
+        @if (!area && cityQuery) {
+          <button type="button" class="active-filter" (click)="clearCity()">
+            <span class="material-symbols-rounded active-filter__icon">location_on</span>
+            {{ cityQuery }}
+            <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
+        }
+        @if (slot !== 'any') {
+          <button type="button" class="active-filter" (click)="clearSlot()">
+            <span class="material-symbols-rounded active-filter__icon">schedule</span>
+            {{ slot === 'morning' ? 'Por la mañana' : 'Por la tarde' }}
+            <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
+        }
+        @if (atHomeOnly) {
+          <button type="button" class="active-filter" (click)="toggleSwitch('atHomeOnly')">
+            A domicilio <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
+        }
+        @if (topRated) {
+          <button type="button" class="active-filter" (click)="toggleSwitch('topRated')">
+            Mejor valorados <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
+        }
+        @if (withPhoto) {
+          <button type="button" class="active-filter" (click)="toggleSwitch('withPhoto')">
+            Con foto <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
         }
       </div>
-    </div>
-  </div>
+    }
+  </header>
 
-  <!-- ── Results ── -->
+  <!-- ── Resultados ── -->
   <div class="results-wrap">
     @if (isLoading) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <span>Buscando...</span>
-      </div>
-    } @else if (businesses.length > 0) {
-      <p class="results-count">{{ businesses.length }} resultado{{ businesses.length !== 1 ? 's' : '' }}</p>
       <div class="results-grid">
-        @for (biz of businesses; track biz.id) {
-          <app-business-card [business]="biz" />
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="skeleton results-skeleton"></div>
         }
       </div>
-    } @else {
+    } @else if (loadError) {
       <div class="empty-state">
-        <span class="material-symbols-rounded" style="font-size: 52px; color: var(--clr-text-3);">search_off</span>
-        <h3>Sin resultados</h3>
-        <p>Prueba con otro término o cambia la categoría.</p>
+        <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+        <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido buscar' }}</h3>
+        <p>{{ loadError.message }}</p>
+        <app-button variant="secondary" icon="refresh" (onClick)="doSearch()">Volver a buscar</app-button>
       </div>
+    } @else {
+
+      <p class="results-count">
+        {{ businesses.length }} resultado{{ businesses.length !== 1 ? 's' : '' }}
+      </p>
+
+      @if (showMap) {
+        <app-business-map
+          [businesses]="businesses"
+          [area]="area"
+          (areaChange)="onAreaChange($event)"
+        />
+      } @else if (businesses.length === 0) {
+        <div class="empty-state">
+          <span class="material-symbols-rounded">search_off</span>
+          <h3>Sin resultados</h3>
+          <p>Prueba con otro término, cambia la categoría o quita algún filtro.</p>
+          @if (activeFilterCount > 0) {
+            <app-button variant="secondary" icon="restart_alt" (onClick)="clearFilters()">
+              Quitar filtros
+            </app-button>
+          }
+        </div>
+      } @else {
+        <div class="results-grid">
+          @for (biz of businesses; track biz.id) {
+            <app-business-card
+              [business]="biz"
+              [previouslyBooked]="!!biz.discovery?.previouslyBooked"
+              [isNew]="!!biz.discovery?.recentlyOpened"
+              [distanceKm]="biz.discovery?.distanceKm ?? null"
+              (rebook)="onRebook($event)"
+            />
+          }
+        </div>
+      }
     }
   </div>
 </div>
+
+<!-- ══════════ HOJA DE FILTROS ══════════
+     La misma que en el móvil: dos grupos y la acción destructiva al final.
+     Sin botón de descartar a propósito — los filtros se aplican al vuelo y se
+     ve el efecto sin cerrar, así que una ✕ que los revirtiera sería una
+     segunda forma de salir con un resultado distinto. Para deshacer está
+     "Quitar filtros", que dice exactamente lo que hace. -->
+@if (filtersOpen) {
+  <div class="sheet-backdrop" (click)="filtersOpen = false">
+    <div class="sheet sheet--filters" (click)="$event.stopPropagation()">
+      <header class="sheet__head">
+        <h2 class="sheet__title">Filtros</h2>
+        <button type="button" class="sheet__done" (click)="filtersOpen = false" aria-label="Hecho">
+          <span class="material-symbols-rounded">check</span>
+        </button>
+      </header>
+
+      @if (picking === 'date') {
+        <button type="button" class="flow__back" (click)="picking = 'none'">
+          <span class="material-symbols-rounded">arrow_back</span>
+          Filtros
+        </button>
+
+        <app-grouped-section header="¿Qué día?">
+          <app-grouped-row
+            label="Cualquier día"
+            icon="event_available"
+            (action)="setDate(null)"
+          >
+            @if (!date) { <span class="material-symbols-rounded sheet__tick">check</span> }
+          </app-grouped-row>
+          @for (option of dateOptions; track option.value) {
+            <app-grouped-row [label]="option.label" (action)="setDate(option.value)">
+              @if (date === option.value) {
+                <span class="material-symbols-rounded sheet__tick">check</span>
+              }
+            </app-grouped-row>
+          }
+        </app-grouped-section>
+      } @else {
+        <app-grouped-section header="Dónde y cuándo">
+          <app-grouped-row
+            label="Zona"
+            icon="location_on"
+            [value]="zoneRowValue"
+            [navigates]="true"
+            (action)="pickZone()"
+          />
+          <app-grouped-row
+            label="Fecha"
+            icon="calendar_today"
+            [value]="dateRowValue"
+            [navigates]="true"
+            (action)="picking = 'date'"
+          />
+        </app-grouped-section>
+
+        <app-grouped-section header="Preferencias">
+          <app-grouped-row label="A domicilio" icon="directions_car" (action)="toggleSwitch('atHomeOnly')">
+            <input type="checkbox" class="sheet__switch" [checked]="atHomeOnly" tabindex="-1" />
+          </app-grouped-row>
+          <app-grouped-row label="Mejor valorados" icon="star" (action)="toggleSwitch('topRated')">
+            <input type="checkbox" class="sheet__switch" [checked]="topRated" tabindex="-1" />
+          </app-grouped-row>
+          <app-grouped-row label="Con foto" icon="photo_camera" (action)="toggleSwitch('withPhoto')">
+            <input type="checkbox" class="sheet__switch" [checked]="withPhoto" tabindex="-1" />
+          </app-grouped-row>
+        </app-grouped-section>
+
+        <!-- Siempre presente y desactivada cuando no hay nada que quitar, en
+             vez de aparecer y desaparecer: al salir y entrar movía toda la
+             hoja. -->
+        <app-grouped-section>
+          <app-grouped-row
+            label="Quitar filtros"
+            [destructive]="true"
+            [disabled]="activeFilterCount === 0"
+            (action)="clearFilters()"
+          />
+        </app-grouped-section>
+      }
+    </div>
+  </div>
+}

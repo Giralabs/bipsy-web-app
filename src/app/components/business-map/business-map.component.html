@@ -1,0 +1,52 @@
+<div class="map">
+  <div class="map__canvas" #canvas></div>
+
+  @if (loadFailed || authRejected) {
+    <div class="map__notice">
+      <span class="material-symbols-rounded">map</span>
+      <p>El mapa no está disponible ahora mismo.</p>
+    </div>
+  } @else if (!ready) {
+    <div class="map__loading"><div class="spinner"></div></div>
+  }
+
+  @if (ready) {
+    <!-- Control de la zona. Flota sobre el mapa, que es donde el cristal sigue
+         haciendo algo: desenfoca el mapa de debajo. -->
+    <div class="map__zone">
+      @if (area) {
+        <div class="map__zone-row">
+          <span class="material-symbols-rounded map__zone-icon">my_location</span>
+          <span class="map__zone-label">A {{ radiusKm }} km de aquí</span>
+          <button type="button" class="map__zone-clear" (click)="clearArea()">Quitar</button>
+        </div>
+        <input
+          class="map__slider"
+          type="range"
+          min="1"
+          max="50"
+          step="1"
+          [value]="radiusKm"
+          (input)="onRadiusChange($any($event.target).value)"
+          aria-label="Radio de la zona en kilómetros"
+        />
+      } @else {
+        <p class="map__zone-hint">
+          <span class="material-symbols-rounded map__zone-icon">touch_app</span>
+          Toca el mapa para buscar solo en esa zona
+        </p>
+      }
+    </div>
+
+    <!-- El negocio tocado. Se cierra al tocar el mapa. -->
+    @if (selected) {
+      <button type="button" class="map__card" (click)="openBusiness(selected)">
+        <span class="map__card-text">
+          <strong>{{ selected.name }}</strong>
+          <small>{{ locationOf(selected) }}</small>
+        </span>
+        <span class="material-symbols-rounded map__card-go">chevron_right</span>
+      </button>
+    }
+  }
+</div>
