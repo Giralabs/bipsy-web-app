@@ -12,6 +12,10 @@ import { LegalDocument, LEGAL_COMPANY } from './legal.models';
  * Reglamento de Servicios Digitales y el Reglamento P2B, pero conviene que los
  * lea uno en cuanto sea asumible.
  *
+ * ⚠️ El texto se pinta TAL CUAL en un <p>: no hay markdown. Un `**negrita**`
+ * sale con los asteriscos a la vista. Si algún día hace falta destacar algo,
+ * hay que darle soporte en la plantilla, no escribirlo aquí.
+ *
  * La numeración de los títulos va escrita a mano. Si insertas una sección en
  * medio, renumera las siguientes: el índice de la página se genera a partir de
  * estos títulos y quedaría descuadrado.
@@ -746,7 +750,7 @@ const ABOUT: LegalDocument = {
       id: 'quien',
       title: '3. Quién está detrás',
       paragraphs: [
-        'Bipsy lo desarrolla **Giralabs**, un proyecto pequeño con base en Marchena, Sevilla. Giralabs es ' +
+        'Bipsy lo desarrolla Giralabs, un proyecto pequeño con base en Marchena, Sevilla. Giralabs es ' +
           'un nombre comercial: la persona responsable, con su nombre y su NIF, está identificada en el ' +
           'Aviso legal, como manda la ley.',
         'Somos pocos y no tenemos inversores detrás. Eso tiene una parte buena y una mala, y las dos se ' +
@@ -933,7 +937,7 @@ const CONTACT: LegalDocument = {
       id: 'donde',
       title: '1. Dónde escribirnos',
       paragraphs: [
-        `Todo pasa por un mismo buzón: **${LEGAL_COMPANY.email}**. Somos un equipo pequeño y preferimos ` +
+        `Todo pasa por un mismo buzón: ${LEGAL_COMPANY.email}. Somos un equipo pequeño y preferimos ` +
           'una dirección que se lee a cinco que no se leen.',
         'Para que llegue al sitio correcto, pon en el asunto de qué va:',
       ],
