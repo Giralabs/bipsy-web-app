@@ -871,3 +871,76 @@ html, body {
     padding-bottom: var(--tabbar-space, 0px);
   }
 }
+
+/* ══════════════════════════════════════════
+   CUADROS DE CATEGORÍA — port de _CategoryTiles (Android)
+   Global porque los usan Explorar y Buscar: en la app es la MISMA pantalla,
+   así que tener dos aspectos distintos era el bug.
+   El lado se despeja del ancho real, no va fijo: con una medida fija el corte
+   solo caía bien en un móvil, y en uno grande el último terminaba justo en el
+   borde y no se cortaba nada.
+   ══════════════════════════════════════════ */
+
+.tiles-row {
+  display: flex;
+  /* Más apretados que el resto de la pantalla a propósito: son una sola fila
+     y con el aire de siempre se desunen. */
+  gap: 8px;
+  /* A sangre: la fila ignora el relleno de su contenedor y pone el suyo, que
+     es el `screenHorizontal` de la app. Antes se sumaban los dos y el primer
+     cuadro empezaba a 44 del borde, con la fila 48 px más estrecha de lo que
+     debía: se veían cuatro y la app enseña cuatro y medio. */
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding: 0 20px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tiles-row::-webkit-scrollbar { display: none; }
+
+
+.tile,
+.tile-skeleton {
+  /* (ancho - margen) / 4,5 - hueco, acotado entre 64 y 88 como en la app. */
+  flex: 0 0 auto;
+  width: clamp(64px, calc((100vw - 20px) / 4.5 - 8px), 88px);
+  height: clamp(64px, calc((100vw - 20px) / 4.5 - 8px), 88px);
+  border-radius: var(--r-xl);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: none;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  cursor: pointer;
+  transition: background-color .18s ease, color .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tile .material-symbols-rounded { font-size: 24px; }
+
+.tile__label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  /* Dos líneas como mucho: «Cejas y pestañas» no cabe en una. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile--on {
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+}

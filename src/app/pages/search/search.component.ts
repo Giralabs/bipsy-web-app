@@ -200,6 +200,20 @@ export class SearchComponent implements OnInit {
   }
 
   /** Quita la zona escrita a mano que no se pudo geocodificar. */
+  /**
+   * Las categorías como las pinta Android: barbería primero, que es la que más
+   * negocios tiene. Sin «Todas»: en la app no existe esa tarjeta.
+   */
+  get tileCategories(): CategoryResponse[] {
+    const isBarber = (code: string) => code === 'BARBER' || code === 'BARBERSHOP';
+    return [...this.categories].sort((a, b) => Number(isBarber(b.code)) - Number(isBarber(a.code)));
+  }
+
+  /** Toca la ya elegida y se deselecciona, como en la app. */
+  toggleCategoryFilter(cat: CategoryResponse): void {
+    this.selectCategoryFilter(this.selectedCategoryId === cat.id ? undefined : cat.id);
+  }
+
   clearCity(): void {
     this.cityQuery = null;
     void this.doSearch();

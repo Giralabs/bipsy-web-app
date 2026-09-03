@@ -57,7 +57,25 @@
 
     <!-- Categorías. Se arrastran con el ratón: en un ordenador, la mitad
          quedaban fuera y no había forma de llegar a ellas. -->
-    <div class="chips-row" appDragScroll>
+    <!-- ── Móvil: los mismos cuadros que Explorar ──
+         En la app buscar es un estado de Explorar, no otra pantalla, así que
+         las categorías se ven igual en las dos. Sin cuadro «Todas»: se vuelve
+         a todo tocando otra vez la que está elegida. -->
+    <div class="tiles-row only-touch" appDragScroll>
+      @for (c of tileCategories; track c.id) {
+        <button
+          type="button"
+          class="tile"
+          [class.tile--on]="selectedCategoryId === c.id"
+          (click)="toggleCategoryFilter(c)"
+        >
+          <span class="material-symbols-rounded">{{ getCategoryIcon(c.code) }}</span>
+          <span class="tile__label">{{ c.name }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="chips-row only-desk" appDragScroll>
       <app-chip
         label="Todas"
         [selected]="!selectedCategoryId"
