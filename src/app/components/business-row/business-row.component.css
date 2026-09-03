@@ -73,3 +73,19 @@
 @media (max-width: 560px) {
   .row__item { flex-basis: 214px; min-width: 214px; }
 }
+
+/* ── Móvil: la fila a sangre, como en la app ──
+   El contenedor ya mete su relleno y la fila metía el suyo encima: la última
+   tarjeta moría pegada al canto por la derecha y la primera empezaba muy
+   adentro. A sangre, con el `screenHorizontal` de la app (20) a los dos
+   lados, la tarjeta cortada se ve cortada y no comida por el borde. */
+@media (max-width: 1024px) {
+  .row__scroll {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    padding: 0 20px 4px;
+    /* Sin esto el ajuste por proximidad se comía el relleno izquierdo: la
+       fila nacía con scrollLeft = 20 y la primera tarjeta pegada al borde. */
+    scroll-padding-left: 20px;
+  }
+}

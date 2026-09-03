@@ -374,3 +374,63 @@
   .cover__info { width: calc(100% - 32px); }
   .card { padding: 18px; }
 }
+
+/* ══════════════════════════════════════════
+   ESCRITORIO — la ficha deja de ser una pila de cajas
+   ══════════════════════════════════════════
+
+   El problema no era ninguna sección en concreto: eran seis cajas idénticas,
+   cada una con su icono de color y su titular, apiladas. Eso se lee como una
+   plantilla, no como la ficha de un negocio. La app no lo hace así: usa
+   `_SectionHeader`, que es un titular a secas, y separa con un filo.
+
+   Aquí igual. La columna principal pierde el fondo, el radio y el relleno de
+   caja; lo que ordena la lectura es el aire y una línea. La barra lateral
+   sigue siendo una tarjeta —ahí sí, porque es una acción y tiene que
+   despegarse— y se queda pegada al bajar. */
+@media (min-width: 1025px) {
+  .detail__body {
+    /* Más aire entre la lectura y la acción, que estaban a 20. */
+    gap: 48px;
+    padding-top: 40px;
+  }
+
+  .detail__main { gap: 0; }
+
+  .detail__main .card {
+    background: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  /* El filo separa; no hace falta que cada sección se dibuje su marco. */
+  .detail__main .card + .card {
+    margin-top: 40px;
+    padding-top: 40px;
+    box-shadow: inset 0 0.5px 0 var(--clr-border);
+  }
+
+  /* Fuera los iconos de los titulares: seis iconos de color en una columna
+     compiten entre sí y con el contenido, que es lo que hay que mirar. */
+  .detail__main .card__title-icon { display: none; }
+
+  .detail__main .card__title {
+    font-family: var(--ff-display, var(--ff));
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -.5px;
+    margin-bottom: 18px;
+  }
+
+  /* La descripción es texto, no una ficha técnica: se lee a ancho cómodo. */
+  .detail__main .card__text {
+    max-width: 62ch;
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  /* Los servicios respiran: es la lista por la que se entra a reservar. */
+  .service { padding: 20px 0; }
+
+  .detail__aside { align-self: start; }
+}
