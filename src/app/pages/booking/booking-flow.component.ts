@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, firstValueFrom, take } from 'rxjs';
@@ -46,6 +46,17 @@ export class BookingFlowComponent implements OnInit {
   @ViewChild(AddCardSheetComponent) cardSheet?: AddCardSheetComponent;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
+
+  /**
+   * Si se llegó aquí navegando dentro de la web.
+   *
+   * Se mira en la construcción porque `getCurrentNavigation()` solo existe
+   * mientras la navegación está en curso: después vale null y ya no hay forma
+   * de saber si había algo detrás.
+   */
+  private readonly cameFromApp =
+    this.router.getCurrentNavigation()?.previousNavigation != null;
 
   step: Step = 'service';
   loading = true;
@@ -363,7 +374,16 @@ export class BookingFlowComponent implements OnInit {
       case 'time': this.step = 'date'; break;
       case 'confirm': this.step = 'time'; break;
       default:
-        if (this.business) {
+        // ⚠️ VOLVER, no navegar a la ficha.
+        //
+        // Navegar EMPUJABA una ficha nueva encima de la reserva, y la ficha
+        // vuelve con `location.back()`: se quedaba rebotando entre las dos
+        // para siempre. Con historial propio se retrocede de verdad; sin él
+        // —entrando por enlace directo— no hay a dónde volver y ahí sí toca
+        // navegar, o se saldría del sitio.
+        if (this.cameFromApp) {
+          this.location.back();
+        } else if (this.business) {
           this.router.navigate(businessPath(this.business));
         }
     }
