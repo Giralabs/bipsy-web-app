@@ -1,3 +1,5 @@
+import { environment } from './environment';
+
 /**
  * Configuración web de Firebase (proyecto `gipsi-6806c`).
  *
@@ -15,34 +17,10 @@
  * `localhost` ya viene autorizado de serie.
  */
 
-/**
- * El dominio que Google enseña en «Ir a …» al elegir cuenta.
- *
- * Con el de Firebase, el selector de cuentas dice «Ir a
- * gipsi-6806c.firebaseapp.com», que no le suena a nadie y da mala espina justo
- * en el paso donde se entregan credenciales. Se arregla sirviendo el manejador
- * de Firebase desde el dominio propio: entonces dice «Ir a bipsy.es».
- *
- * **Cómo encenderlo** (los dos pasos, y en este orden):
- *
- *   1. Desplegar con el `vercel.json` de este repo, que reescribe
- *      `/__/auth/*` hacia `gipsi-6806c.firebaseapp.com`. Es lo que hace que
- *      el dominio propio sepa responder al retorno de Google.
- *   2. Firebase Console → Authentication → Settings → **Authorized domains**:
- *      añadir `bipsy.es`.
- *
- * Y entonces cambiar la constante de abajo a `'bipsy.es'`.
- *
- * ⚠️ **No cambiarla antes.** Si el dominio no sirve `/__/auth/handler`, el
- * acceso con Google deja de funcionar entero: la ventana vuelve a un 404 y no
- * hay token. Por eso queda en el de Firebase hasta que los dos pasos estén
- * hechos, y no se deduce del `location.host`.
- */
-export const firebaseAuthDomain = 'gipsi-6806c.firebaseapp.com';
-
 export const firebaseConfig = {
   apiKey: 'AIzaSyCZth_-nuG-bp2X4LlqB6vJsHmSCqmytzw',
-  authDomain: firebaseAuthDomain,
+  // Sale del entorno: producción y desarrollo no pueden usar el mismo.
+  authDomain: environment.firebaseAuthDomain,
   projectId: 'gipsi-6806c',
   storageBucket: 'gipsi-6806c.firebasestorage.app',
   messagingSenderId: '933645516812',

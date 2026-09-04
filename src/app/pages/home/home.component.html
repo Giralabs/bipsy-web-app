@@ -96,40 +96,32 @@
         </form>
       </div>
 
-      <!-- Con una cita, el hueco de la ilustración lo ocupa la cita. -->
-      @if (isAuthenticated && heroBooking) {
-        <button type="button" class="hero-booking" (click)="openHeroBooking()">
-          <span class="hero-booking__head">
-            <span class="hero-booking__eyebrow">
-              {{ heroBookingIsPast ? 'Tu última cita' : 'Tu próxima cita' }}
+      <!-- ⚠️ El muñeco NO se quita nunca: es la cara del hero y lo que hace
+           que esta portada sea de Bipsy y no de cualquiera. La cita se cuelga
+           encima, como las insignias de cristal sobre las fotos de las
+           tarjetas: cristal solo donde hay algo debajo que dejar ver. -->
+      <div class="hero-showcase">
+        <img
+          src="assets_bip/bip_hello.webp"
+          alt="Bipsy Preview"
+          class="hero-image"
+        />
+
+        @if (isAuthenticated && heroBooking) {
+          <button type="button" class="hero-chip" (click)="openHeroBooking()">
+            <span class="hero-chip__top">
+              <span class="hero-chip__eyebrow">
+                {{ heroBookingIsPast ? 'Tu última cita' : 'Tu próxima cita' }}
+              </span>
+              <span class="hero-chip__state" [class]="'hero-chip__state hero-chip__state--' + heroBookingTone">
+                {{ heroBookingLabel }}
+              </span>
             </span>
-            <span class="badge" [class]="'badge badge--' + heroBookingTone">
-              {{ heroBookingLabel }}
-            </span>
-          </span>
-
-          <span class="hero-booking__name">{{ heroBooking.businessName || 'Tu negocio' }}</span>
-          <span class="hero-booking__service">{{ heroBooking.serviceName }}</span>
-
-          <span class="hero-booking__when">
-            <span class="material-symbols-rounded">schedule</span>
-            {{ heroBookingWhen }}
-          </span>
-
-          <span class="hero-booking__go">
-            {{ heroBookingIsPast ? 'Volver a reservar' : 'Ver la cita' }}
-            <span class="material-symbols-rounded">arrow_forward</span>
-          </span>
-        </button>
-      } @else {
-        <div class="hero-showcase">
-          <img
-            src="assets_bip/bip_hello.webp"
-            alt="Bipsy Preview"
-            class="hero-image"
-          />
-        </div>
-      }
+            <span class="hero-chip__name">{{ heroBooking.businessName || heroBooking.serviceName }}</span>
+            <span class="hero-chip__when">{{ heroBookingWhen }}</span>
+          </button>
+        }
+      </div>
     </div>
   </section>
 
