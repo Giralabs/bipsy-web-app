@@ -197,7 +197,11 @@
              `getFavoriteBusinesses()` hace exactamente lo mismo, así que no hay
              401 que temer, y el cartel «guarda un negocio con el corazón» es
              justo para quien todavía no ha guardado ninguno. -->
+        <!-- Vacía, solo en móvil: en escritorio una caja a todo lo ancho
+             diciendo que no has guardado nada ocupa media pantalla para no
+             decir nada. Con favoritos dentro se pinta en los dos. -->
         <app-business-row
+          [class.only-touch]="favoriteBusinesses.length === 0"
           title="Tus favoritos"
           [businesses]="favoriteBusinesses"
           [loading]="isLoading"

@@ -17,7 +17,12 @@
         }
       </div>
     } @else if (businesses.length === 0) {
-      <p class="row__empty">{{ emptyMessage }}</p>
+      <!-- El corazón a la izquierda del texto: es lo que pinta `_EmptyRowCard`
+           en la app, y sin él la tarjeta es un párrafo suelto en una caja. -->
+      <p class="row__empty">
+        <span class="material-symbols-rounded">favorite</span>
+        <span>{{ emptyMessage }}</span>
+      </p>
     } @else {
       <div class="row__scroll">
         @for (biz of businesses; track biz.id) {

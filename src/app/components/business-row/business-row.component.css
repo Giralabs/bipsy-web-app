@@ -7,7 +7,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  /* 24 arriba y 12 abajo: el reparto de `_RowShell` (xxl sobre el título, md
+     bajo él). Pegado a los cuadros de categoría, el título parecía su pie. */
+  margin-top: 24px;
+  margin-bottom: 12px;
 }
 
 /* headlineMedium: Bricolage Grotesque 24 px, 700, tracking -0,6. */
@@ -61,13 +64,23 @@
 .row__skeleton { height: 200px; border-radius: var(--r-lg); }
 
 .row__empty {
-  padding: 16px 20px;
-  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  /* Radio xl y no sm: es el de `_EmptyRowCard`. */
+  border-radius: var(--r-xl);
   background: var(--clr-surface);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.55;
   color: var(--clr-text-2);
+}
+
+.row__empty .material-symbols-rounded {
+  font-size: 22px;
+  flex: 0 0 auto;
+  color: var(--clr-text-3);
 }
 
 @media (max-width: 560px) {
