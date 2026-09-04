@@ -94,12 +94,30 @@
             Buscar
           </app-button>
         </form>
+
+        <!-- La cita, en una línea y bajo el buscador: con sesión es lo primero
+             que se quiere saber, pero no vale tanto como para ocupar media
+             portada ni para taparle la cara al muñeco. -->
+        @if (isAuthenticated && heroBooking) {
+          <button type="button" class="hero-strip" (click)="openHeroBooking()">
+            <span class="material-symbols-rounded hero-strip__icon">
+              {{ heroBookingIsPast ? 'history' : 'event_upcoming' }}
+            </span>
+            <span class="hero-strip__text">
+              <strong>{{ heroBooking.businessName || heroBooking.serviceName }}</strong>
+              <span>{{ heroBookingWhen }}</span>
+            </span>
+            <span class="hero-strip__state" [class]="'hero-strip__state hero-strip__state--' + heroBookingTone">
+              {{ heroBookingLabel }}
+            </span>
+            <span class="material-symbols-rounded hero-strip__go">arrow_forward</span>
+          </button>
+        }
       </div>
 
-      <!-- ⚠️ El muñeco NO se quita nunca: es la cara del hero y lo que hace
-           que esta portada sea de Bipsy y no de cualquiera. La cita se cuelga
-           encima, como las insignias de cristal sobre las fotos de las
-           tarjetas: cristal solo donde hay algo debajo que dejar ver. -->
+      <!-- ⚠️ El muñeco NO se toca: es la cara del hero y lo que hace que esta
+           portada sea de Bipsy y no de cualquiera. Nada se pinta encima —una
+           tarjeta ahí le corta el cuerpo— y nada lo sustituye. -->
       <div class="hero-showcase">
         <img
           src="assets_bip/bip_hello.webp"
@@ -107,20 +125,6 @@
           class="hero-image"
         />
 
-        @if (isAuthenticated && heroBooking) {
-          <button type="button" class="hero-chip" (click)="openHeroBooking()">
-            <span class="hero-chip__top">
-              <span class="hero-chip__eyebrow">
-                {{ heroBookingIsPast ? 'Tu última cita' : 'Tu próxima cita' }}
-              </span>
-              <span class="hero-chip__state" [class]="'hero-chip__state hero-chip__state--' + heroBookingTone">
-                {{ heroBookingLabel }}
-              </span>
-            </span>
-            <span class="hero-chip__name">{{ heroBooking.businessName || heroBooking.serviceName }}</span>
-            <span class="hero-chip__when">{{ heroBookingWhen }}</span>
-          </button>
-        }
       </div>
     </div>
   </section>
