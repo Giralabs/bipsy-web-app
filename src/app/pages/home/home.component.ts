@@ -4,7 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BipsyService } from '../../services/bipsy.service';
 import { ApiError } from '../../core/api-error';
-import { BusinessResponse, CategoryResponse } from '../../models/bipsy.models';
+import {
+  BookingResponse,
+  BusinessResponse,
+  CategoryResponse,
+  isBookingActive,
+} from '../../models/bipsy.models';
+import { parseLocal, relativeDate } from '../../shared/dates';
 import { categoryIcon } from '../../shared/category-icons';
 import { businessBookingPath, businessPath } from '../../shared/slug';
 import { DragScrollDirective } from '../../shared/drag-scroll.directive';
@@ -54,6 +60,12 @@ export class HomeComponent implements OnInit {
         return;
       }
       this.isAuthenticated = status === 'authenticated';
+      // La cita del hero solo se pide con sesión: sin ella el hero es el
+      // cartel de siempre y una llamada más sería un 401 para nada.
+      this.heroBooking = null;
+      if (this.isAuthenticated) {
+        void this.loadHeroBooking();
+      }
       void this.loadData();
     });
   }
@@ -141,6 +153,85 @@ export class HomeComponent implements OnInit {
     this.router.navigate(businessBookingPath(business), {
       queryParams: { serviceId, workerId: business.discovery?.lastWorkerId },
     });
+  }
+
+  // ----- HERO PERSONALIZADO --------------------
+  //
+  // Con sesión, el hero deja de ser un cartel y pasa a ser tu cita: lo que
+  // alguien que ya usa Bipsy quiere ver al entrar es si tiene algo reservado,
+  // no un titular que ya ha leído. Sin sesión no cambia nada.
+  /** La próxima cita activa, o la última que hubo si no hay ninguna. */
+  heroBooking: BookingResponse | null = null;
+  /** True cuando la que se enseña ya pasó: cambia el tono y la acción. */
+  heroBookingIsPast = false;
+
+  /**
+   * La cita del hero.
+   *
+   * Mismo criterio que Mis citas para no decir cosas distintas en dos
+   * pantallas: próxima es la que empieza en el futuro Y sigue activa; el resto
+   * es pasado, y de ahí se coge la más reciente.
+   */
+  private async loadHeroBooking(): Promise<void> {
+    try {
+      const all: BookingResponse[] = await this.bipsyService.getMyBookings();
+      const now = Date.now();
+      const upcoming = all
+        .filter(b => parseLocal(b.startDateTime).getTime() > now && isBookingActive(b))
+        .sort((a, b) => a.startDateTime.localeCompare(b.startDateTime));
+
+      if (upcoming.length) {
+        this.heroBooking = upcoming[0];
+        this.heroBookingIsPast = false;
+        return;
+      }
+      const past = all
+        .filter(b => !(parseLocal(b.startDateTime).getTime() > now && isBookingActive(b)))
+        .sort((a, b) => b.startDateTime.localeCompare(a.startDateTime));
+      this.heroBooking = past[0] ?? null;
+      this.heroBookingIsPast = !!past.length;
+    } catch {
+      // El hero no puede caerse por esto: sin cita se enseña el de siempre.
+      this.heroBooking = null;
+    }
+  }
+
+  /**
+   * Lo que se lee bajo el nombre del negocio.
+   *
+   * «Terminada» no es un estado del servidor: una cita confirmada cuya hora ya
+   * pasó está CONFIRMED para siempre. Se deduce aquí, que es donde se sabe qué
+   * hora es.
+   */
+  get heroBookingLabel(): string {
+    const b = this.heroBooking;
+    if (!b) return '';
+    if (b.status === 'CANCELED') return 'Cancelada';
+    if (b.status === 'NO_SHOW') return 'No acudiste';
+    if (this.heroBookingIsPast) return 'Terminada';
+    return b.status === 'PENDING' ? 'Pendiente de confirmar' : 'Confirmada';
+  }
+
+  get heroBookingTone(): string {
+    const b = this.heroBooking;
+    if (!b) return 'subtle';
+    if (b.status === 'CANCELED' || b.status === 'NO_SHOW') return 'danger';
+    if (this.heroBookingIsPast) return 'subtle';
+    return b.status === 'PENDING' ? 'warn' : 'mint';
+  }
+
+  /** Cuándo es (o fue), en una línea. */
+  get heroBookingWhen(): string {
+    const b = this.heroBooking;
+    if (!b) return '';
+    const start = parseLocal(b.startDateTime);
+    return `${relativeDate(start)} · ${b.startDateTime.slice(11, 16)}`;
+  }
+
+  openHeroBooking(): void {
+    if (this.heroBooking) {
+      void this.router.navigate(['/appointments', this.heroBooking.id]);
+    }
   }
 
   /**
