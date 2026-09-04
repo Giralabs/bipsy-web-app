@@ -191,20 +191,21 @@
         </div>
       } @else {
 
-        <!-- Las dos filas personales solo con sesión: sin ella los endpoints
-             responden 401 y el cartel no tendría a quién hablarle. -->
-        @if (isAuthenticated) {
-          <app-business-row
-            title="Tus favoritos"
-            [businesses]="favoriteBusinesses"
-            [loading]="isLoading"
-            [markPreviouslyBooked]="true"
-            emptyMessage="Guarda un negocio con el corazón y aparecerá aquí, el último que marques primero."
-            seeAllLink="/favoritos"
-            (rebook)="onRebook($event)"
-          />
-
-        }
+        <!-- Favoritos SIEMPRE, con o sin sesión, como en la app: allí la fila
+             se pinta igual y `FavoritesRow.fetch` devuelve lista vacía cuando
+             no hay usuario, sin llegar a llamar al endpoint. Aquí
+             `getFavoriteBusinesses()` hace exactamente lo mismo, así que no hay
+             401 que temer, y el cartel «guarda un negocio con el corazón» es
+             justo para quien todavía no ha guardado ninguno. -->
+        <app-business-row
+          title="Tus favoritos"
+          [businesses]="favoriteBusinesses"
+          [loading]="isLoading"
+          [markPreviouslyBooked]="true"
+          emptyMessage="Guarda un negocio con el corazón y aparecerá aquí, el último que marques primero."
+          seeAllLink="/favoritos"
+          (rebook)="onRebook($event)"
+        />
 
         <!-- Puede contener sitios donde ya has reservado: van los primeros y
              es su propio `discovery` el que les pone el reloj. -->

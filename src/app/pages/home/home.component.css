@@ -90,31 +90,41 @@
 }
 
 /* Hero Search Box */
+/* El formulario ya no es la píldora: es solo la fila que reparte el campo y
+   el botón. El cristal —fondo, filo, sombra y desenfoque— se lo queda el
+   campo, y el botón queda suelto a su derecha. */
 .hero-search {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255,255,255,0.06);
-  border: 1.2px solid rgba(185,235,208,0.25);
-  border-radius: 999px;
-  padding: 7px 7px 7px 24px;
+  align-items: stretch;
+  gap: 12px;
   max-width: 600px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter: blur(12px);
-  transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-.hero-search:focus-within {
-  border-color: var(--clr-mint);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 3px var(--clr-mint-dim);
-}
-
+/* Aquí sí: esto es el campo, y es lo que se ilumina al escribir. */
 .hero-search-input-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
   flex: 1;
+  min-width: 0;
+  padding: 14px 24px;
+  background: rgba(255,255,255,0.06);
+  border: 1.2px solid rgba(185,235,208,0.25);
+  border-radius: 999px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter: blur(12px);
+  transition: border-color .2s ease, box-shadow .2s ease;
 }
+
+.hero-search-input-wrap:focus-within {
+  border-color: var(--clr-mint);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 3px var(--clr-mint-dim);
+}
+
+/* El botón acompaña al alto del campo en vez de traer el suyo: puestos uno al
+   lado del otro, dos alturas distintas cantan. */
+.hero-search app-button { display: flex; }
+.hero-search ::ng-deep .bipsy-btn { height: 100%; padding-inline: 30px; }
 
 .hero-search-icon { color: var(--clr-mint); flex-shrink: 0; }
 
@@ -130,7 +140,6 @@
 
 .hero-search-input::placeholder { color: var(--clr-text-3); }
 
-.hero-search-btn { flex-shrink: 0; padding: 12px 26px; font-size: 0.95rem; }
 .hero-search ::ng-deep .bipsy-btn:hover {
   transform: none !important;
 }
