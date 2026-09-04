@@ -218,6 +218,47 @@
           (rebook)="onRebook($event)"
         />
       }
+    } @else {
+
+      <!-- ══════════════════════════════════════════
+           CATEGORÍA ELEGIDA — la lista de esa categoría
+           Faltaba entera: elegir una categoría escondía las filas y no ponía
+           nada en su sitio, así que el filtro parecía roto. En la app esto es
+           `_BusinessSliverList`: la misma tarjeta, en vertical y a ancho
+           completo.
+           ══════════════════════════════════════════ -->
+      @if (isLoading) {
+        <div class="cat-list">
+          @for (i of skeletons; track i) {
+            <div class="skeleton cat-skeleton"></div>
+          }
+        </div>
+      } @else if (loadError) {
+        <div class="empty-state">
+          <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+          <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido cargar los negocios' }}</h3>
+          <p>{{ loadError.message }}</p>
+          <app-button variant="secondary" icon="refresh" (onClick)="retryCategory()">Reintentar</app-button>
+        </div>
+      } @else if (businesses.length === 0) {
+        <div class="empty-state">
+          <span class="material-symbols-rounded">storefront</span>
+          <h3>Todavía no hay nada aquí</h3>
+          <p>No encontramos negocios de {{ selectedCategoryName }}. Prueba con otra categoría.</p>
+        </div>
+      } @else {
+        <div class="cat-list">
+          @for (biz of businesses; track biz.id) {
+            <app-business-card
+              [business]="biz"
+              [previouslyBooked]="!!biz.discovery?.previouslyBooked"
+              [isNew]="!!biz.discovery?.recentlyOpened"
+              [distanceKm]="biz.discovery?.distanceKm ?? null"
+              (rebook)="onRebook($event)"
+            />
+          }
+        </div>
+      }
     }
 
     <!-- ══════════════════════════════════════════

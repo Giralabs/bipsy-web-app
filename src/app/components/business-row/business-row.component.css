@@ -71,7 +71,10 @@
 }
 
 @media (max-width: 560px) {
-  .row__item { flex-basis: 214px; min-width: 214px; }
+  /* 275, el ancho que `_GlassHomeCard` usa en las filas de la app. Estaba en
+     214 y las tarjetas salían enclenques al lado de las del móvil: con la foto
+     a 16:9, 60 px de ancho son 34 de foto. */
+  .row__item { flex-basis: 275px; min-width: 275px; }
 }
 
 /* ── Móvil: la fila a sangre, como en la app ──

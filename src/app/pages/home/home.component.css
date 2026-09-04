@@ -971,3 +971,21 @@
   /* Sin sitio para las dos cosas: se va la hora, que se ve al abrirla. */
   .hero-strip__text span { display: none; }
 }
+
+/* ══════════════════════════════════════════
+   LISTA DE UNA CATEGORÍA — port de _BusinessSliverList
+   ══════════════════════════════════════════ */
+
+.cat-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.cat-skeleton { height: 280px; border-radius: var(--r-lg); }
+
+/* En ancho, rejilla: una columna de tarjetas a 1240 px sería una tira de
+   fotos gigantes con el 70 % de la pantalla vacío. */
+@media (min-width: 1025px) {
+  .cat-list { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}

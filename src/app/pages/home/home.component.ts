@@ -114,6 +114,19 @@ export class HomeComponent implements OnInit {
     void this.selectCategory(cat);
   }
 
+  /** El nombre de la categoría abierta, para el cartel de «no hay nada». */
+  get selectedCategoryName(): string {
+    return this.categories.find(c => c.code === this.selectedCategoryCode)?.name ?? 'esta categoría';
+  }
+
+  /** Reintenta la categoría abierta sin volver a «Todo». */
+  retryCategory(): void {
+    const cat = this.categories.find(c => c.code === this.selectedCategoryCode);
+    if (cat) {
+      void this.selectCategory(cat);
+    }
+  }
+
   /** El botón de filtros abre la hoja de Buscar, que es la misma de la app. */
   openFilters(): void {
     void this.router.navigate(['/search'], { queryParams: { filtros: 1 } });
