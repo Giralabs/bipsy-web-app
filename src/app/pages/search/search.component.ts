@@ -12,7 +12,7 @@ import { BusinessMapComponent, SearchArea } from '../../components/business-map/
 import { GroupedSectionComponent } from '../../components/grouped-list/grouped-section.component';
 import { GroupedRowComponent } from '../../components/grouped-list/grouped-row.component';
 import { isGoogleMapsConfigured } from '../../../environments/maps.config';
-import { DaySlot } from '../../components/search-header/search-header.component';
+import { DaySlot } from '../../components/search-bar/search-bar.component';
 import { categoryIcon } from '../../shared/category-icons';
 import { isoDate, longDate } from '../../shared/dates';
 import { businessBookingPath, businessPath } from '../../shared/slug';

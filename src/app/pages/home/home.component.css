@@ -39,7 +39,10 @@
 /* ── Hero ── */
 .hero {
   position: relative;
-  z-index: 1;
+  /* 2 y no 1: `.section-wrap` tambien vale 1 y va despues en el DOM, asi que
+     ganaba por orden y los paneles del buscador —que son hijos del hero— se
+     pintaban DEBAJO de los chips de categoria y de las tarjetas. */
+  z-index: 2;
   padding: 30px 24px 25px;
   border-bottom: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.015);

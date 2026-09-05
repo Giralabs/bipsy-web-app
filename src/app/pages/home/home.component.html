@@ -68,32 +68,11 @@
           </p>
         }
 
-        <!-- Search box -->
-        <form class="hero-search" (submit)="executeSearch(); $event.preventDefault()">
-          <div class="hero-search-input-wrap">
-            <span class="material-symbols-rounded hero-search-icon">search</span>
-            <!-- `autocomplete="off"` y un nombre propio: con `name="q"` el
-                 navegador ofrecía su historial de TODOS los formularios que
-                 hayan usado ese nombre, así que salían correos y nombres de
-                 otras webs colgando del buscador. -->
-            <input
-              type="text"
-              class="hero-search-input"
-              placeholder="Busca un servicio, barbería, peluquería..."
-              [(ngModel)]="searchQuery"
-              name="bipsy-hero-search"
-              autocomplete="off"
-              autocorrect="off"
-              spellcheck="false"
-            />
-          </div>
-          <app-button
-            type="submit"
-            variant="primary"
-          >
-            Buscar
-          </app-button>
-        </form>
+        <!-- El mismo buscador de tres campos que el header compacto: qué,
+             dónde y cuándo. Es un componente compartido, así que la
+             geocodificación, el permiso de ubicación y el calendario no
+             existen dos veces. -->
+        <app-search-bar variant="hero" />
 
         <!-- La cita, en una línea y bajo el buscador: con sesión es lo primero
              que se quiere saber, pero no vale tanto como para ocupar media

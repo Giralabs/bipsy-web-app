@@ -1,0 +1,153 @@
+<!-- ── Los tres campos ── -->
+<div class="sbar" [class.sbar--hero]="variant === 'hero'" role="search">
+  <div class="sbar__field sbar__field--text">
+    <span class="sbar__label">Servicio</span>
+    <input type="text"
+           name="bipsy-quick-service"
+           autocomplete="off"
+           class="sbar__input"
+           placeholder="Barbería, uñas, masaje…"
+           [value]="service"
+           (input)="service = $any($event.target).value"
+           (keydown.enter)="submit()" />
+  </div>
+
+  <span class="sbar__sep" aria-hidden="true"></span>
+
+  <button type="button"
+          class="sbar__field"
+          [class.sbar__field--open]="open === 'where'"
+          [attr.aria-expanded]="open === 'where'"
+          (click)="toggle('where')">
+    <span class="sbar__label">Dónde</span>
+    <span class="sbar__value" [class.sbar__value--set]="place || placeText">{{ placeLabel }}</span>
+  </button>
+
+  <span class="sbar__sep" aria-hidden="true"></span>
+
+  <button type="button"
+          class="sbar__field"
+          [class.sbar__field--open]="open === 'when'"
+          [attr.aria-expanded]="open === 'when'"
+          (click)="toggle('when')">
+    <span class="sbar__label">Cuándo</span>
+    <span class="sbar__value" [class.sbar__value--set]="date || slot !== 'any'">{{ whenLabel }}</span>
+  </button>
+
+  <button type="button" class="sbar__go" (click)="submit()" aria-label="Buscar">
+    <span class="material-symbols-rounded">search</span>
+  </button>
+</div>
+
+<!-- ── Panel: dónde ── -->
+@if (open === 'where') {
+  <div class="pop pop--where" role="dialog" aria-label="Elegir zona">
+    <button type="button" class="pop__geo" (click)="useMyLocation()" [disabled]="placeBusy">
+      <span class="material-symbols-rounded">my_location</span>
+      <span>
+        <strong>Activar acceso a la ubicación</strong>
+        <small>Buscamos negocios cerca de donde estés</small>
+      </span>
+    </button>
+
+    <div class="pop__or"><span>o escribe una dirección</span></div>
+
+    <div class="pop__search">
+      <span class="material-symbols-rounded">search</span>
+      <input type="text"
+             name="bipsy-quick-place"
+             autocomplete="off"
+             placeholder="Calle, ciudad o código postal"
+             [value]="placeQuery"
+             (input)="placeQuery = $any($event.target).value"
+             (keydown.enter)="resolvePlace()" />
+      <button type="button" class="pop__search-go" (click)="resolvePlace()" [disabled]="placeBusy">
+        {{ placeBusy ? 'Buscando…' : 'Buscar' }}
+      </button>
+    </div>
+
+    @if (placeError) {
+      <p class="pop__error">{{ placeError }}</p>
+    }
+
+    @if (placeResults.length) {
+      <ul class="pop__results">
+        @for (result of placeResults; track result.label) {
+          <li>
+            <button type="button" (click)="choosePlace(result)">
+              <span class="material-symbols-rounded">location_on</span>
+              {{ result.label }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (place || placeText) {
+      <button type="button" class="pop__clear" (click)="clearPlace()">Quitar la zona</button>
+    }
+  </div>
+}
+
+<!-- ── Panel: cuándo ── -->
+@if (open === 'when') {
+  <div class="pop pop--when" role="dialog" aria-label="Elegir cuándo">
+    <div class="cal__head">
+      <button type="button"
+              class="cal__nav"
+              (click)="shiftMonth(-1)"
+              [disabled]="atFirstMonth"
+              aria-label="Mes anterior">
+        <span class="material-symbols-rounded">chevron_left</span>
+      </button>
+      <p class="cal__month">{{ monthLabel }}</p>
+      <button type="button" class="cal__nav" (click)="shiftMonth(1)" aria-label="Mes siguiente">
+        <span class="material-symbols-rounded">chevron_right</span>
+      </button>
+    </div>
+
+    <div class="cal__weekdays" aria-hidden="true">
+      <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+    </div>
+
+    <div class="cal__grid">
+      @for (cell of monthCells; track trackCell($index)) {
+        @if (cell; as day) {
+          <button type="button"
+                  class="cal__day"
+                  [class.cal__day--past]="day.past"
+                  [class.cal__day--on]="date === day.iso"
+                  [disabled]="day.past"
+                  (click)="chooseDay(day)">
+            {{ day.day }}
+          </button>
+        } @else {
+          <span class="cal__gap"></span>
+        }
+      }
+    </div>
+
+    <div class="pop__divider"></div>
+
+    <p class="pop__section">¿A qué hora te viene bien?</p>
+    <div class="cal__slots">
+      <button type="button" class="cal__slot" [class.cal__slot--on]="slot === 'morning'"
+              (click)="chooseSlot('morning')">
+        <span class="material-symbols-rounded">wb_sunny</span> Por la mañana
+      </button>
+      <button type="button" class="cal__slot" [class.cal__slot--on]="slot === 'afternoon'"
+              (click)="chooseSlot('afternoon')">
+        <span class="material-symbols-rounded">wb_twilight</span> Por la tarde
+      </button>
+      <button type="button" class="cal__slot" [class.cal__slot--on]="slot === 'any'"
+              (click)="chooseSlot('any')">
+        <span class="material-symbols-rounded">schedule</span> A cualquier hora
+      </button>
+    </div>
+
+    <div class="pop__footer">
+      <button type="button" class="pop__clear" (click)="clearWhen()">Quitar</button>
+      <button type="button" class="pop__apply" (click)="applyWhen()">Buscar</button>
+    </div>
+  </div>
+}

@@ -18,13 +18,14 @@ import { BusinessCardComponent } from '../../components/business-card/business-c
 import { BusinessRowComponent } from '../../components/business-row/business-row.component';
 import { SessionService } from '../../core/session.service';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { SearchBarComponent } from '../../components/search-bar/search-bar.component';
 import { ButtonComponent } from '../../components/button/button.component';
 import { ChipComponent } from '../../components/chip/chip.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [AvatarComponent, CommonModule, RouterLink, FormsModule, BusinessCardComponent, BusinessRowComponent, ButtonComponent, ChipComponent, DragScrollDirective],
+  imports: [AvatarComponent, SearchBarComponent, CommonModule, RouterLink, FormsModule, BusinessCardComponent, BusinessRowComponent, ButtonComponent, ChipComponent, DragScrollDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
