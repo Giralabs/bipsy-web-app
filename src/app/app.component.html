@@ -1,18 +1,40 @@
-<div class="app-root">
-  <!-- ── Móvil y tablet: la app ──
-       La tira de la tienda arriba y la barra de pestañas abajo, como en
-       cualquier app con web. El cromo de escritorio no se pinta siquiera. -->
-  <app-app-banner class="only-touch"></app-app-banner>
+@if (showMaintenance()) {
 
-  <!-- ── Escritorio ── -->
-  <app-promo-bar class="only-desk"></app-promo-bar>
-  <app-navbar class="only-desk"></app-navbar>
-  <app-search-header class="only-desk"></app-search-header>
+  <!-- ── Mantenimiento ──
+       En lugar de la web, no encima de ella: ni barra, ni pie, ni pestañas, ni
+       la página pedida. Vuelve sola a la rama de abajo cuando termina. -->
+  <app-maintenance></app-maintenance>
 
-  <main class="page-content">
-    <router-outlet></router-outlet>
-  </main>
+} @else {
 
-  <app-footer class="only-desk"></app-footer>
-  <app-tab-bar class="only-touch"></app-tab-bar>
-</div>
+  <div class="app-root">
+    @if (chrome()) {
+      <!-- ── Móvil y tablet: la app ──
+           La tira de la tienda arriba y la barra de pestañas abajo, como en
+           cualquier app con web. El cromo de escritorio no se pinta siquiera. -->
+      <app-app-banner class="only-touch"></app-app-banner>
+
+      <!-- ── Escritorio ── -->
+      <app-promo-bar class="only-desk"></app-promo-bar>
+      <app-navbar class="only-desk"></app-navbar>
+      <app-search-header class="only-desk"></app-search-header>
+    }
+
+    <!-- Sin cromo solo queda `/admin` en mantenimiento: la puerta del equipo. -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+
+    @if (chrome()) {
+      <app-footer class="only-desk"></app-footer>
+      <app-tab-bar class="only-touch"></app-tab-bar>
+    }
+  </div>
+
+  <!-- Dentro con el pase del equipo: que no se olvide de que el público no
+       está viendo esto. -->
+  @if (maintenance.bypass()) {
+    <app-maintenance-indicator></app-maintenance-indicator>
+  }
+
+}

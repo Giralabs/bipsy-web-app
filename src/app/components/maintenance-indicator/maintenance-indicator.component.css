@@ -1,0 +1,77 @@
+:host { display: contents; }
+
+/* Abajo a la izquierda: el centro es del aviso flotante. Flota sobre contenido
+   real, así que conserva sombra —como la barra y las hojas—; por debajo de
+   estas últimas (900) para no tapar ningún diálogo. */
+.maint-pill {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 6px 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--clr-text);
+  color: var(--clr-base);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: var(--shadow-float);
+}
+
+/* Ámbar: no es un error, es un "ojo, esto no es lo que ve todo el mundo". */
+.maint-pill__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clr-warn);
+}
+
+.maint-pill__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.maint-pill__leave {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--r-pill);
+  /* El fondo de la pastilla es el color de texto: el relleno del botón sale
+     del mismo sitio, aclarado, para valer en los dos temas. */
+  background: color-mix(in srgb, var(--clr-base) 18%, transparent);
+  color: inherit;
+  font-family: var(--ff);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.maint-pill__leave:hover { background: color-mix(in srgb, var(--clr-base) 30%, transparent); }
+
+.maint-pill__leave:focus-visible {
+  outline: 2px solid var(--clr-base);
+  outline-offset: 2px;
+}
+
+/* Móvil y tablet: por encima de la barra de pestañas. El hueco lo publica
+   ella, que es quien sabe si se está pintando; solo se lee aquí dentro porque
+   en escritorio la variable también existe aunque la barra no se vea. */
+@media (max-width: 1024px) {
+  .maint-pill {
+    bottom: calc(16px + max(var(--tabbar-space, 0px), env(safe-area-inset-bottom, 0px)));
+  }
+}
+
+/* En un móvil la frase entera no cabe junto al botón: se queda lo esencial. */
+@media (max-width: 480px) {
+  .maint-pill__detail { display: none; }
+}

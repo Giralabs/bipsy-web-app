@@ -1,0 +1,45 @@
+:host { display: block; }
+
+/* El aviso del equipo: una tarjeta, que es como se dice "esto lo ha escrito
+   alguien" en el resto de la web. A la izquierda aunque todo lo demás vaya
+   centrado: puede traer varias líneas y centradas no se leen. */
+.maint__message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--clr-surface);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text);
+  text-align: left;
+}
+
+.maint__message .material-symbols-rounded {
+  flex-shrink: 0;
+  font-size: 20px;
+  color: var(--clr-mint);
+}
+
+/* Respeta los saltos de línea que escriba el equipo y parte las palabras
+   imposibles —un enlace pegado— en vez de desbordar la tarjeta. */
+.maint__text {
+  min-width: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* "Seguimos en ello", tras reintentar. Una línea propia sobre la nota, y más
+   marcada que ella: es la respuesta a lo que se acaba de pulsar. */
+.maint__status {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--clr-text);
+}
+
+.maint__status:empty { display: none; }

@@ -46,8 +46,18 @@ export class ApiService {
   /** El cerrojo del refresco. Null mientras no haya ninguno en marcha. */
   private refreshing: Promise<boolean> | null = null;
 
-  get<T>(path: string, params?: QueryParams, auth = true): Promise<T> {
-    return this.request<T>('GET', path, undefined, params, auth);
+  /**
+   * `headers` son cabeceras de más para ESTA llamada. Solo las usa la consulta
+   * de mantenimiento, que manda su propio pase en `X-Bipsy-Maintenance`: no es
+   * la sesión de nadie y por eso no viaja en `Authorization`.
+   */
+  get<T>(
+    path: string,
+    params?: QueryParams,
+    auth = true,
+    headers?: Record<string, string>,
+  ): Promise<T> {
+    return this.request<T>('GET', path, undefined, params, auth, headers);
   }
 
   post<T>(path: string, body?: unknown, auth = true): Promise<T> {
@@ -76,6 +86,7 @@ export class ApiService {
     body: unknown,
     params: QueryParams | undefined,
     auth: boolean,
+    extraHeaders?: Record<string, string>,
     retried = false,
   ): Promise<T> {
     try {
@@ -83,7 +94,7 @@ export class ApiService {
         (this.http.request<T>(method, this.baseUrl + path, {
           body,
           params: buildParams(params),
-          headers: this.headersFor(auth, body),
+          headers: { ...this.headersFor(auth, body), ...extraHeaders },
           responseType: 'json',
         }) as Observable<T>).pipe(
           timeout(REQUEST_TIMEOUT_MS),
@@ -111,7 +122,7 @@ export class ApiService {
       if (error.isUnauthorized && auth && !retried && this.tokens.refreshToken) {
         const ok = await this.refreshSession();
         if (ok) {
-          return this.request<T>(method, path, body, params, auth, true);
+          return this.request<T>(method, path, body, params, auth, extraHeaders, true);
         }
       }
       throw error;

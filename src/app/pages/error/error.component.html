@@ -1,0 +1,13 @@
+<app-status-page [mascot]="copy.mascot" [heading]="copy.heading" [lead]="copy.lead">
+  <app-button statusActions variant="primary" [icon]="copy.icon" (onClick)="retry()">
+    {{ copy.action }}
+  </app-button>
+
+  <!-- Con una versión nueva, un enlace interno volvería a pedir ficheros que
+       ya no existen: ahí la única salida que funciona es recargar. -->
+  @if (kind !== 'version') {
+    <app-button statusActions variant="secondary" icon="home" [routerLink]="['/']">
+      Ir al inicio
+    </app-button>
+  }
+</app-status-page>

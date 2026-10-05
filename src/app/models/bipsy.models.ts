@@ -280,6 +280,7 @@ export interface BookingResponse {
   startDateTime: string;
   endDateTime: string;
   price?: number;
+  priceCents?: number | null;
   status: BookingStatus;
   notes?: string;
   cancelReason?: string;
@@ -315,6 +316,15 @@ export interface CancellationFee {
   hoursBeforeStart: number;
 }
 
+/**
+ * Precio de la cita en euros, o null. El servidor lo manda como `priceCents`;
+ * `price` queda por compatibilidad con respuestas antiguas.
+ */
+export function bookingPrice(booking: BookingResponse): number | null {
+  if (typeof booking.priceCents === 'number') return booking.priceCents / 100;
+  return typeof booking.price === 'number' ? booking.price : null;
+}
+
 /** Una cita está viva mientras no se haya cancelado ni marcado como no-show. */
 export function isBookingActive(booking: BookingResponse): boolean {
   return booking.status === 'PENDING' || booking.status === 'CONFIRMED';
@@ -322,19 +332,34 @@ export function isBookingActive(booking: BookingResponse): boolean {
 
 // ----- REVIEWS --------------------
 
+/**
+ * ⚠️ El autor llega como `customerName` y su foto como
+ * `customerProfileImageUrl` (ReviewDtos.java). La web leía `authorName` y
+ * todas las reseñas salían firmadas por «Cliente».
+ */
 export interface ReviewResponse {
   id: number;
   businessId: number;
   bookingId?: number;
   customerId?: number;
-  authorName?: string;
-  customerImageUrl?: string;
+  customerName?: string;
+  customerProfileImageUrl?: string;
+  serviceId?: number;
   rating: number;
   comment?: string;
   serviceName?: string;
+  /** Instante UTC. */
   createdAt?: string;
+  updatedAt?: string;
   reply?: string;
   repliedAt?: string;
+  /** Solo en los datos de demostración antiguos. */
+  authorName?: string;
+}
+
+/** Nombre del autor de una reseña, con la reserva de siempre. */
+export function reviewAuthor(review: ReviewResponse): string {
+  return (review.customerName || review.authorName || 'Cliente').trim();
 }
 
 export interface CreateReviewRequest {
@@ -342,6 +367,27 @@ export interface CreateReviewRequest {
   rating: number;
   comment?: string;
 }
+
+// ----- REPORTES --------------------
+
+/** `ReportReason` del backend, sin `NO_SHOW`: ese lo usa el negocio. */
+export type ReportReason = 'FAKE_REVIEW' | 'FRAUD' | 'INAPPROPRIATE_BEHAVIOR' | 'SPAM' | 'OTHER';
+
+export interface CreateReportRequest {
+  reportedId: number;
+  targetType: 'BUSINESS' | 'CUSTOMER';
+  reason: ReportReason;
+  description?: string;
+}
+
+/** Los motivos en el orden y con el texto de `ReportBusinessSheet`. */
+export const REPORT_REASONS: { code: ReportReason; label: string; icon: string }[] = [
+  { code: 'FAKE_REVIEW', label: 'Reseña falsa', icon: 'rate_review' },
+  { code: 'FRAUD', label: 'Fraude o estafa', icon: 'gpp_bad' },
+  { code: 'INAPPROPRIATE_BEHAVIOR', label: 'Comportamiento inapropiado', icon: 'block' },
+  { code: 'SPAM', label: 'Spam', icon: 'report' },
+  { code: 'OTHER', label: 'Otro motivo', icon: 'more_horiz' },
+];
 
 // ----- PAGINACIÓN --------------------
 
@@ -676,4 +722,22 @@ export interface PaymentResponse {
   failureReason?: string;
   /** ⚠️ Es un `Instant`, o sea **UTC** (`…Z`). Hay que pasarlo a hora local. */
   createdAt: string;
+}
+
+// ----- MANTENIMIENTO --------------------
+
+/** Respuesta de `GET /maintenance/status`. */
+export interface MaintenanceStatus {
+  site: string;
+  maintenance: boolean;
+  /** El mantenimiento está puesto, pero el pase enviado deja entrar. */
+  bypass: boolean;
+  /** Lo que el equipo quiera contar mientras dura. */
+  message: string | null;
+}
+
+/** Respuesta de `POST /maintenance/unlock`: el pase del equipo. */
+export interface MaintenanceUnlock {
+  token: string;
+  expiresAt: string;
 }

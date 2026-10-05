@@ -1,0 +1,156 @@
+/* Mantenimiento, página no encontrada y error: el mismo motivo que el hero de
+   la portada —Bip sobre el disco menta—, a tamaño de aviso y centrado. */
+:host { display: block; }
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Dentro de la web: alto suficiente para que el pie no suba a media pantalla
+     en un monitor grande, sin llegar a esconderlo. */
+  min-height: 64vh;
+  padding: 56px 24px 80px;
+}
+
+.status__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+}
+
+/* ── Sola en la página ──
+   Sin barra ni pie alrededor: ocupa la pantalla entera, con la marca arriba.
+   `dvh` detrás de `vh` para que en el móvil no quede cortada por la barra del
+   navegador, que `vh` no descuenta. */
+:host(.status-page--full) .status {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 28px 24px 48px;
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+}
+
+/* La misma altura que el logotipo de la barra: es su sitio, sin la barra. */
+.status__brand { height: 34px; width: auto; flex-shrink: 0; }
+
+:host(.status-page--full) .status__body { padding-top: 32px; }
+
+/* ── Bip ── */
+.status__art {
+  position: relative;
+  width: 236px;
+  height: 236px;
+  flex-shrink: 0;
+  /* El aro sobresale del disco: el margen lo cuenta. */
+  margin-bottom: 40px;
+}
+
+/* `primaryGradient` de la app, como el disco del hero. */
+.status__disc {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 196px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D4F7E3 0%, #A0E3BD 100%);
+  transform: translateX(-50%);
+}
+
+.status__disc::after {
+  content: '';
+  position: absolute;
+  inset: -22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(192, 238, 211, .22);
+}
+
+/* Los pies dentro del disco y la cabeza fuera, como en la portada. */
+.status__mascot {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  height: 232px;
+  width: auto;
+  max-width: none;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 16px rgba(0, 0, 0, .22));
+  transform: translateX(-50%);
+  animation: status-bob 5s ease-in-out infinite;
+}
+
+@keyframes status-bob {
+  0%, 100% { transform: translateX(-50%); }
+  50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* ── Texto ── */
+.status__eyebrow {
+  margin-bottom: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--clr-text-2);
+}
+
+.status__title {
+  font-family: var(--ff-display);
+  font-size: clamp(1.75rem, 4.4vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -1.2px;
+  color: var(--clr-text);
+  /* Un titular de dos líneas partido 5-1 se lee como un error más. */
+  text-wrap: balance;
+}
+
+.status__lead {
+  margin-top: 12px;
+  max-width: 46ch;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text-2);
+  text-wrap: pretty;
+}
+
+/* Lo que proyecte la página. Sin contenido, ninguno de los tres ocupa sitio:
+   un hueco de 24 px que no separa nada descuadra la columna. */
+.status__extra { width: 100%; margin-top: 20px; }
+
+.status__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.status__note {
+  margin-top: 24px;
+  max-width: 44ch;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+.status__extra:empty,
+.status__actions:empty,
+.status__note:empty { display: none; }
+
+@media (max-width: 480px) {
+  .status { padding: 32px 20px 56px; }
+  .status__art { width: 200px; height: 200px; margin-bottom: 34px; }
+  .status__disc { width: 166px; }
+  .status__disc::after { inset: -18px; }
+  .status__mascot { height: 196px; bottom: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status__mascot { animation: none; }
+}

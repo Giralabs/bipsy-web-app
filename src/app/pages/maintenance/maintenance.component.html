@@ -1,0 +1,33 @@
+<app-status-page
+  [fullPage]="true"
+  mascot="support"
+  eyebrow="En mantenimiento"
+  heading="Estamos poniendo Bipsy a punto"
+  lead="Estamos haciendo mejoras en la web y volvemos enseguida. Tus citas siguen en pie: no tienes que hacer nada."
+>
+  <!-- Lo que el equipo haya querido contar: cuánto va a durar, qué cambia. -->
+  @if (maintenance.message(); as message) {
+    <p class="maint__message">
+      <span class="material-symbols-rounded fill" aria-hidden="true">campaign</span>
+      <span class="maint__text">{{ message }}</span>
+    </p>
+  }
+
+  <app-button statusActions variant="primary" icon="refresh" [loading]="retrying" (onClick)="retry()">
+    Reintentar
+  </app-button>
+
+  <!-- Siempre en el DOM: es una región `status`, y un lector de pantalla solo
+       anuncia lo que cambia dentro de una que ya existía. -->
+  <span statusNote class="maint__status" role="status">
+    @if (stillClosed) {
+      Seguimos en ello. Prueba otra vez dentro de un rato.
+    }
+  </span>
+
+  <!-- Solo se cierra la web: la app habla con el servidor por su cuenta. -->
+  <span statusNote>
+    Esta página se abrirá sola en cuanto terminemos. Mientras tanto, la app de Bipsy en tu móvil
+    sigue funcionando con normalidad.
+  </span>
+</app-status-page>

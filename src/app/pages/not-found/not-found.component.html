@@ -1,0 +1,13 @@
+<app-status-page
+  mascot="hello"
+  eyebrow="Error 404"
+  heading="Esta página no existe"
+  lead="Puede que el enlace esté mal escrito o que la página haya cambiado de sitio. Bip te acompaña de vuelta."
+>
+  <app-button statusActions variant="primary" icon="home" [routerLink]="['/']">
+    Ir al inicio
+  </app-button>
+  <app-button statusActions variant="secondary" icon="search" [routerLink]="['/buscar']">
+    Buscar un negocio
+  </app-button>
+</app-status-page>

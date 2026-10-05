@@ -1,0 +1,31 @@
+<section class="status anim-fade-up">
+
+  @if (fullPage) {
+    <img src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
+         alt="Bipsy" class="status__brand theme-dark-only" />
+    <img src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
+         alt="Bipsy" class="status__brand theme-light-only" />
+  }
+
+  <div class="status__body">
+    <!-- Decorativo: lo que hay que saber lo dice el titular. -->
+    <div class="status__art" aria-hidden="true">
+      <span class="status__disc"></span>
+      <img [src]="mascotSrc" alt="" class="status__mascot" />
+    </div>
+
+    @if (eyebrow) {
+      <p class="status__eyebrow">{{ eyebrow }}</p>
+    }
+    <h1 class="status__title">{{ heading }}</h1>
+    @if (lead) {
+      <p class="status__lead">{{ lead }}</p>
+    }
+
+    <div class="status__extra"><ng-content></ng-content></div>
+
+    <div class="status__actions"><ng-content select="[statusActions]"></ng-content></div>
+
+    <p class="status__note"><ng-content select="[statusNote]"></ng-content></p>
+  </div>
+</section>
