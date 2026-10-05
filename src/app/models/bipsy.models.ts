@@ -71,6 +71,11 @@ export interface BusinessDiscovery {
 export interface BusinessResponse {
   id: number;
   name: string;
+  /**
+   * Parte legible del enlace para compartir (`/negocio/barberia-pepe`). El
+   * backend la fija al crear el negocio y no cambia al renombrarlo.
+   */
+  slug?: string;
   email?: string;
   username?: string;
   phone?: string;

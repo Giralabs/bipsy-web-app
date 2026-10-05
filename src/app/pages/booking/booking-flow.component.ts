@@ -19,7 +19,7 @@ import { AddCardSheetComponent } from '../../components/add-card-sheet/add-card-
 import { AvatarComponent } from '../../components/avatar/avatar.component';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { euros, isoDate, isoLocalDateTime, longDate, duration, relativeDate } from '../../shared/dates';
-import { businessIdFromParam, businessPath } from '../../shared/slug';
+import { businessPath } from '../../shared/slug';
 
 type Step = 'service' | 'worker' | 'date' | 'time' | 'confirm' | 'done';
 
@@ -101,7 +101,7 @@ export class BookingFlowComponent implements OnInit {
   days: Date[] = [];
 
   async ngOnInit(): Promise<void> {
-    const businessId = businessIdFromParam(this.route.snapshot.paramMap.get('id'));
+    const businessParam = this.route.snapshot.paramMap.get('id');
     const params = this.route.snapshot.queryParams;
 
     // ⚠️ Hay que ESPERAR a que la sesión se resuelva antes de decidir.
@@ -122,10 +122,8 @@ export class BookingFlowComponent implements OnInit {
     }
 
     try {
-      const [business, services] = await Promise.all([
-        this.bipsy.getBusinessById(businessId!),
-        this.bipsy.getBusinessServices(businessId!),
-      ]);
+      const business = await this.bipsy.resolveBusiness(businessParam);
+      const services = await this.bipsy.getBusinessServices(business.id);
       this.business = business;
       this.services = services.filter(s => s.active);
       this.buildDays(business.availabilityHorizonDays ?? 60);

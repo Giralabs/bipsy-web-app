@@ -93,6 +93,11 @@ export class CatalogRepository {
     return this.api.get<BusinessResponse>(`/businesses/${id}`, undefined, false);
   }
 
+  businessBySlug(slug: string): Promise<BusinessResponse> {
+    return this.api.get<BusinessResponse>(
+      `/businesses/by-slug/${encodeURIComponent(slug)}`, undefined, false);
+  }
+
   businessServices(id: number | string): Promise<ServiceResponse[]> {
     return this.api.get<ServiceResponse[]>(`/businesses/${id}/services`, undefined, false);
   }
