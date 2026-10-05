@@ -130,7 +130,10 @@ export class ApiService {
   }
 
   private headersFor(auth: boolean, body: unknown): Record<string, string> {
-    const headers: Record<string, string> = {};
+    // En qué app se pregunta: desde la V105 del backend un mismo correo puede
+    // tener cuenta de cliente y cuenta profesional, y entrar, recuperar la
+    // contraseña y el alta responden 400 sin esta cabecera.
+    const headers: Record<string, string> = { 'X-Bipsy-Scope': 'CUSTOMER' };
     // FormData lleva su propio Content-Type con boundary.
     if (!(body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
@@ -163,7 +166,7 @@ export class ApiService {
           this.http.post<{ accessToken: string; refreshToken: string; role?: string; actorId?: number }>(
             `${this.baseUrl}/auth/refresh`,
             { refreshToken },
-            { headers: { 'Content-Type': 'application/json' } },
+            { headers: { 'Content-Type': 'application/json', 'X-Bipsy-Scope': 'CUSTOMER' } },
           ),
         );
         this.tokens.save(auth);

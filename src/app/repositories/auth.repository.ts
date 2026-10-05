@@ -25,7 +25,13 @@ export class AuthRepository {
    * él, pero espera esa clave. Mandando `email` el login devolvía siempre 400.
    */
   async login(req: LoginRequest): Promise<AuthResponse> {
-    const auth = await this.api.post<AuthResponse>('/auth/login', req, false);
+    // Desde la V105 el servidor espera `email`; el formulario lo sigue
+    // llamando `username` por dentro.
+    const auth = await this.api.post<AuthResponse>(
+      '/auth/login',
+      { email: req.username, password: req.password },
+      false,
+    );
     this.tokens.save(auth);
     return auth;
   }
