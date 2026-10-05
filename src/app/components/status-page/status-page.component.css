@@ -83,6 +83,13 @@
   animation: status-bob 5s ease-in-out infinite;
 }
 
+/* El del escritorio: la misma caja (el dibujo es cuadrado), pero quieto. Está
+   sentado, y lo que se mueve son sus piezas (`app-bip-rig`). */
+.status__mascot--rig {
+  width: 232px;
+  animation: none;
+}
+
 @keyframes status-bob {
   0%, 100% { transform: translateX(-50%); }
   50% { transform: translateX(-50%) translateY(-5px); }
@@ -149,6 +156,7 @@
   .status__disc { width: 166px; }
   .status__disc::after { inset: -18px; }
   .status__mascot { height: 196px; bottom: 12px; }
+  .status__mascot--rig { width: 196px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

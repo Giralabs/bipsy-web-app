@@ -1,0 +1,95 @@
+/* El Bip del escritorio, por capas. Todas ocupan la caja entera —están
+   cortadas sobre el mismo lienzo— y cada una gira sobre su `transform-origin`,
+   que llega del `bip-rig.data.ts`.
+
+   Los ángulos son pequeños a propósito: debajo de cada pieza solo hay relleno
+   en unos pocos píxeles junto al borde, y con más recorrido se vería. Los
+   límites probados sobre composiciones de las capas: cabeza ±3°, pulgar ±9°,
+   mano ±7°, planta ±5°. */
+:host {
+  display: block;
+  aspect-ratio: 1;
+}
+
+.rig {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.rig--ready { opacity: 1; }
+
+.rig__part,
+.rig__img,
+.rig__fallback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.rig__fallback { position: static; }
+
+/* Los párpados están plegados salvo en el parpadeo. */
+.rig__part--lid-left,
+.rig__part--lid-right { transform: scaleY(0); }
+
+/* Nada se mueve hasta que está todo: si no, cada capa arrancaría a su hora. */
+.rig--ready .rig__part--head { animation: rig-head 7s ease-in-out infinite; }
+.rig--ready .rig__part--thumb { animation: rig-thumb 5s ease-in-out infinite; }
+.rig--ready .rig__part--typing { animation: rig-typing 2.4s ease-in-out infinite; }
+.rig--ready .rig__part--plant { animation: rig-plant 6s ease-in-out infinite; }
+.rig--ready .rig__part--lid-left,
+.rig--ready .rig__part--lid-right { animation: rig-blink 5.2s linear infinite; }
+
+/* Ladea la cabeza a un lado, vuelve, y un poco al otro. */
+@keyframes rig-head {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(2deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-1.5deg); }
+}
+
+/* El pulgar: dos sacudidas cortas y un descanso largo. */
+@keyframes rig-thumb {
+  0%, 52%, 100% { transform: rotate(0deg); }
+  60% { transform: rotate(-7deg); }
+  68% { transform: rotate(3deg); }
+  76% { transform: rotate(-6deg); }
+  86% { transform: rotate(1deg); }
+}
+
+/* Teclea: ráfaga de golpes pequeños, pausa. */
+@keyframes rig-typing {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  8% { transform: rotate(4deg); }
+  16% { transform: rotate(-1deg); }
+  24% { transform: rotate(5deg); }
+  32% { transform: rotate(0deg); }
+  40% { transform: rotate(4deg); }
+  50% { transform: rotate(-1deg); }
+}
+
+@keyframes rig-plant {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* Un parpadeo, y otro doble algo después. */
+@keyframes rig-blink {
+  0%, 43%, 49%, 80%, 86%, 89%, 95%, 100% { transform: scaleY(0); }
+  46% { transform: scaleY(1); }
+  83% { transform: scaleY(1); }
+  92% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rig { transition: none; }
+  .rig--ready .rig__part { animation: none; }
+}

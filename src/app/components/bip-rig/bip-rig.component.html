@@ -1,0 +1,20 @@
+@if (failed()) {
+  <img [src]="fallback" alt="" class="rig__fallback" />
+} @else {
+  <div class="rig" [class.rig--ready]="ready()">
+    @for (layer of layers; track layer.key) {
+      @if (layer.children) {
+        <div [class]="'rig__part rig__part--' + layer.key" [style.transform-origin]="layer.origin">
+          <img [src]="src(layer.key)" alt="" class="rig__img" (load)="onLoad()" (error)="onError()" />
+          @for (child of layer.children; track child.key) {
+            <img [src]="src(child.key)" alt="" [class]="'rig__part rig__part--' + child.key"
+                 [style.transform-origin]="child.origin" (load)="onLoad()" (error)="onError()" />
+          }
+        </div>
+      } @else {
+        <img [src]="src(layer.key)" alt="" [class]="'rig__part rig__part--' + layer.key"
+             [style.transform-origin]="layer.origin ?? null" (load)="onLoad()" (error)="onError()" />
+      }
+    }
+  </div>
+}

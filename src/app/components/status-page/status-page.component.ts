@@ -1,4 +1,5 @@
 import { Component, HostBinding, Input } from '@angular/core';
+import { BipRigComponent } from '../bip-rig/bip-rig.component';
 
 /** Las tres poses de Bip que hay en `public/assets_bip`. */
 export type StatusMascot = 'hello' | 'support' | 'booking';
@@ -22,6 +23,7 @@ export type StatusMascot = 'hello' | 'support' | 'booking';
 @Component({
   selector: 'app-status-page',
   standalone: true,
+  imports: [BipRigComponent],
   templateUrl: './status-page.component.html',
   styleUrl: './status-page.component.css',
 })
@@ -39,6 +41,15 @@ export class StatusPageComponent {
    */
   @HostBinding('class.status-page--full')
   @Input() fullPage = false;
+
+  /**
+   * El Bip de soporte es el único que está cortado en capas (`app-bip-rig`):
+   * mantenimiento y los errores que lo usan lo enseñan animado por piezas.
+   * Los otros dos siguen siendo su imagen fija.
+   */
+  get rigged(): boolean {
+    return this.mascot === 'support';
+  }
 
   get mascotSrc(): string {
     return `assets_bip/bip_${this.mascot}.webp`;

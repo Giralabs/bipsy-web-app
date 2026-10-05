@@ -11,7 +11,12 @@
     <!-- Decorativo: lo que hay que saber lo dice el titular. -->
     <div class="status__art" aria-hidden="true">
       <span class="status__disc"></span>
-      <img [src]="mascotSrc" alt="" class="status__mascot" />
+      @if (rigged) {
+        <!-- El del escritorio se mueve por piezas, sin subir ni bajar. -->
+        <app-bip-rig class="status__mascot status__mascot--rig" />
+      } @else {
+        <img [src]="mascotSrc" alt="" class="status__mascot" />
+      }
     </div>
 
     @if (eyebrow) {
