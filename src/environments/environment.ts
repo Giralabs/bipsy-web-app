@@ -7,7 +7,9 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://gipsi-api.onrender.com',
+  // Por ahora el backend no está desplegado en ningún sitio: corre en la
+  // máquina de quien abre la web. Cambiar por la URL pública el día que se aloje.
+  apiUrl: 'http://localhost:8080',
 
   /**
    * El dominio del acceso con Google. Es lo que se lee en «Ir a …» cuando
