@@ -2,7 +2,7 @@
   <div class="sheader__inner">
 
     <!-- ── Marca ── -->
-    <a routerLink="/home" class="sheader__logo" aria-label="Bipsy · inicio">
+    <a routerLink="/" class="sheader__logo" aria-label="Bipsy · inicio">
       <img src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
            alt="Bipsy" class="theme-dark-only" />
       <img src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
@@ -14,11 +14,11 @@
     <!-- ── Sesión ── -->
     <div class="sheader__actions">
       @if (session.currentUser; as user) {
-        <a routerLink="/profile" class="sheader__avatar" [title]="user.name || 'Mi perfil'">
+        <a routerLink="/ajustes" class="sheader__avatar" [title]="user.name || 'Mi perfil'">
           @if (user.profileImageUrl) {
             <img [src]="user.profileImageUrl" [alt]="user.name || 'Mi perfil'" />
           } @else {
-            <span class="material-symbols-rounded">person</span>
+            <span class="sheader__initials">{{ user.initials || 'U' }}</span>
           }
         </a>
       } @else {

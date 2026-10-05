@@ -157,7 +157,7 @@ export class RescheduleComponent implements OnInit {
   }
 
   goToDetail(): void {
-    this.router.navigate(['/appointments', this.booking!.id]);
+    this.router.navigate(['/citas', this.booking!.id]);
   }
 
   private buildDays(horizon: number): void {

@@ -55,8 +55,9 @@ export class BookingRepository {
     return this.api.post<ReviewResponse>('/reviews', req);
   }
 
-  async myReviews(): Promise<ReviewResponse[]> {
-    const res = await this.api.get<ReviewResponse[] | PageResponse<ReviewResponse>>('/reviews/me');
+  /** Las del cliente. Una página grande: nadie escribe cientos de reseñas. */
+  async myReviews(size = 100): Promise<ReviewResponse[]> {
+    const res = await this.api.get<ReviewResponse[] | PageResponse<ReviewResponse>>('/reviews/me', { page: 0, size });
     return Array.isArray(res) ? res : (res?.content ?? []);
   }
 

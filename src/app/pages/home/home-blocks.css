@@ -1,0 +1,366 @@
+/* Bloques de Explorar calculados con datos reales: ciudades, reseñas de
+   clientes y el acceso al mapa. Aparte de home.component.css para no pasar
+   del presupuesto de estilos por fichero. */
+
+/* ── Cabecera de bloque: la misma que las filas de negocios ── */
+.blk-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 14px;
+}
+
+.blk-head__icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-mint-dim);
+  color: var(--clr-mint);
+  font-size: 20px;
+}
+
+.blk-head__icon--star { background: rgba(255, 176, 32, .16); color: var(--clr-star); }
+.blk-head__main { flex: 1; min-width: 0; }
+
+/* ── Flechas de las filas horizontales ──
+   Con ratón, una fila que se sale por la derecha no se descubre sola: el
+   arrastre existe, pero nadie lo intenta si no ve por dónde. */
+.head-tools { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+
+.arrow {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.arrow:hover { background: var(--clr-surface-hover); }
+.arrow:active { transform: scale(.92); }
+.arrow .material-symbols-rounded { font-size: 22px; }
+
+/* El corte del último elemento, en degradado: se lee como «hay más», no como
+   un fallo de maquetación. */
+.cats__row,
+.voices__row {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
+}
+
+/* Hueco al final para que el último elemento salga del degradado al llegar. */
+.cats__row, .voices__row { padding-right: 64px; }
+
+.voice { cursor: pointer; transition: background-color .2s ease, transform .2s cubic-bezier(.2,.8,.2,1); }
+.voice:hover { background: var(--clr-surface-hover); transform: translateY(-3px); }
+.voice:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+.voices__row { padding-top: 4px; }
+
+.voice__biz {
+  font-weight: 600;
+  color: var(--clr-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blk-head__title {
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.6px;
+}
+
+.blk-head__sub { margin-top: 2px; font-size: 0.8125rem; font-weight: 500; color: var(--clr-text-2); }
+
+/* ══════════ CIUDADES ══════════ */
+.cities { margin-bottom: 36px; }
+
+.cities__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 170px;
+  gap: 14px;
+}
+
+.cities__grid--few { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 200px; }
+
+.city {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: var(--clr-surface);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--ff);
+}
+
+/* La que más negocios tiene ocupa el doble: da ritmo a la rejilla. */
+.city--big { grid-column: span 2; grid-row: span 2; }
+.cities__grid--few .city--big { grid-row: span 1; grid-column: span 1; }
+
+.city__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .6s cubic-bezier(.2,.8,.2,1);
+}
+
+.city:hover .city__img { transform: scale(1.06); }
+
+.city__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(21, 23, 26, .85) 0%, rgba(21, 23, 26, .15) 55%, transparent 100%);
+}
+
+.city__text {
+  position: absolute;
+  left: 18px;
+  right: 60px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
+
+.city__text strong {
+  font-family: var(--ff-display);
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -.5px;
+  line-height: 1.1;
+}
+
+.city--big .city__text strong { font-size: 2.25rem; letter-spacing: -1px; }
+.city__text span { margin-top: 2px; font-size: 0.8125rem; font-weight: 600; color: rgba(255, 255, 255, .8); }
+
+.city__go {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #C0EED3;
+  color: #2E343B;
+  transform: scale(.85);
+  opacity: 0;
+  transition: transform .25s ease, opacity .25s ease;
+}
+
+.city__go .material-symbols-rounded { font-size: 20px; }
+.city:hover .city__go, .city:focus-visible .city__go { transform: scale(1); opacity: 1; }
+
+/* ══════════ RESEÑAS DE LA GENTE ══════════ */
+.voices { margin-bottom: 36px; }
+
+.voices__row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.voices__row::-webkit-scrollbar { display: none; }
+.voices__row.is-dragging { cursor: grabbing; }
+
+.voice {
+  flex: 0 0 340px;
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border-radius: var(--r-xl);
+  background: var(--clr-surface);
+}
+
+.voice__stars { display: flex; color: var(--clr-star); }
+.voice__stars .material-symbols-rounded { font-size: 18px; opacity: .3; }
+.voice__stars .material-symbols-rounded.fill { opacity: 1; }
+
+.voice__text {
+  flex: 1;
+  margin-top: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.voice__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  box-shadow: inset 0 0.5px 0 var(--clr-border);
+}
+
+.voice__avatar {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.voice__avatar--initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.voice__who { display: flex; flex-direction: column; min-width: 0; font-size: 0.8125rem; }
+.voice__who strong { font-weight: 700; color: var(--clr-text); }
+.voice__who a { font-weight: 600; color: var(--clr-text-2); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voice__who a:hover { color: var(--clr-mint); text-decoration: underline; }
+
+/* ══════════ EL MAPA ══════════ */
+.mapband {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 300px;
+  margin: 8px 0 36px;
+  border-radius: var(--r-xxl);
+  overflow: hidden;
+  background: var(--clr-surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.mapband__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 36px 40px;
+}
+
+.mapband__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--clr-text-2);
+}
+
+.mapband__eyebrow .material-symbols-rounded { font-size: 18px; color: var(--clr-mint); }
+
+.mapband__title {
+  margin-top: 8px;
+  font-family: var(--ff-display);
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -1.2px;
+}
+
+.mapband__lead { margin-top: 10px; max-width: 42ch; font-size: 0.9375rem; font-weight: 500; line-height: 1.55; color: var(--clr-text-2); }
+
+.mapband__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  height: 46px;
+  padding: 0 20px;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.mapband__cta .material-symbols-rounded { font-size: 18px; transition: transform .2s ease; }
+.mapband:hover .mapband__cta .material-symbols-rounded { transform: translateX(3px); }
+
+/* El «mapa»: manzanas en menta muy suave, calles claras y las fotos de los
+   negocios de verdad como chinchetas. */
+.mapband__map {
+  position: relative;
+  background-color: #CFEBDB;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .55) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(255, 255, 255, .55) 2px, transparent 2px);
+  background-size: 46px 46px;
+  overflow: hidden;
+}
+
+.mapband__road { position: absolute; background: #F4FBF7; }
+.mapband__road--a { left: -10%; right: -10%; top: 42%; height: 14px; transform: rotate(-12deg); }
+.mapband__road--b { top: -10%; bottom: -10%; left: 58%; width: 12px; transform: rotate(8deg); }
+.mapband__road--c { left: 20%; right: -10%; top: 78%; height: 9px; transform: rotate(6deg); }
+
+.pin {
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  padding: 3px;
+  border-radius: 50% 50% 50% 4px;
+  background: #2E343B;
+  transform: rotate(-45deg);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, .25);
+  transition: transform .3s cubic-bezier(.2,1.4,.4,1);
+}
+
+.pin img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transform: rotate(45deg); }
+
+.pin--0 { left: 14%; top: 18%; }
+.pin--1 { left: 48%; top: 24%; width: 64px; height: 64px; background: #C0EED3; }
+.pin--2 { left: 72%; top: 52%; }
+.pin--3 { left: 26%; top: 58%; }
+.pin--4 { left: 82%; top: 12%; width: 44px; height: 44px; }
+.pin--5 { left: 56%; top: 72%; width: 44px; height: 44px; }
+
+.mapband:hover .pin { transform: rotate(-45deg) translate(3px, -3px); }
+
+@media (max-width: 1024px) {
+  .cities__grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 140px; gap: 10px; }
+  .cities__grid--few { grid-template-columns: repeat(2, 1fr); }
+  .city--big,
+  .cities__grid--few .city--big { grid-column: span 2; grid-row: span 1; }
+  .city--big .city__text strong { font-size: 1.75rem; }
+  .city__go { opacity: 1; transform: scale(.9); }
+
+  .voices__row { margin: 0 calc(50% - 50vw); padding: 0 20px 4px; }
+  .voice { flex-basis: 290px; padding: 18px; }
+
+  .mapband { grid-template-columns: 1fr; border-radius: var(--r-xl); }
+  .mapband__text { padding: 24px; }
+  .mapband__map { min-height: 190px; order: -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .city:hover .city__img, .mapband:hover .pin { transform: none; }
+}

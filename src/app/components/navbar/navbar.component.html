@@ -1,7 +1,7 @@
 <header class="navbar">
   <div class="navbar-inner">
     <!-- Logo -->
-    <a routerLink="/home" class="navbar-logo">
+    <a routerLink="/" class="navbar-logo">
       <img
         src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
         alt="Bipsy"
@@ -18,7 +18,7 @@
     @if (currentUser) {
       <nav class="nav-links" aria-label="Navegación principal">
         <a
-          routerLink="/home"
+          routerLink="/"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
           class="nav-link"
@@ -26,7 +26,7 @@
           <span class="material-symbols-rounded nav-icon">explore</span>
           <span>Explorar</span>
         </a>
-        <a routerLink="/appointments" routerLinkActive="active" class="nav-link">
+        <a routerLink="/citas" routerLinkActive="active" class="nav-link">
           <span class="material-symbols-rounded nav-icon">schedule</span>
           <span>Mis citas</span>
         </a>
@@ -43,11 +43,7 @@
     <!-- User zone -->
     <div class="navbar-user">
       @if (currentUser) {
-        <a routerLink="/favoritos" routerLinkActive="active" class="icon-btn" title="Favoritos"
-           aria-label="Favoritos">
-          <span class="material-symbols-rounded">favorite</span>
-        </a>
-        <a routerLink="/profile" class="user-badge" title="Ajustes">
+        <a routerLink="/ajustes" class="user-badge" title="Ajustes">
           @if (currentUser.profileImageUrl) {
             <img class="user-avatar-img" [src]="currentUser.profileImageUrl" alt="" />
           } @else {

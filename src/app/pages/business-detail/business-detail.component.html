@@ -170,9 +170,9 @@
               @for (review of reviews; track review.id) {
                 <article class="review">
                   <header class="review__head">
-                    <span class="review__avatar">{{ (review.authorName || '?')[0] }}</span>
+                    <span class="review__avatar">{{ (review.customerName || review.authorName || '?')[0] }}</span>
                     <span class="review__who">
-                      <strong>{{ review.authorName || 'Cliente' }}</strong>
+                      <strong>{{ review.customerName || review.authorName || 'Cliente' }}</strong>
                       <span class="review__stars">
                         @for (filled of stars(review.rating); track $index) {
                           <span class="material-symbols-rounded review__star" [class.fill]="filled">star</span>

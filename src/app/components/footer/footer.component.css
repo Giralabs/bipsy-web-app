@@ -36,6 +36,27 @@
 .footer__store:hover { opacity: .8; }
 .footer__store img { height: 100%; width: auto; display: block; }
 
+/* ── Redes ──
+   Botón redondo con el relleno de las píldoras sobre el suelo: `--clr-subtle`
+   y no la tarjeta, que en claro es blanco sobre casi blanco. */
+.footer__socials { margin-top: 16px; display: flex; gap: 10px; }
+
+.footer__social {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-subtle);
+  color: var(--clr-text-2);
+  transition: background-color .2s ease, color .2s ease, transform .12s ease;
+}
+
+.footer__social:hover { color: var(--clr-text); }
+.footer__social:active { transform: scale(.94); }
+.footer__social svg { width: 18px; height: 18px; fill: currentColor; }
+
 /* ── Columnas de enlaces ── */
 .footer__col { display: flex; flex-direction: column; gap: 10px; }
 

@@ -115,6 +115,10 @@ export class SearchComponent implements OnInit {
       if (params['filtros']) {
         this.filtersOpen = true;
       }
+      // El bloque del mapa de la portada entra directo a la vista de mapa.
+      if (params['mapa']) {
+        this.showMap = true;
+      }
       this.date = params['date'] ?? null;
       this.slot = (params['slot'] as DaySlot) ?? 'any';
       this.cityQuery = params['city'] ?? null;

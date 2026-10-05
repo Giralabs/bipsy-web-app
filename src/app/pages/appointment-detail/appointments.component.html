@@ -1,66 +1,179 @@
-<div class="appts-page anim-fade-up">
-  <div class="appts-inner">
+<div class="page anim-fade-up">
+  <div class="page__inner">
 
-    <h1 class="appts-heading">Mis citas</h1>
-    <p class="appts-sub">Tus reservas, pasadas y futuras</p>
+    <header class="phead">
+      <div>
+        <p class="phead__eyebrow">Tu agenda</p>
+        <h1 class="phead__title">Mis citas</h1>
+        <p class="phead__sub">
+          @if (isAuthenticated && !isLoading && !loadError) {
+            {{ upcoming.length === 0 ? 'No tienes nada por delante.' : upcoming.length === 1 ? 'Tienes 1 cita por delante.' : 'Tienes ' + upcoming.length + ' citas por delante.' }}
+          } @else {
+            Tus reservas, pasadas y futuras, en un mismo sitio.
+          }
+        </p>
+        <div class="phead__actions">
+          <a routerLink="/buscar" class="pill-btn">
+            <span class="material-symbols-rounded">add</span>
+            Reservar cita
+          </a>
+        </div>
+      </div>
+      <span class="phead__art" aria-hidden="true">
+        <span class="material-symbols-rounded">event_available</span>
+      </span>
+    </header>
 
-    @if (!isAuthenticated) {
+    @if (!isAuthenticated && !isLoading) {
       <div class="empty-state">
         <span class="material-symbols-rounded">lock</span>
         <h3>Entra para ver tus citas</h3>
-        <p>Con tu cuenta de Bipsy tienes aquí todas tus reservas, puedas cambiarlas o cancelarlas.</p>
+        <p>Con tu cuenta de Bipsy tienes aquí todas tus reservas y puedes cambiarlas o cancelarlas.</p>
         <app-button variant="primary" icon="login" (onClick)="openLogin()">Iniciar sesión</app-button>
       </div>
     } @else {
-      <app-segmented
-        class="appts-segmented"
-        [labels]="tabs"
-        [selectedIndex]="selectedTab"
-        (selectedIndexChange)="selectedTab = $event"
-      />
+      <div class="ap">
+        <div class="ap__main">
 
-      <!-- Los avisos de hueco libre caducan en horas: van arriba del todo y
-           no en una pestaña aparte. Se pintan también con la lista vacía. -->
-      @if (selectedTab === 0) {
-        <app-waitlist-summary />
-      }
+          <!-- ══════════ LA PRÓXIMA ══════════ -->
+          @if (!isLoading && next) {
+            <article class="next" role="link" tabindex="0" (click)="openBooking(next)" (keydown.enter)="openBooking(next)">
+              <div class="next__leaf">
+                <span class="next__month">{{ nextMonth }}</span>
+                <span class="next__day">{{ nextDay }}</span>
+              </div>
+              <div class="next__body">
+                <p class="next__label">
+                  Tu próxima cita
+                  <span class="next__count">{{ countdown }}</span>
+                </p>
+                <h2 class="next__title">{{ next.serviceName }}</h2>
+                <p class="next__meta">
+                  <span><span class="material-symbols-rounded">storefront</span>{{ next.businessName || 'Negocio' }}</span>
+                  <span><span class="material-symbols-rounded">schedule</span>{{ nextWhen }}</span>
+                  @if (next.workerName) {
+                    <span><span class="material-symbols-rounded">person</span>{{ next.workerName }}</span>
+                  }
+                </p>
+              </div>
+              <div class="next__side">
+                @if (nextPrice) {
+                  <span class="next__price">{{ nextPrice }}</span>
+                }
+                <span class="next__go">
+                  Ver cita
+                  <span class="material-symbols-rounded">arrow_forward</span>
+                </span>
+              </div>
+            </article>
+          }
 
-      @if (isLoading) {
-        <div class="appts-list">
-          @for (i of [1, 2, 3]; track i) {
-            <div class="skeleton appts-skeleton"></div>
+          <app-segmented
+            class="ap__segmented"
+            [labels]="tabs"
+            [selectedIndex]="selectedTab"
+            (selectedIndexChange)="selectedTab = $event"
+          />
+
+          <!-- Los avisos de hueco libre caducan en horas: van arriba del todo. -->
+          @if (selectedTab === 0) {
+            <app-waitlist-summary />
+          }
+
+          @if (isLoading) {
+            <div class="ap__list">
+              @for (i of [1, 2, 3]; track i) {
+                <div class="skeleton ap__skeleton"></div>
+              }
+            </div>
+          } @else if (loadError) {
+            <div class="empty-state">
+              <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+              <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido cargar tus citas' }}</h3>
+              <p>{{ loadError.message }}</p>
+              <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+            </div>
+          } @else if (groups.length === 0) {
+            <div class="ap__empty">
+              <span class="ap__empty-icon">
+                <span class="material-symbols-rounded">{{ selectedTab === 0 ? 'event_upcoming' : 'history' }}</span>
+              </span>
+              <div>
+                <h3>
+                  @if (selectedTab === 0) {
+                    {{ next ? 'No hay más citas por ahora' : 'No tienes citas próximas' }}
+                  } @else {
+                    Sin historial todavía
+                  }
+                </h3>
+                <p>{{ selectedTab === 0 ? 'Cuando reserves, tus citas aparecerán aquí.' : 'Aquí verás tus citas pasadas y canceladas, y podrás repetirlas.' }}</p>
+              </div>
+              @if (selectedTab === 0) {
+                <button type="button" class="pill-btn" (click)="goExplore()">
+                  <span class="material-symbols-rounded">search</span>
+                  Buscar un sitio
+                </button>
+              }
+            </div>
+          } @else {
+            @for (group of groups; track group.label) {
+              <h3 class="ap__month">{{ group.label }}</h3>
+              <div class="ap__list">
+                @for (booking of group.items; track booking.id) {
+                  <app-booking-card
+                    [booking]="booking"
+                    [canRebook]="selectedTab === 1"
+                    (open)="openBooking($event)"
+                    (rebook)="rebook($event)"
+                  />
+                }
+              </div>
+            }
           }
         </div>
-      } @else if (loadError) {
-        <div class="empty-state">
-          <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
-          <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido cargar tus citas' }}</h3>
-          <p>{{ loadError.message }}</p>
-          <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
-        </div>
-      } @else if (items.length === 0) {
-        <div class="empty-state">
-          <span class="material-symbols-rounded">event_busy</span>
-          <h3>{{ selectedTab === 0 ? 'No tienes citas próximas' : 'Sin historial' }}</h3>
-          <p>
-            {{ selectedTab === 0
-                ? 'Cuando reserves una cita aparecerá aquí.'
-                : 'Aquí verás tus citas pasadas y canceladas.' }}
-          </p>
-          <app-button variant="primary" icon="explore" (onClick)="goExplore()">Explorar negocios</app-button>
-        </div>
-      } @else {
-        <div class="appts-list">
-          @for (booking of items; track booking.id) {
-            <app-booking-card
-              [booking]="booking"
-              [canRebook]="selectedTab === 1"
-              (open)="openBooking($event)"
-              (rebook)="rebook($event)"
-            />
-          }
-        </div>
-      }
+
+        <!-- ══════════ LATERAL ══════════ -->
+        @if (!isLoading && !loadError) {
+          <aside class="ap__aside">
+            <div class="side-card">
+              <h2 class="side-card__title">Tu actividad</h2>
+              <div class="stats">
+                <div class="stat">
+                  <span class="stat__value">{{ upcoming.length }}</span>
+                  <span class="stat__label">Próximas</span>
+                </div>
+                <div class="stat">
+                  <span class="stat__value">{{ visits }}</span>
+                  <span class="stat__label">Visitas</span>
+                </div>
+                <div class="stat">
+                  <span class="stat__value">{{ places }}</span>
+                  <span class="stat__label">Sitios</span>
+                </div>
+              </div>
+            </div>
+
+            @if (pendingReviews > 0) {
+              <a routerLink="/resenas" class="side-card ap__review">
+                <span class="ap__review-icon"><span class="material-symbols-rounded fill">star</span></span>
+                <span class="ap__review-text">
+                  <strong>{{ pendingReviews === 1 ? 'Tienes 1 cita por valorar' : 'Tienes ' + pendingReviews + ' citas por valorar' }}</strong>
+                  <span>Cuenta qué tal te fue y ayuda a otros a elegir.</span>
+                </span>
+                <span class="material-symbols-rounded ap__review-go">arrow_forward</span>
+              </a>
+            }
+
+            <div class="side-card ap__tip">
+              <span class="material-symbols-rounded">tips_and_updates</span>
+              <p>
+                <strong>¿Te ha surgido algo?</strong>
+                Abre la cita para cambiar el día o cancelarla. Si el negocio cobra por cancelar tarde, te lo decimos antes.
+              </p>
+            </div>
+          </aside>
+        }
+      </div>
     }
   </div>
 </div>

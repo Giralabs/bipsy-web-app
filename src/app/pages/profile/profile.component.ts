@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BookingRepository } from '../../repositories/booking.repository';
 import { ApiError } from '../../core/api-error';
 import { SessionService } from '../../core/session.service';
 import { PushService } from '../../core/push.service';
@@ -9,11 +10,55 @@ import { shrinkImage } from '../../shared/image-resize';
 import { MeRepository } from '../../repositories/me.repository';
 import { UserProfileDto } from '../../models/bipsy.models';
 import { ButtonComponent } from '../../components/button/button.component';
-import { GroupedSectionComponent } from '../../components/grouped-list/grouped-section.component';
-import { GroupedRowComponent } from '../../components/grouped-list/grouped-row.component';
 
-/** Qué panel está abierto dentro de los ajustes. */
-type Panel = 'none' | 'edit' | 'password' | 'notices';
+/** Cada apartado de los ajustes. En escritorio se ve uno a la derecha del menú. */
+type Section = 'profile' | 'security' | 'notices' | 'help' | 'legal' | 'account';
+
+const SECTIONS: { id: Section; icon: string; label: string; hint: string }[] = [
+  { id: 'profile', icon: 'person', label: 'Perfil', hint: 'Foto, nombre y datos de contacto' },
+  { id: 'security', icon: 'lock', label: 'Seguridad', hint: 'Contraseña y sesiones' },
+  { id: 'notices', icon: 'notifications', label: 'Avisos', hint: 'Notificaciones y novedades' },
+  { id: 'help', icon: 'help', label: 'Ayuda', hint: 'Preguntas frecuentes' },
+  { id: 'legal', icon: 'gavel', label: 'Legal', hint: 'Términos y privacidad' },
+  { id: 'account', icon: 'manage_accounts', label: 'Cuenta', hint: 'Cerrar sesión o eliminarla' },
+];
+
+const SECTION_SLUGS: Record<string, Section> = {
+  perfil: 'profile',
+  seguridad: 'security',
+  avisos: 'notices',
+  ayuda: 'help',
+  legal: 'legal',
+  cuenta: 'account',
+};
+
+/** Las preguntas de `HelpSheet` en la app, con el mismo texto. */
+const FAQ: { q: string; a: string }[] = [
+  {
+    q: 'Cómo reservo una cita',
+    a: 'Busca un negocio en Explorar, entra en su ficha y elige el servicio. Después te pedimos día, hora y, si el negocio tiene equipo, con quién quieres ir.',
+  },
+  {
+    q: 'Cómo cancelo o cambio una cita',
+    a: 'En Mis citas, abre la que quieras y usa "Cambiar día u hora" o "Cancelar cita". Si el negocio cobra por cancelar tarde, la propia pantalla te dice hasta cuándo es gratis y cuánto costaría después.',
+  },
+  {
+    q: 'Por qué me piden una tarjeta',
+    a: 'Algunos negocios la exigen como garantía para aceptar la reserva. No se cobra nada al guardarla: solo sirve si cancelas tarde o no apareces y ese negocio aplica tarifa.',
+  },
+  {
+    q: 'Puedo dejar una reseña',
+    a: 'Sí, después de tu cita, desde Ajustes → Reseñas. Es una por negocio: si vuelves más adelante podrás actualizarla borrando la anterior.',
+  },
+  {
+    q: 'Cómo cambio mi contraseña',
+    a: 'Ajustes → Cambiar contraseña. Al cambiarla se cierran tus sesiones en los demás dispositivos; en este sigues dentro.',
+  },
+  {
+    q: 'Cómo elimino mi cuenta',
+    a: 'Ajustes → Eliminar cuenta. Se te pide la contraseña. Tus reservas pasadas se conservan anonimizadas y las futuras se cancelan.',
+  },
+];
 
 /**
  * Ajustes de la cuenta. Port de `ProfileScreen`.
@@ -26,18 +71,33 @@ type Panel = 'none' | 'edit' | 'password' | 'notices';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, GroupedSectionComponent, GroupedRowComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   private readonly session = inject(SessionService);
   private readonly meRepo = inject(MeRepository);
+  private readonly bookings = inject(BookingRepository);
   private readonly push = inject(PushService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   profile: UserProfileDto | null = null;
-  panel: Panel = 'none';
+  readonly sections = SECTIONS;
+  section: Section = 'profile';
+  /** En móvil: el menú, o el apartado abierto encima. En escritorio no cuenta. */
+  mobileOpen = false;
+  /** Paso de confirmación para eliminar la cuenta. */
+  deleteOpen = false;
+
+  readonly faq = FAQ;
+  /** La pregunta abierta en Ayuda. */
+  openFaq: number | null = 0;
+
+  // Eliminar cuenta
+  deletePassword = '';
+  deleteConfirmed = false;
 
   saving = false;
   error: string | null = null;
@@ -71,15 +131,46 @@ export class ProfileComponent implements OnInit, OnDestroy {
   pushOn = false;
   pushBusy = false;
 
+  // Tus cifras. Null mientras no han llegado: se pinta un guion, no un cero.
+  bookingsCount: number | null = null;
+  reviewsCount: number | null = null;
+  favoritesCount = 0;
+  private countsLoaded = false;
+
+  readonly quickLinks = [
+    { path: '/citas', icon: 'event', label: 'Mis citas', hint: 'Próximas y pasadas' },
+    { path: '/favoritos', icon: 'favorite', label: 'Favoritos', hint: 'Tus sitios guardados' },
+    { path: '/resenas', icon: 'star', label: 'Reseñas', hint: 'Valora tus visitas' },
+    { path: '/pagos', icon: 'credit_card', label: 'Pagos', hint: 'Tarjetas y cobros' },
+  ];
+
   ngOnInit(): void {
     this.session.currentUser$.subscribe(user => {
       this.profile = user;
-      if (user) {
+      if (user && !this.saving) {
         this.formName = user.name ?? '';
         this.formEmail = user.email ?? '';
         this.formPhone = user.phone ?? '';
+        if (!this.countsLoaded) {
+          this.countsLoaded = true;
+          void this.loadCounts();
+        }
       }
     });
+    this.session.favoriteBusinessIds$.subscribe(ids => (this.favoritesCount = ids.length));
+
+    // Enlace directo a un apartado: /profile?apartado=seguridad
+    const wanted = SECTION_SLUGS[this.route.snapshot.queryParamMap.get('apartado') ?? ''];
+    if (wanted) {
+      this.selectSection(wanted);
+    }
+  }
+
+  /** Ninguna de las dos puede romper los ajustes: sin cifra, un guion. */
+  private async loadCounts(): Promise<void> {
+    const [bookings, reviews] = await Promise.allSettled([this.bookings.mine(), this.bookings.myReviews()]);
+    this.bookingsCount = bookings.status === 'fulfilled' ? bookings.value.length : null;
+    this.reviewsCount = reviews.status === 'fulfilled' ? reviews.value.length : null;
   }
 
   ngOnDestroy(): void {
@@ -136,21 +227,59 @@ export class ProfileComponent implements OnInit, OnDestroy {
    * Quien entró con Google no eligió contraseña, pero puede creársela: es lo
    * que le deja entrar también con su correo.
    */
+  get hasLetter(): boolean {
+    return /[a-zA-Z]/.test(this.newPassword);
+  }
+
+  get hasDigit(): boolean {
+    return /\d/.test(this.newPassword);
+  }
+
   get passwordRowLabel(): string {
     return this.profile?.hasPassword ? 'Cambiar contraseña' : 'Crear contraseña';
   }
 
-  openPanel(panel: Panel): void {
+  get currentSection(): { id: Section; icon: string; label: string; hint: string } {
+    return SECTIONS.find(s => s.id === this.section)!;
+  }
+
+  /** Abre un apartado. En móvil, además, pasa del menú al contenido. */
+  selectSection(section: Section): void {
     this.error = null;
     this.notice = null;
-    this.panel = this.panel === panel ? 'none' : panel;
-    if (this.panel === 'notices') {
+    this.section = section;
+    this.mobileOpen = true;
+    if (section === 'notices') {
+      this.pushOn = this.push.state === 'on';
       void this.loadPrivacy();
+    }
+    if (section === 'account') {
+      this.deletePassword = '';
+      this.deleteConfirmed = false;
+      this.deleteOpen = false;
+    }
+    if (typeof window !== 'undefined' && window.innerWidth <= 1024) {
+      window.scrollTo({ top: 0 });
     }
   }
 
+  backToMenu(): void {
+    this.mobileOpen = false;
+    this.error = null;
+    this.notice = null;
+  }
+
+  /** Hay cambios del perfil sin guardar: habilita Guardar y Descartar. */
+  get profileDirty(): boolean {
+    const p = this.profile;
+    return !!this.pendingPhoto || this.removePhoto ||
+      this.formName.trim() !== (p?.name ?? '') ||
+      this.formEmail.trim() !== (p?.email ?? '') ||
+      this.formPhone.trim() !== (p?.phone ?? '');
+  }
+
   goToLogin(): void {
-    this.router.navigate(['/acceder'], { queryParams: { returnTo: '/profile' } });
+    this.router.navigate(['/acceder'], { queryParams: { returnTo: '/ajustes' } });
   }
 
   goToRegister(): void {
@@ -183,15 +312,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.removePhoto = false;
       await this.session.refreshProfile();
       this.notice = 'Perfil actualizado.';
-      this.panel = 'none';
     });
   }
 
-  /** Cerrar el panel también descarta la foto elegida. */
+  /** Descarta lo tocado: la foto elegida y los campos vuelven a lo guardado. */
   cancelEdit(): void {
     this.discardPendingPhoto();
     this.removePhoto = false;
-    this.panel = 'none';
+    this.formName = this.profile?.name ?? '';
+    this.formEmail = this.profile?.email ?? '';
+    this.formPhone = this.profile?.phone ?? '';
   }
 
   // ----- CONTRASEÑA --------------------
@@ -206,7 +336,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.currentPassword = '';
       this.newPassword = '';
       this.notice = 'Contraseña actualizada.';
-      this.panel = 'none';
     });
   }
 
@@ -281,21 +410,25 @@ export class ProfileComponent implements OnInit, OnDestroy {
     // entre aquí recibiría los avisos del anterior.
     await this.push.disable();
     await this.session.logout();
-    this.router.navigate(['/home']);
+    this.router.navigate(['/']);
+  }
+
+  get canDelete(): boolean {
+    return this.deleteConfirmed && (!this.profile?.hasPassword || this.deletePassword.length > 0);
   }
 
   async deleteAccount(): Promise<void> {
-    const sure = confirm(
-      'Al eliminar la cuenta se borran tus datos y tus reservas. No se puede deshacer. ' +
-      '¿Seguro que quieres continuar?',
-    );
-    if (!sure) {
+    if (!this.canDelete) {
       return;
     }
     await this.run(async () => {
-      await this.meRepo.deleteAccount();
+      await this.meRepo.deleteAccount(this.profile?.hasPassword ? this.deletePassword : undefined);
+      this.deletePassword = '';
+      await this.push.disable();
+      // `logout` limpia en local aunque la llamada falle, que es lo que pasa
+      // con una cuenta ya borrada.
       await this.session.logout();
-      this.router.navigate(['/home']);
+      this.router.navigate(['/']);
     });
   }
 

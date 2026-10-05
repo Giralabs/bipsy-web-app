@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ApiService } from './api.service';
+import { SocialAuthService } from './social-auth.service';
 import { TokenStorageService } from './token-storage.service';
 import { AuthRepository } from '../repositories/auth.repository';
 import { MeRepository } from '../repositories/me.repository';
@@ -24,6 +25,7 @@ export class SessionService {
   private readonly tokens = inject(TokenStorageService);
   private readonly auth = inject(AuthRepository);
   private readonly meRepo = inject(MeRepository);
+  private readonly social = inject(SocialAuthService);
 
   private readonly statusSubject = new BehaviorSubject<SessionStatus>('unknown');
   readonly status$ = this.statusSubject.asObservable();
@@ -60,7 +62,7 @@ export class SessionService {
    * Hay un token guardado, aunque todavía no se sepa si vale.
    *
    * Sirve para no echar a nadie de una pantalla protegida durante el instante
-   * en que la sesión aún se está comprobando: sin esto, recargar `/appointments`
+   * en que la sesión aún se está comprobando: sin esto, recargar `/citas`
    * con sesión válida rebotaba al login antes de que llegara `/me`.
    */
   get tokenLooksPresent(): boolean {
@@ -99,6 +101,11 @@ export class SessionService {
 
   async logout(): Promise<void> {
     await this.auth.logout();
+    // Cierra también la sesión de Firebase, que es la que abren Google y
+    // Apple, para que la próxima vez vuelva a preguntar la cuenta. Igual que
+    // en `AuthController.logout()` de la app; no afecta a quien entró con
+    // contraseña, que no tiene ninguna abierta.
+    await this.social.signOut();
     this.clearSession();
   }
 

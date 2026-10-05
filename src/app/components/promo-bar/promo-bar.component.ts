@@ -23,7 +23,8 @@ export class PromoBarComponent {
   private static readonly STORAGE_KEY = 'bipsy_promo_business';
 
   /**
-   * La duración que se anuncia.
+   * La duración que se anuncia. Es la misma que anuncia la web de negocios
+   * (`bipsy-business-web-app`): si cambia aquí, cambia allí.
    *
    * ⚠️ Hoy NO coincide con lo que da el backend: el plan «Bipsy Business»
    * tiene `plan.trial_days = 14` y el alta regala `WELCOME_TRIAL_DAYS = 5`.
@@ -31,7 +32,7 @@ export class PromoBarComponent {
    * `trial_days` o bajar este texto— y crear la oferta de introducción en Play
    * Console y App Store Connect, o se estará anunciando algo que no se cumple.
    */
-  readonly trialLabel = '3 meses gratis';
+  readonly trialLabel = '30 días gratis';
 
   dismissed = this.readDismissed();
 

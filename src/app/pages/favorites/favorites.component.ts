@@ -29,11 +29,17 @@ export class FavoritesComponent implements OnInit {
   private readonly router = inject(Router);
 
   businesses: BusinessResponse[] = [];
+  /** Destacados, para que una lista vacía proponga por dónde empezar. */
+  suggestions: BusinessResponse[] = [];
   isAuthenticated = false;
   isLoading = true;
   loadError: ApiError | null = null;
 
   ngOnInit(): void {
+    this.catalog.featured(0, 8)
+      .then(list => (this.suggestions = list))
+      .catch(() => (this.suggestions = []));
+
     this.session.status$.subscribe(status => {
       if (status === 'unknown') {
         return;
@@ -75,6 +81,6 @@ export class FavoritesComponent implements OnInit {
   }
 
   goExplore(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/buscar']);
   }
 }

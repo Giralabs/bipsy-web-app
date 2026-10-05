@@ -1,5 +1,5 @@
-<div class="bd anim-fade-up">
-  <div class="bd__inner">
+<div class="page bd anim-fade-up">
+  <div class="page__inner">
 
     <button type="button" class="flow__back" (click)="goBack()">
       <span class="material-symbols-rounded">arrow_back</span>
@@ -7,7 +7,11 @@
     </button>
 
     @if (isLoading) {
-      <div class="loading-state"><div class="spinner"></div><span>Cargando la cita…</span></div>
+      <div class="skeleton bd__skeleton-cover"></div>
+      <div class="bd__layout">
+        <div class="skeleton bd__skeleton-block"></div>
+        <div class="skeleton bd__skeleton-block"></div>
+      </div>
     } @else if (loadError || !booking) {
       <div class="empty-state">
         <span class="material-symbols-rounded">{{ loadError?.networkError ? 'wifi_off' : 'event_busy' }}</span>
@@ -17,119 +21,218 @@
       </div>
     } @else {
 
-      <div class="bd__head">
-        <h1 class="bd__title">{{ booking.serviceName }}</h1>
-        <app-booking-status-pill [status]="booking.status" />
-      </div>
+      <!-- ══════════ PORTADA ══════════ -->
+      <header class="cover">
+        <img class="cover__img" [src]="coverUrl" alt="" />
+        <span class="cover__veil" aria-hidden="true"></span>
 
-      <!-- Cuándo, con quién y dónde. Es a lo que se entra. -->
-      <div class="form-group">
-        <div class="form-group__box">
-          <div class="bd__row">
-            <span class="material-symbols-rounded bd__row-icon">calendar_today</span>
-            <span class="bd__row-text"><strong>{{ dateLabel }}</strong></span>
+        <div class="cover__content">
+          <div class="cover__pills">
+            <app-booking-status-pill [status]="booking.status" />
+            @if (countdown) {
+              <span class="badge badge--photo">
+                <span class="material-symbols-rounded cover__pill-icon">timer</span>{{ countdown }}
+              </span>
+            }
           </div>
-          <div class="bd__row">
-            <span class="material-symbols-rounded bd__row-icon">schedule</span>
-            <span class="bd__row-text">{{ timeRange }}</span>
+          <h1 class="cover__title">{{ booking.serviceName }}</h1>
+          <button type="button" class="cover__biz" (click)="openBusiness()">
+            <span class="material-symbols-rounded">storefront</span>
+            {{ business?.name || booking.businessName || 'Negocio' }}
+            <span class="material-symbols-rounded cover__biz-go">chevron_right</span>
+          </button>
+        </div>
+
+        @if (serviceImage) {
+          <img class="cover__service" [src]="serviceImage" [alt]="booking.serviceName" />
+        }
+      </header>
+
+      <div class="bd__layout">
+        <div class="bd__main">
+
+          <!-- ══════════ CUÁNDO, CUÁNTO, CON QUIÉN ══════════ -->
+          <div class="tiles">
+            <div class="tile-info">
+              <span class="tile-info__icon"><span class="material-symbols-rounded">calendar_today</span></span>
+              <span class="tile-info__label">Día</span>
+              <strong class="tile-info__value">{{ weekdayLabel }}</strong>
+              <span class="tile-info__sub">{{ dayMonthLabel }}</span>
+            </div>
+            <div class="tile-info">
+              <span class="tile-info__icon"><span class="material-symbols-rounded">schedule</span></span>
+              <span class="tile-info__label">Hora</span>
+              <strong class="tile-info__value">{{ timeRange }}</strong>
+              <span class="tile-info__sub">{{ durationLabel }}</span>
+            </div>
+            @if (priceLabel) {
+              <div class="tile-info">
+                <span class="tile-info__icon"><span class="material-symbols-rounded">payments</span></span>
+                <span class="tile-info__label">Precio</span>
+                <strong class="tile-info__value">{{ priceLabel }}</strong>
+                <span class="tile-info__sub">Del servicio</span>
+              </div>
+            }
+            @if (booking.workerName) {
+              <div class="tile-info">
+                <span class="tile-info__icon"><span class="material-symbols-rounded">person</span></span>
+                <span class="tile-info__label">Con</span>
+                <strong class="tile-info__value">{{ booking.workerName }}</strong>
+                <span class="tile-info__sub">Profesional</span>
+              </div>
+            }
           </div>
-          @if (business) {
-            <div class="bd__row bd__row--link" (click)="openBusiness()">
-              <span class="material-symbols-rounded bd__row-icon">storefront</span>
-              <span class="bd__row-text">
-                <strong>{{ business.name }}</strong>
+
+          <!-- ══════════ DÓNDE ══════════ -->
+          <section class="block">
+            <h2 class="block__title">Dónde</h2>
+            <div class="where">
+              <img class="where__img" [src]="coverUrl" alt="" />
+              <div class="where__text">
+                <strong>{{ business?.name || booking.businessName }}</strong>
                 @if (locationDisplay) {
-                  <small>{{ locationDisplay }}</small>
+                  <span><span class="material-symbols-rounded">location_on</span>{{ locationDisplay }}</span>
+                }
+                @if (business?.phone) {
+                  <span><span class="material-symbols-rounded">call</span>{{ business?.phone }}</span>
+                }
+              </div>
+            </div>
+            <div class="where__actions">
+              @if (directionsUrl) {
+                <a class="pill-btn pill-btn--soft" [href]="directionsUrl" target="_blank" rel="noopener">
+                  <span class="material-symbols-rounded">directions</span>Cómo llegar
+                </a>
+              }
+              @if (business?.phone) {
+                <a class="pill-btn pill-btn--soft" [href]="'tel:' + business?.phone">
+                  <span class="material-symbols-rounded">call</span>Llamar
+                </a>
+              }
+              <button type="button" class="pill-btn pill-btn--soft" (click)="openBusiness()">
+                <span class="material-symbols-rounded">storefront</span>Ver negocio
+              </button>
+            </div>
+          </section>
+
+          @if (booking.notes) {
+            <section class="block">
+              <h2 class="block__title">Tus notas</h2>
+              <p class="block__note">
+                <span class="material-symbols-rounded">sticky_note_2</span>{{ booking.notes }}
+              </p>
+            </section>
+          }
+
+          @if (booking.cancelReason) {
+            <section class="block block--danger">
+              <h2 class="block__title">Motivo de la cancelación</h2>
+              <p class="block__text">{{ booking.cancelReason }}</p>
+            </section>
+          }
+
+          <!-- ══════════ RESEÑA ══════════ -->
+          @if (myReview) {
+            <section class="block">
+              <div class="block__head">
+                <h2 class="block__title">Tu reseña</h2>
+                <button type="button" class="block__link" [disabled]="busy" (click)="deleteReview()">Eliminar</button>
+              </div>
+              <span class="bd__stars">
+                @for (filled of stars(myReview.rating); track $index) {
+                  <span class="material-symbols-rounded bd__star" [class.fill]="filled">star</span>
                 }
               </span>
-              <span class="material-symbols-rounded bd__chevron">chevron_right</span>
-            </div>
-          }
-          @if (booking.notes) {
-            <div class="bd__row">
-              <span class="material-symbols-rounded bd__row-icon">sticky_note_2</span>
-              <span class="bd__row-text">{{ booking.notes }}</span>
-            </div>
+              @if (myReview.comment) {
+                <p class="bd__review-text">“{{ myReview.comment }}”</p>
+              }
+              @if (myReview.reply) {
+                <div class="bd__review-reply">
+                  <strong><span class="material-symbols-rounded">storefront</span>Respuesta del negocio</strong>
+                  <p>{{ myReview.reply }}</p>
+                </div>
+              }
+            </section>
+          } @else if (canReview) {
+            <button type="button" class="ask" (click)="openReview()">
+              <span class="ask__stars" aria-hidden="true">
+                @for (i of [1, 2, 3, 4, 5]; track i) {
+                  <span class="material-symbols-rounded fill">star</span>
+                }
+              </span>
+              <span class="ask__text">
+                <strong>¿Qué tal te fue?</strong>
+                <span>Tu reseña ayuda a {{ business?.name || 'este negocio' }} y a quien busca dónde ir.</span>
+              </span>
+              <span class="ask__go">Valorar <span class="material-symbols-rounded">arrow_forward</span></span>
+            </button>
           }
         </div>
-      </div>
 
-      @if (actionError) {
-        <p class="flow__error" role="alert">
-          <span class="material-symbols-rounded fill">error</span>{{ actionError }}
-        </p>
-      }
+        <!-- ══════════ ACCIONES ══════════ -->
+        <aside class="bd__aside">
+          <div class="side-card">
+            <h2 class="side-card__title">{{ canCancel ? 'Gestionar cita' : 'Acciones' }}</h2>
 
-      <!-- Tu reseña de esta cita -->
-      @if (myReview) {
-        <div class="form-group">
-          <p class="form-group__header">Tu reseña</p>
-          <div class="form-group__box bd__review">
-            <span class="bd__stars">
-              @for (filled of stars(myReview.rating); track $index) {
-                <span class="material-symbols-rounded bd__star" [class.fill]="filled">star</span>
-              }
-            </span>
-            @if (myReview.comment) {
-              <p class="bd__review-text">{{ myReview.comment }}</p>
-            }
-            @if (myReview.reply) {
-              <p class="bd__review-reply">
-                <strong>Respuesta del negocio:</strong> {{ myReview.reply }}
+            @if (actionError) {
+              <p class="flow__error" role="alert">
+                <span class="material-symbols-rounded fill">error</span>{{ actionError }}
               </p>
             }
-            <app-button variant="text" size="small" [disabled]="busy" (onClick)="deleteReview()">
-              Eliminar reseña
-            </app-button>
+
+            <div class="acts">
+              @if (canRebook) {
+                <button type="button" class="act act--primary" (click)="rebook()">
+                  <span class="material-symbols-rounded">event_repeat</span>
+                  <span>Volver a reservar<small>El mismo servicio{{ booking.workerName ? ' con ' + booking.workerName : '' }}</small></span>
+                </button>
+              }
+
+              <button type="button" class="act" [disabled]="busy" (click)="openChat()">
+                <span class="material-symbols-rounded">forum</span>
+                <span>Escribir al negocio<small>Pregunta lo que necesites</small></span>
+              </button>
+
+              @if (calendarUrl) {
+                <a class="act" [href]="calendarUrl" target="_blank" rel="noopener">
+                  <span class="material-symbols-rounded">calendar_add_on</span>
+                  <span>Añadir al calendario<small>Google Calendar</small></span>
+                </a>
+              }
+
+              @if (canCancel) {
+                <button type="button" class="act" (click)="reschedule()">
+                  <span class="material-symbols-rounded">edit_calendar</span>
+                  <span>Cambiar día u hora<small>Elige otro hueco libre</small></span>
+                </button>
+
+                <button type="button" class="act act--danger" [disabled]="busy" (click)="cancel()">
+                  <span class="material-symbols-rounded">{{ willCharge ? 'credit_card' : 'event_busy' }}</span>
+                  <span>{{ cancelLabel }}<small>{{ willCharge ? 'Se cargará en tu tarjeta' : 'No se puede deshacer' }}</small></span>
+                </button>
+              }
+            </div>
+
+            <!-- La letra pequeña de las dos acciones, no el pie de una sola. -->
+            @if (canCancel && fee) {
+              <p class="bd__fee" [class.bd__fee--warn]="willCharge">
+                <span class="material-symbols-rounded">{{ willCharge ? 'warning' : 'info' }}</span>
+                <span>
+                  @if (willCharge) {
+                    Quedan menos de {{ fee.windowHours }} h: cancelar o cambiar la cita ahora cuesta
+                    {{ feeAmount }} ({{ fee.feePercent }} % del servicio).
+                  } @else if (fee.feePercent > 0) {
+                    Cancelar es gratis hasta {{ fee.windowHours }} h antes de la cita. A partir de ahí
+                    cuesta el {{ fee.feePercent }} % del servicio.
+                  } @else {
+                    Cancelar es gratis. No se cobra nada.
+                  }
+                </span>
+              </p>
+            }
           </div>
-        </div>
-      }
-
-      <!-- ══════════ ACCIONES ══════════ -->
-      <div class="bd__actions">
-        @if (canReview) {
-          <app-button variant="primary" icon="star" [fullWidth]="true" (onClick)="openReview()">
-            Dejar reseña
-          </app-button>
-        }
-
-        <app-button variant="secondary" icon="forum" [fullWidth]="true" [disabled]="busy" (onClick)="openChat()">
-          Escribir al negocio
-        </app-button>
-
-        @if (canCancel) {
-          <app-button variant="secondary" icon="edit_calendar" [fullWidth]="true" (onClick)="reschedule()">
-            Cambiar día u hora
-          </app-button>
-
-          <!-- Con cargo el botón lo dice y lleva el importe: enterarse al
-               pulsar de que cancelar cuesta dinero es enterarse tarde. -->
-          <app-button
-            variant="destructive"
-            [icon]="willCharge ? 'credit_card' : 'cancel'"
-            [fullWidth]="true"
-            [loading]="busy"
-            (onClick)="cancel()"
-          >
-            {{ cancelLabel }}
-          </app-button>
-        }
+        </aside>
       </div>
-
-      <!-- La letra pequeña de las dos acciones, no el pie de una sola. -->
-      @if (canCancel && fee) {
-        <p class="bd__fee">
-          @if (willCharge) {
-            Quedan menos de {{ fee.windowHours }} h: cancelar o cambiar la cita ahora cuesta
-            {{ feeAmount }} ({{ fee.feePercent }} % del servicio).
-          } @else if (fee.feePercent > 0) {
-            Cancelar es gratis hasta {{ fee.windowHours }} h antes de la cita. A partir de ahí
-            cuesta el {{ fee.feePercent }} % del servicio.
-          } @else {
-            No se cobra nada por cancelar.
-          }
-        </p>
-      }
     }
   </div>
 

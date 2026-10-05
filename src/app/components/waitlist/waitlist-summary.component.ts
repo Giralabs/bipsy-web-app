@@ -116,7 +116,7 @@ export class WaitlistSummaryComponent implements OnInit, OnDestroy {
       const result = await this.waitlist.acceptOffer(offer.id, offer.requiresPolicyConsent);
       this.offers = this.offers.filter(o => o.id !== offer.id);
       if (result.bookingId) {
-        this.router.navigate(['/appointments', result.bookingId]);
+        this.router.navigate(['/citas', result.bookingId]);
       }
     } catch (raw) {
       const error = ApiError.from(raw);

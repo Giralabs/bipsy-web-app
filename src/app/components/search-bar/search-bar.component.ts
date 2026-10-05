@@ -305,7 +305,7 @@ export class SearchBarComponent {
     if (this.date) params['date'] = this.date;
     if (this.slot !== 'any') params['slot'] = this.slot;
 
-    void this.router.navigate(['/search'], { queryParams: params });
+    void this.router.navigate(['/buscar'], { queryParams: params });
   }
 
   trackCell(index: number): number {

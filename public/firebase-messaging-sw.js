@@ -25,14 +25,27 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+/**
+ * A dónde lleva un aviso. El backend no manda una ruta: manda el `type` y los
+ * ids, igual que a las apps (`fcm_service.dart`). `route` se respeta si algún
+ * día llega.
+ */
+function targetFor(data) {
+  data = data || {};
+  if (data.route) return data.route;
+  if (data.type === 'CHAT_MESSAGE' && data.conversationId) return '/mensajes/' + data.conversationId;
+  // La web no tiene pantalla propia de la oferta: el aviso vive arriba de Mis citas.
+  if (data.type === 'WAITLIST_OFFER') return '/citas';
+  if (data.bookingId) return '/citas/' + data.bookingId;
+  return '/';
+}
+
 messaging.onBackgroundMessage(payload => {
   const notification = payload.notification || {};
   self.registration.showNotification(notification.title || 'Bipsy', {
     body: notification.body,
-    icon: '/assets_bipsy/Brand Marks/brandmark_mint.webp',
-    // El destino viaja en los datos del mensaje: es lo que decide a dónde
-    // lleva el clic.
-    data: { url: (payload.data && payload.data.route) || '/home' },
+    icon: '/assets_bipsy/System/Custom_Resolutions/mint_symbol/mint_symbol_192x192.webp',
+    data: { url: targetFor(payload.data) },
   });
 });
 
@@ -40,7 +53,7 @@ messaging.onBackgroundMessage(payload => {
 // pestaña de Bipsy abierta se enfoca esa, y si no se abre una.
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const target = (event.notification.data && event.notification.data.url) || '/home';
+  const target = (event.notification.data && event.notification.data.url) || '/';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {

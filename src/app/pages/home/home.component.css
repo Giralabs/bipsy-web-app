@@ -1,848 +1,686 @@
-.home-page {
-  position: relative;
-  min-height: 100vh;
-  overflow: hidden;
+/* Explorar. Tokens de gipsi_shared_ui (styles.css); el menta literal
+   (192,238,211) solo en brillos decorativos, que en claro quedan en verde
+   suave y en oscuro en halo. */
+:host { --accent-ink: #C0EED3; }
+
+@media (prefers-color-scheme: light) {
+  :host { --accent-ink: #4E7D62; }
 }
 
-/* ── Ambient Orbs ── */
-.orb {
-  position: fixed;
-  pointer-events: none;
-  border-radius: 50%;
-  z-index: 0;
-  animation: orb-float 10s ease-in-out infinite;
-  display: none;
-}
+.home { position: relative; min-height: 100vh; }
 
-.orb--1 {
-  width: 500px;
-  height: 500px;
-  top: -150px;
-  right: -100px;
-  background: radial-gradient(circle, rgba(185,235,208,0.10) 0%, transparent 65%);
-}
-
-.orb--2 {
-  width: 400px;
-  height: 400px;
-  bottom: 10%;
-  left: -120px;
-  background: radial-gradient(circle, rgba(185,235,208,0.06) 0%, transparent 65%);
-  animation-delay: -5s;
-}
-
-@keyframes orb-float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50%       { transform: translateY(-20px) scale(1.04); }
-}
-
-/* ── Hero ── */
-.hero {
-  position: relative;
-  /* 2 y no 1: `.section-wrap` tambien vale 1 y va despues en el DOM, asi que
-     ganaba por orden y los paneles del buscador —que son hijos del hero— se
-     pintaban DEBAJO de los chips de categoria y de las tarjetas. */
-  z-index: 2;
-  padding: 30px 24px 25px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.015);
-}
-
-/* La misma columna que el resto de la página: con 1320 aquí y 1240 debajo,
-   el titular arrancaba 18 px a la izquierda de las categorías. */
-.hero-inner {
-  width: min(1240px, 100%);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
-}
-
-.hero-text { flex: 1; max-width: 680px; }
-
-.hero-greeting {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--clr-mint);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 6px;
-}
-
-.hero-title {
-  font-size: clamp(2.2rem, 4vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -2px;
-  margin-bottom: 8px;
-  color: var(--clr-text);
-}
-
-.hero-accent {
-  color: var(--clr-mint);
-  font-style: italic;
-}
-
-.hero-sub {
-  font-size: 1.0rem;
-  color: var(--clr-text-2);
-  line-height: 1.55;
-  margin-bottom: 16px;
-  max-width: 520px;
-}
-
-/* Hero Search Box */
-/* El formulario ya no es la píldora: es solo la fila que reparte el campo y
-   el botón. El cristal —fondo, filo, sombra y desenfoque— se lo queda el
-   campo, y el botón queda suelto a su derecha. */
-.hero-search {
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-  max-width: 600px;
-}
-
-/* Aquí sí: esto es el campo, y es lo que se ilumina al escribir. */
-.hero-search-input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-  padding: 14px 24px;
-  background: rgba(255,255,255,0.06);
-  border: 1.2px solid rgba(185,235,208,0.25);
-  border-radius: 999px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter: blur(12px);
-  transition: border-color .2s ease, box-shadow .2s ease;
-}
-
-.hero-search-input-wrap:focus-within {
-  border-color: var(--clr-mint);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 3px var(--clr-mint-dim);
-}
-
-/* El botón acompaña al alto del campo en vez de traer el suyo: puestos uno al
-   lado del otro, dos alturas distintas cantan. */
-.hero-search app-button { display: flex; }
-.hero-search ::ng-deep .bipsy-btn { height: 100%; padding-inline: 30px; }
-
-.hero-search-icon { color: var(--clr-mint); flex-shrink: 0; }
-
-.hero-search-input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  color: var(--clr-text);
-  font-family: var(--ff);
-  font-size: 0.97rem;
-}
-
-.hero-search-input::placeholder { color: var(--clr-text-3); }
-
-.hero-search ::ng-deep .bipsy-btn:hover {
-  transform: none !important;
-}
-
-/* Glassmorphic Showcase Card */
-.hero-showcase {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: float-card 6s ease-in-out infinite;
-}
-
-.hero-image {
-  width: 190px;
-  max-width: 100%;
-  height: auto;
-  display: block;
-  object-fit: contain;
-  transition: transform 0.3s ease;
-}
-
-.hero-image:hover {
-  transform: scale(1.03);
-}
-
-@keyframes float-card {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
-}
-
-.showcase-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.showcase-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--clr-mint-dim);
-  border: 1.5px solid var(--clr-mint);
-  color: var(--clr-mint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 800;
-  box-shadow: 0 0 10px rgba(185, 235, 208, 0.2);
-}
-
-.showcase-info {
-  flex: 1;
-}
-
-.showcase-title {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--clr-text);
-  margin-bottom: 2px;
-}
-
-.showcase-subtitle {
-  font-size: 0.78rem;
-  color: var(--clr-text-2);
-}
-
-.showcase-icon {
-  color: var(--clr-mint);
-  font-size: 22px;
-  filter: drop-shadow(0 0 4px rgba(185, 235, 208, 0.4));
-}
-
-.showcase-divider {
-  border-top: 1.5px dashed rgba(255, 255, 255, 0.12);
-  margin: 16px 0;
-}
-
-.showcase-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.showcase-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.82rem;
-  color: var(--clr-text-2);
-  font-weight: 500;
-}
-
-.showcase-meta span.material-symbols-rounded {
-  font-size: 16px;
-  color: var(--clr-mint);
-}
-
-.showcase-badge {
-  position: absolute;
-  bottom: 18px;
-  right: 18px;
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
-  font-size: 0.8rem;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 999px;
-  box-shadow: 0 4px 10px rgba(185, 235, 208, 0.25);
-}
-
-/* ── Section wrapper ── */
-.section-wrap {
+.wrap {
   position: relative;
   z-index: 1;
   width: min(1240px, 100% - 48px);
   margin: 0 auto;
-  padding: 28px 0 80px;
+  padding: 8px 0 72px;
 }
 
-/* ── Chips row ── */
-.chips-row {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  margin-bottom: 28px;
-  scrollbar-width: none;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.chips-row.is-dragging { cursor: grabbing; }
-.chips-row app-chip { flex-shrink: 0; }
-.chips-row::-webkit-scrollbar { display: none; }
-
-/* ── Section Header ── */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-/* headlineMedium: Bricolage Grotesque 24 px, 700, tracking -0,6. */
-.section-title {
-  font-family: var(--ff-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -.6px;
-}
-
-.section-link {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--clr-mint);
-  text-decoration: none;
-  transition: opacity .2s ease;
-}
-.section-link:hover { opacity: .7; }
-
-/* ── Featured horizontal scroll ── */
-.featured-scroll {
-  display: flex;
-  /* GipsiSpacing.md: el hueco que deja `_GlassHomeCard` hasta la siguiente. */
-  gap: 12px;
-  overflow-x: auto;
-  align-items: stretch;
-  /* Aire a la derecha para que la última tarjeta no muera pegada al canto. */
-  padding: 0 28px 0 0;
-  margin: 0 -28px 32px 0;
-  scrollbar-width: none;
-
-  /* Mask gradient for smooth left/right fading */
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    black 48px,
-    black calc(100% - 48px),
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    black 48px,
-    black calc(100% - 48px),
-    transparent 100%
-  );
-}
-.featured-scroll::-webkit-scrollbar { display: none; }
-
-/* Mientras carga la fila no se arrastra: el desplazamiento automático
-   arranca cuando ya hay tarjetas. */
-.featured-scroll--static { overflow-x: hidden; }
-
-/* La misma proporción que la tarjeta: 16:9 de foto más el pie. */
-.featured-skeleton { height: 223px; border-radius: var(--r-xl); }
-
-.chip-skeleton {
-  flex: 0 0 118px;
-  height: 39px;
-  border-radius: var(--r-pill);
-}
-
-/* 263 px = los 275 de `_GlassHomeCard.width` menos el margen de 12 que aquí
-   pone el `gap`. */
-.featured-item {
-  flex: 0 0 263px;
-  min-width: 263px;
-}
-
-/* ── Businesses grid ── */
-.businesses-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-}
-
-@media (max-width: 1200px) { .businesses-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 960px)  { .businesses-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px)  {
-  .businesses-grid { grid-template-columns: 1fr; }
-  .hero-showcase { display: none; }
-  .hero-title { font-size: 2.4rem; }
-}
-
-/* ── Empty state ── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 80px 20px;
-  gap: 12px;
-  color: var(--clr-text-2);
-  text-align: center;
-}
-.empty-state h3 { font-size: 1.3rem; font-weight: 700; color: var(--clr-text); }
-.empty-state p { font-size: 0.92rem; }
-
-/* ── Carousel Wrapper & Scroll Arrows ── */
-.carousel-wrapper {
+/* ══════════ HERO ══════════
+   Una tarjeta, un disco menta y Bip de pie con la cabeza fuera de ella. Sin
+   brillos, sin rejillas y sin etiquetas flotantes: lo que llama la atención es
+   la mascota y el tamaño del titular. */
+.hero {
   position: relative;
-  display: block;
-}
-
-.scroll-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: var(--clr-text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
-  user-select: none;
-}
-
-.scroll-arrow:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: var(--clr-mint);
-  transform: translateY(-50%) scale(1.08);
-  box-shadow: 0 6px 20px rgba(185, 235, 208, 0.15);
-}
-
-.scroll-arrow:active {
-  transform: translateY(-50%) scale(0.96);
-}
-
-.scroll-arrow--left {
-  left: -20px;
-}
-
-.scroll-arrow--right {
-  right: -20px;
-}
-
-@media (max-width: 768px) {
-  .scroll-arrow {
-    display: none !important;
-  }
-}
-
-/* ── App Download Promo Section ── */
-.apps-promo-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  margin-top: 40px;
-  width: 100%;
-}
-
-.app-promo-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 680px;
-  padding: 40px 24px 0;
-  border-radius: var(--r-xl);
-  position: relative;
-  overflow: hidden;
-  container-type: inline-size;
-  text-align: center;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-  box-sizing: border-box;
-}
-
-.client-promo-card,
-.business-promo-card {
-  background: #272b30;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.3);
-}
-
-.client-promo-card:hover,
-.business-promo-card:hover {
-  transform: translateY(-5px);
-}
-
-@media (prefers-color-scheme: light) {
-  .client-promo-card,
-  .business-promo-card {
-    background: #ffffff;
-    border: 1px solid var(--clr-border);
-    box-shadow: 0 12px 32px rgba(0,0,0,0.05);
-  }
-}
-
-.promo-card-top {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+  /* Por encima de `.wrap`: los paneles del buscador son hijos del hero. */
   z-index: 2;
+  width: min(1240px, 100% - 48px);
+  /* Aire arriba para la cabeza de Bip, que sobresale de la tarjeta. */
+  margin: 96px auto 0;
 }
 
-/* Brand Logo */
-.promo-logo-img {
-  height: 48px;
-  height: 9cqw;
-  width: auto;
-  object-fit: contain;
-  margin-bottom: 20px;
-}
-
-/* Store Badges Row */
-.store-badges-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  justify-content: center;
-  align-items: center;
-}
-
-.promo-store-badge-img-link {
-  display: block;
-  cursor: pointer;
-  transition: transform 0.2s, opacity 0.2s;
-  height: 40px;
-  height: 7.8cqw;
-}
-
-.promo-store-badge-img-link:hover {
-  transform: scale(1.04);
-}
-
-.promo-store-badge-img {
-  height: 100%;
-  width: auto;
-  display: block;
-  object-fit: contain;
-}
-
-/* Card Subtitle */
-.promo-card-subtitle {
-  font-family: var(--ff);
-  font-size: 0.95rem;
-  font-size: 3cqw;
-  margin-top: 4px;
-  margin-bottom: 24px;
-  font-weight: 500;
-}
-
-.client-promo-card .promo-card-subtitle {
-  color: #beefd2;
-}
-
-.business-promo-card .promo-card-subtitle {
-  color: #8796a7;
-}
-
-@media (prefers-color-scheme: light) {
-  .client-promo-card .promo-card-subtitle,
-  .business-promo-card .promo-card-subtitle {
-    color: var(--clr-text-2);
-  }
-}
-
-/* Email Pill Form */
-.promo-email-form {
-  background: #4c4f50;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px;
-  padding: 0.8cqw;
-  width: 320px;
-  width: 62cqw;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.promo-email-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #ffffff;
-  padding-left: 16px;
-  padding-left: 3cqw;
-  font-family: var(--ff);
-  font-size: 0.9rem;
-  font-size: 2.8cqw;
-}
-
-.promo-email-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.promo-email-btn {
-  background: #ffffff;
-  color: #4c4f50;
-  border: none;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.8rem;
-  font-size: 2.4cqw;
-  padding: 8px 16px;
-  padding: 1.5cqw 3.5cqw;
-  cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
-  font-family: var(--ff);
-}
-
-.promo-email-btn:hover {
-  background: #f0f0f0;
-  transform: scale(1.03);
-}
-
-.promo-email-btn:active {
-  transform: scale(0.97);
-}
-
-/* Business Promo Text */
-.promo-free-text {
-  font-family: var(--ff);
-  font-size: 1.7rem;
-  font-size: 5.5cqw;
-  font-weight: 900;
-  color: #8796a7;
-  margin-top: -8px;
-  margin-bottom: 20px;
-  letter-spacing: -0.5px;
-}
-
-@media (prefers-color-scheme: light) {
-  .promo-free-text {
-    color: #30353a;
-  }
-}
-
-/* Abre tu negocio Button */
-.promo-action-link {
-  background-color: #5c6264;
-  color: #ffffff;
-  font-weight: 800;
-  font-family: var(--ff);
-  font-size: 0.85rem;
-  font-size: 2.6cqw;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  padding: 12px 32px;
-  padding: 2.2cqw 6cqw;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: transform 0.2s, background-color 0.2s;
-  letter-spacing: 0.5px;
-}
-
-@media (prefers-color-scheme: light) {
-  .promo-action-link {
-    background-color: #70757a;
-  }
-}
-
-.promo-action-link:hover {
-  background-color: #6a7173;
-  transform: translateY(-2px);
-}
-
-@media (prefers-color-scheme: light) {
-  .promo-action-link:hover {
-    background-color: #7e8489;
-  }
-}
-
-/* Bottom Showcase Graphic */
-.promo-bottom-showcase {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  margin-top: 24px;
-}
-
-.promo-showcase-img {
-  width: 100%;
-  max-width: 460px;
-  height: auto;
-  display: block;
-  object-fit: contain;
-}
-
-@media (max-width: 960px) {
-  .apps-promo-section {
-    grid-template-columns: 1fr;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .app-promo-card {
-    min-height: auto;
-    padding-bottom: 0;
-  }
-  .promo-store-badge-img-link {
-    height: 42px;
-  }
-  .promo-email-form { width: 340px; }
-  .promo-email-input { font-size: 0.95rem; }
-  .promo-email-btn { font-size: 0.85rem; }
-  .promo-action-link { font-size: 0.9rem; }
-}
-
-/* ── Cómo funciona ──
-   Tres pasos con su icono en lugar de tres párrafos: la prosa decía en cuatro
-   líneas lo que aquí se lee de un vistazo, y la mascota se quedaba de adorno
-   al lado del texto. Ahora ocupa media columna y sostiene el bloque. */
-.steps {
+.hero__card {
   position: relative;
-  z-index: 1;
-  margin-top: 32px;
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  align-items: center;
-  gap: 64px;
-  padding: 64px 56px;
+  min-height: 430px;
+  padding: 56px 0 48px 56px;
   border-radius: var(--r-xxl);
   background: var(--clr-surface);
+  /* Sin `overflow: hidden`: cortaría los paneles del buscador y la cabeza de
+     Bip. Lo que sí se recorta vive en `.hero__stage`. */
 }
 
-/* La mascota al otro lado: dos bloques idénticos seguidos se leen como uno
-   repetido. Se invierte el orden de las columnas, no el contenido. */
-.steps--mirrored .steps__art { order: 2; }
-
-.steps__art {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Halo difuminado, no un disco: el círculo opaco de antes parecía una
-   pegatina pegada detrás. */
-.steps__art::before {
-  content: '';
+.hero__stage {
   position: absolute;
-  width: min(380px, 100%);
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* El disco: `primaryGradient` de la app, a sangre por abajo y por la derecha. */
+.hero__disc {
+  position: absolute;
+  right: -40px;
+  bottom: -210px;
+  width: 560px;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--clr-mint-dim) 0%, transparent 68%);
+  background: linear-gradient(135deg, #D4F7E3 0%, #A0E3BD 100%);
 }
 
-.steps__img {
+/* Un segundo aro, fino, que repite el disco y le da profundidad sin brillo. */
+.hero__disc::after {
+  content: '';
+  position: absolute;
+  inset: -48px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(192, 238, 211, .22);
+}
+
+.hero__mascot {
+  position: absolute;
+  right: 100px;
+  bottom: 0;
+  height: 610px;
+  width: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .25));
+  transform-origin: 50% 100%;
+  animation: bip-wave 5s ease-in-out infinite;
+}
+
+@keyframes bip-wave {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-1.5deg) translateY(-4px); }
+}
+
+.hero__text {
   position: relative;
-  width: 100%;
-  max-width: 320px;
-  height: auto;
-  display: block;
-  object-fit: contain;
+  z-index: 1;
+  max-width: 640px;
 }
 
-.steps__eyebrow {
-  font-size: 0.6875rem;
+.hero__hello {
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  color: var(--clr-mint);
+  color: var(--accent-ink);
 }
 
-/* headlineLarge: Bricolage Grotesque, 700, tracking -0,8. */
-.steps__title {
-  margin-top: 8px;
+.hero__title {
+  margin-top: 6px;
   font-family: var(--ff-display);
-  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.8px;
+  font-size: clamp(3rem, 5.2vw, 4.5rem);
+  font-weight: 800;
+  line-height: .98;
+  letter-spacing: -2.4px;
   color: var(--clr-text);
 }
 
-.steps__list { list-style: none; margin-top: 32px; display: grid; gap: 26px; }
+.hero__title em { display: block; font-style: italic; color: var(--accent-ink); }
 
-.step { display: flex; align-items: flex-start; gap: 16px; }
-
-/* El icono en su disco de marca: es lo que separa un paso del siguiente sin
-   necesidad de una línea ni de un número. */
-.step__icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--clr-mint-dim);
-  color: var(--clr-mint);
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.step__text {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 0.9375rem;
+.hero__sub {
+  margin: 18px 0 30px;
+  max-width: 470px;
+  font-size: 1.0625rem;
   font-weight: 500;
   line-height: 1.55;
   color: var(--clr-text-2);
-  max-width: 46ch;
 }
 
-.step__text strong {
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.1px;
+.hero__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 24px;
+  margin-top: 22px;
+}
+
+/* ── Negocios de verdad ── */
+.hero__proof {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--clr-text-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.hero__proof strong { color: var(--clr-text); font-weight: 800; }
+.hero__proof:hover strong { text-decoration: underline; }
+
+.hero__faces { display: flex; }
+
+.hero__faces img {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 3px var(--clr-surface);
+  background: var(--clr-field);
+}
+
+.hero__faces img + img { margin-left: -10px; }
+
+.hero__popular { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.hero__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px 7px 10px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-field);
   color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .2s ease;
 }
 
-@media (max-width: 960px) {
-  .steps {
-    grid-template-columns: 1fr;
-    gap: 32px;
-    padding: 40px 24px;
-    margin-top: 24px;
-  }
+.hero__pill:hover { background: var(--clr-subtle); }
+.hero__pill .material-symbols-rounded { font-size: 17px; color: var(--accent-ink); }
 
-  /* La mascota primero: dice de qué va el bloque antes de leer nada. */
-  .steps--mirrored .steps__art { order: 0; }
-  .steps__img { max-width: 220px; }
-  .steps__art::before { width: min(260px, 100%); }
-  .step__text { max-width: none; }
+/* Sobre la tarjeta, el buscador baja al tono del suelo: con el cristal
+   blanco de siempre desaparecía en el tema claro. */
+.hero ::ng-deep .sbar--hero { background: var(--clr-base); }
+
+@media (max-width: 1240px) {
+  .hero__disc { width: 460px; bottom: -170px; right: -60px; }
+  .hero__mascot { height: 460px; right: 70px; }
+  .hero__text { max-width: 560px; }
 }
 
-/* ══════════════════════════════════════════
-   CABECERA DE MÓVIL — port de _ExploreHeader
-   Márgenes de GipsiSpacing: screenHorizontal 20, y el buscador a sm (8)
-   del saludo, igual que en la app.
-   ══════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .hero__card { padding: 44px 0 40px 40px; }
+  .hero__mascot { height: 400px; right: 30px; }
+  .hero__disc { width: 380px; bottom: -140px; }
+  .hero__text { max-width: 520px; }
+}
 
-.mhead { padding: 12px 20px 8px; }
-
-.mhead__top {
+/* ══════════ PRÓXIMA CITA ══════════ */
+.ticket {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px 18px 14px 14px;
+  border-radius: var(--r-xl);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background-color .2s ease;
 }
 
-/* headlineMedium de la app: es el texto más grande de la pantalla y lo que
-   la ancla, así que no se encoge por mucho nombre que haya. */
-.mhead__greeting {
+/* El filo menta de la izquierda: lo que la separa de una tarjeta cualquiera. */
+.ticket::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  bottom: 18px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--clr-mint);
+}
+
+.ticket:hover { background: var(--clr-surface-hover); }
+.ticket:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+
+.ticket__leaf {
+  flex: 0 0 auto;
+  width: 64px;
+  height: 68px;
+  margin-left: 6px;
+  border-radius: var(--r-sm);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ticket__month {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: .8;
+}
+
+.ticket__day {
+  font-family: var(--ff-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ticket__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+.ticket__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--clr-text-3);
+}
+
+.ticket__title {
+  font-family: var(--ff-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--clr-text-2);
+}
+
+.ticket__meta .material-symbols-rounded { font-size: 15px; }
+.ticket__sep { margin: 0 4px; color: var(--clr-text-3); }
+.ticket__worker { display: inline-flex; align-items: center; gap: 4px; }
+
+.ticket__state {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: 0.625rem;
+  letter-spacing: .3px;
+  text-transform: none;
+  font-weight: 800;
+}
+
+.ticket__state--mint { background: var(--clr-mint); color: var(--clr-mint-text); }
+.ticket__state--warn { background: var(--clr-warn); color: #15171A; }
+.ticket__state--danger { background: var(--clr-danger); color: #15171A; }
+.ticket__state--subtle { background: var(--clr-field); color: var(--clr-text-2); }
+
+.ticket__more {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--clr-field);
+  color: var(--clr-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ticket__more:hover { background: var(--clr-subtle); }
+
+.ticket__go {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .2s ease;
+}
+
+.ticket:hover .ticket__go { transform: translateX(3px); }
+
+/* ══════════ CATEGORÍAS ══════════ */
+.cats { margin-top: 36px; scroll-margin-top: 110px; }
+
+.cats__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cats__title {
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -.6px;
+}
+
+.cats__sub { margin-top: 2px; font-size: 0.8125rem; font-weight: 500; color: var(--clr-text-2); }
+
+.cats__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px 8px 10px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cats__clear:hover { background: var(--clr-surface-hover); }
+.cats__clear .material-symbols-rounded { font-size: 18px; }
+
+.cats__row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.cats__row::-webkit-scrollbar { display: none; }
+.cats__row.is-dragging { cursor: grabbing; }
+
+.cat-card,
+.cat-card-skeleton {
+  flex: 0 0 132px;
+  height: 124px;
+  border-radius: var(--r-xl);
+}
+
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 10px;
+  border: none;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  cursor: pointer;
+  transition: background-color .2s ease, transform .2s cubic-bezier(.2,.8,.2,1);
+}
+
+.cat-card:hover { background: var(--clr-surface-hover); transform: translateY(-3px); }
+
+.cat-card__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-mint-dim);
+  color: var(--accent-ink);
+  transition: transform .25s cubic-bezier(.2,1.4,.4,1);
+}
+
+.cat-card:hover .cat-card__icon { transform: scale(1.08) rotate(-6deg); }
+.cat-card__icon .material-symbols-rounded { font-size: 26px; }
+
+.cat-card__name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cat-card--on { background: var(--clr-mint); color: var(--clr-mint-text); }
+.cat-card--on:hover { background: var(--clr-mint-hover); }
+.cat-card--on .cat-card__icon { background: rgba(0, 0, 0, .1); color: inherit; }
+
+/* ══════════ UBICACIÓN ══════════ */
+.locate {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 12px 12px 12px 14px;
+  border-radius: var(--r-xl);
+  background: var(--clr-mint-dim);
+}
+
+.locate__icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+}
+
+.locate__icon .material-symbols-rounded { font-size: 20px; }
+
+.locate__text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 0.8125rem; }
+.locate__text strong { font-weight: 800; color: var(--clr-text); }
+.locate__text span { font-weight: 500; color: var(--clr-text-2); }
+
+.locate__btn {
+  flex: 0 0 auto;
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.locate__btn:hover { background: var(--clr-mint-hover); }
+
+/* ══════════ CATEGORÍA ELEGIDA ══════════ */
+.catlist__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 24px 0 14px;
+}
+
+.catlist__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -.6px;
+}
+
+.catlist__title .material-symbols-rounded { font-size: 26px; color: var(--accent-ink); }
+
+.catlist__count {
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  background: var(--clr-surface);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--clr-text-2);
+}
+
+.cat-list { display: grid; gap: 16px; }
+.cat-skeleton { height: 260px; border-radius: var(--r-lg); }
+
+@media (min-width: 1025px) {
+  .cat-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+}
+
+/* ══════════ ÚNETE ══════════ */
+.join {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-top: 28px;
+  padding: 28px 40px 28px 28px;
+  border-radius: var(--r-xxl);
+  background: var(--clr-surface);
+  overflow: hidden;
+}
+
+.join__img { flex: 0 0 auto; width: 200px; height: auto; margin: -20px 0 -40px; }
+.join__text { flex: 1; min-width: 0; }
+
+.join__title {
+  font-family: var(--ff-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -.8px;
+}
+
+.join__lead { margin-top: 6px; max-width: 56ch; font-size: 0.9375rem; font-weight: 500; line-height: 1.55; color: var(--clr-text-2); }
+.join__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+.join__btn {
+  height: 46px;
+  padding: 0 22px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-field);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.join__btn:hover { background: var(--clr-subtle); }
+.join__btn:active { transform: scale(.96); }
+.join__btn--primary { background: var(--clr-mint); color: var(--clr-mint-text); }
+.join__btn--primary:hover { background: var(--clr-mint-hover); }
+
+/* ══════════ APPS ══════════ */
+.apps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+.app-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 300px;
+  border-radius: var(--r-xxl);
+  overflow: hidden;
+  background: var(--clr-surface);
+  scroll-margin: 120px;
+}
+
+/* Las imágenes de las apps traen su fondo pintado (#272B30 en oscuro, blanco
+   en claro): la tarjeta lleva ese mismo color para que no se vea el recorte. */
+.app-card { background: #272B30; }
+
+@media (prefers-color-scheme: light) {
+  .app-card { background: #FFFFFF; }
+}
+
+.app-card__text {
+  position: relative;
+  z-index: 1;
   flex: 1;
-  min-width: 0;
-  font-family: var(--ff-display, var(--ff));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 32px 0 32px 32px;
+  max-width: 56%;
+}
+
+.app-card__logo { height: 30px; width: auto; margin-bottom: 18px; }
+
+.app-card__badge {
+  padding: 4px 10px;
+  margin-bottom: 10px;
+  border-radius: var(--r-pill);
+  background: var(--clr-warn);
+  color: #15171A;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+.app-card__title {
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.6px;
+}
+
+.app-card__lead { margin-top: 8px; font-size: 0.875rem; font-weight: 500; line-height: 1.5; color: var(--clr-text-2); }
+
+.app-card__stores { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 20px; }
+.app-card__stores a { display: block; height: 40px; transition: transform .2s ease; }
+.app-card__stores a:hover { transform: translateY(-2px); }
+.app-card__stores img { height: 100%; width: auto; display: block; }
+
+.app-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--r-pill);
+  background: var(--clr-text);
+  color: var(--clr-base);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .15s ease;
+}
+
+.app-card__cta:hover { transform: translateY(-2px); }
+.app-card__cta .material-symbols-rounded { font-size: 18px; }
+
+.app-card__img {
+  position: absolute;
+  right: -30px;
+  bottom: 0;
+  width: 58%;
+  height: auto;
+  object-fit: contain;
+  object-position: bottom right;
+  transition: transform .5s cubic-bezier(.2,.8,.2,1);
+}
+
+.app-card:hover .app-card__img { transform: translateY(-6px); }
+
+@media (max-width: 1180px) {
+  .apps { grid-template-columns: 1fr; }
+}
+
+/* ══════════ MÓVIL ══════════ */
+.mhead { padding: 12px 20px 4px; }
+
+.mhead__top { display: flex; align-items: center; gap: 16px; }
+.mhead__hello { flex: 1; min-width: 0; }
+
+.mhead__eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--clr-text-2);
+}
+
+/* headlineMedium de la app: el texto más grande de la pantalla. */
+.mhead__greeting {
+  font-family: var(--ff-display);
   font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: -.6px;
@@ -855,12 +693,7 @@
 
 .mhead__avatar { flex: 0 0 auto; display: inline-flex; text-decoration: none; }
 
-.mhead__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-}
+.mhead__row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 
 .mhead__search {
   flex: 1;
@@ -871,7 +704,7 @@
   padding: 0 16px;
   height: 48px;
   border-radius: var(--r-pill);
-  background: var(--clr-field);
+  background: var(--clr-surface);
 }
 
 .mhead__search > .material-symbols-rounded { font-size: 20px; color: var(--clr-text-3); }
@@ -890,114 +723,45 @@
 .mhead__search input:focus { outline: none; }
 .mhead__search input::placeholder { color: var(--clr-text-3); }
 
-
-/* Botón de filtros: 44 px redondo, `tune` dentro. Los de la app. */
 .mhead__filters {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border: none;
   border-radius: 50%;
-  background: var(--clr-surface);
-  color: var(--clr-text-2);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
   cursor: pointer;
-  transition: background-color .18s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .mhead__filters .material-symbols-rounded { font-size: 20px; }
 
-/* ══════════════════════════════════════════
-   HERO CON SESIÓN — la cita, en una línea bajo el buscador
-   Estuvo colgada del muñeco y le cortaba el cuerpo: la ilustración es lo que
-   identifica la portada y no se le pone nada encima. Aquí acompaña al texto,
-   que es donde vive el resto de lo personal.
-   ══════════════════════════════════════════ */
-
-.hero-strip {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 560px;
-  margin-top: 16px;
-  padding: 12px 16px;
-  border: none;
-  border-radius: var(--r-pill);
-  background: var(--clr-surface);
-  color: var(--clr-text);
-  font-family: var(--ff);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color .2s ease;
+@media (max-width: 1024px) {
+  .wrap { width: calc(100% - 40px); padding-bottom: 40px; }
+  .cats { margin-top: 18px; }
+  .ticket { margin-top: 14px; gap: 12px; padding: 12px 14px 12px 10px; }
+  .ticket__leaf { width: 54px; height: 58px; }
+  .ticket__day { font-size: 1.5rem; }
+  .ticket__title { font-size: 1.0625rem; }
+  .ticket__go { width: 34px; height: 34px; }
+  .join { flex-direction: column; text-align: center; padding: 24px 20px; gap: 8px; }
+  .join__img { width: 150px; margin: -10px 0 0; }
+  .join__actions { justify-content: center; }
+  .join__title { font-size: 1.375rem; }
+  .locate { flex-wrap: wrap; }
 }
 
-.hero-strip:hover { background: var(--clr-surface-hover); }
-
-.hero-strip__icon { font-size: 20px; color: var(--clr-mint); flex: 0 0 auto; }
-
-.hero-strip__text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  overflow: hidden;
+@media (max-width: 480px) {
+  .ticket__meta .ticket__sep,
+  .ticket__meta .material-symbols-rounded:first-child { display: none; }
 }
 
-.hero-strip__text strong {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hero-strip__text span {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--clr-text-3);
-  white-space: nowrap;
-}
-
-.hero-strip__state {
-  flex: 0 0 auto;
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-  font-size: 0.6875rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.hero-strip__state--mint { background: var(--clr-mint); color: var(--clr-mint-text); }
-.hero-strip__state--warn { background: var(--clr-warn, #F0C674); color: #15171A; }
-.hero-strip__state--danger { background: var(--clr-danger); color: #15171A; }
-.hero-strip__state--subtle { background: var(--clr-field); color: var(--clr-text-2); }
-
-.hero-strip__go { font-size: 18px; color: var(--clr-text-3); flex: 0 0 auto; }
-
-@media (max-width: 720px) {
-  /* Sin sitio para las dos cosas: se va la hora, que se ve al abrirla. */
-  .hero-strip__text span { display: none; }
-}
-
-/* ══════════════════════════════════════════
-   LISTA DE UNA CATEGORÍA — port de _BusinessSliverList
-   ══════════════════════════════════════════ */
-
-.cat-list {
-  display: grid;
-  gap: 16px;
-  margin-top: 4px;
-}
-
-.cat-skeleton { height: 280px; border-radius: var(--r-lg); }
-
-/* En ancho, rejilla: una columna de tarjetas a 1240 px sería una tira de
-   fotos gigantes con el 70 % de la pantalla vacío. */
-@media (min-width: 1025px) {
-  .cat-list { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+@media (prefers-reduced-motion: reduce) {
+  .hero__mascot { animation: none; }
+  .cat-card:hover, .cat-card:hover .cat-card__icon,
+  .app-card:hover .app-card__img { transform: none; }
 }

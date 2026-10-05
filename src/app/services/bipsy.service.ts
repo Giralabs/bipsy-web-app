@@ -51,9 +51,9 @@ export class BipsyService {
     }
   }
 
-  async getFeaturedBusinesses(size = 12): Promise<BusinessResponse[]> {
+  async getFeaturedBusinesses(size = 12, coords?: { lat: number; lng: number }): Promise<BusinessResponse[]> {
     try {
-      return await this.catalog.featured(0, size);
+      return await this.catalog.featured(0, size, coords);
     } catch (error) {
       return this.orDemo(error, DEMO_BUSINESSES);
     }
@@ -81,6 +81,20 @@ export class BipsyService {
     }
     try {
       return await this.catalog.rebookable();
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Una página amplia del catálogo para las filas que se calculan en la web
+   * (mejor valorados, recién abiertos). El servidor no ordena la búsqueda por
+   * `sort`, así que se ordena aquí. Si falla, esas filas simplemente no salen.
+   */
+  async getCatalogSample(size = 60, coords?: { lat: number; lng: number }): Promise<BusinessResponse[]> {
+    try {
+      const page = await this.catalog.searchBusinesses({ size, lat: coords?.lat, lng: coords?.lng });
+      return page.content ?? [];
     } catch {
       return [];
     }

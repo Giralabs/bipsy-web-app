@@ -1,27 +1,36 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../core/api-error';
 import { SessionService } from '../../core/session.service';
 import { BipsyService } from '../../services/bipsy.service';
-import { BookingResponse, isBookingActive } from '../../models/bipsy.models';
+import { BookingResponse, bookingPrice, isBookingActive } from '../../models/bipsy.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { SegmentedComponent } from '../../components/segmented/segmented.component';
 import { BookingCardComponent } from '../../components/booking-card/booking-card.component';
 import { WaitlistSummaryComponent } from '../../components/waitlist/waitlist-summary.component';
-import { parseLocal } from '../../shared/dates';
+import { capitalize, euros, parseLocal, relativeDate, time } from '../../shared/dates';
 import { businessBookingPath } from '../../shared/slug';
+
+const MONTH_YEAR = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
+const MONTH_SHORT = new Intl.DateTimeFormat('es-ES', { month: 'short' });
+
+interface MonthGroup {
+  label: string;
+  items: BookingResponse[];
+}
 
 /**
  * "Mis citas". Port de `MyBookingsScreen`.
  *
- * Dos listas de la misma cosa —próximas y pasadas—, así que un segmentado y no
- * pestañas. Sin sesión no se piden citas: se ofrece entrar.
+ * La próxima cita, destacada arriba: es lo que se viene a mirar. Debajo, las
+ * dos listas —próximas y pasadas— agrupadas por mes, y a un lado tus números y
+ * lo que tienes pendiente de valorar.
  */
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, SegmentedComponent, BookingCardComponent, WaitlistSummaryComponent],
+  imports: [CommonModule, RouterLink, ButtonComponent, SegmentedComponent, BookingCardComponent, WaitlistSummaryComponent],
   templateUrl: './appointments.component.html',
   styleUrl: './appointments.component.css',
 })
@@ -30,7 +39,7 @@ export class AppointmentsComponent implements OnInit {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
 
-  readonly tabs = ['Próximas', 'Pasadas'];
+  tabs = ['Próximas', 'Pasadas'];
   selectedTab = 0;
 
   isAuthenticated = false;
@@ -39,6 +48,13 @@ export class AppointmentsComponent implements OnInit {
 
   upcoming: BookingResponse[] = [];
   past: BookingResponse[] = [];
+  upcomingGroups: MonthGroup[] = [];
+  pastGroups: MonthGroup[] = [];
+
+  /** Citas a las que fuiste, sitios distintos y reseñas por escribir. */
+  visits = 0;
+  places = 0;
+  pendingReviews = 0;
 
   ngOnInit(): void {
     this.session.status$.subscribe(status => {
@@ -54,6 +70,10 @@ export class AppointmentsComponent implements OnInit {
         this.past = [];
       }
     });
+  }
+
+  get groups(): MonthGroup[] {
+    return this.selectedTab === 0 ? this.upcomingGroups : this.pastGroups;
   }
 
   get items(): BookingResponse[] {
@@ -84,6 +104,17 @@ export class AppointmentsComponent implements OnInit {
 
       this.upcoming = upcoming;
       this.past = past;
+      // La destacada no se repite en la lista de debajo.
+      this.upcomingGroups = groupByMonth(upcoming.slice(1));
+      this.pastGroups = groupByMonth(past);
+      this.tabs = [
+        upcoming.length ? `Próximas (${upcoming.length})` : 'Próximas',
+        past.length ? `Pasadas (${past.length})` : 'Pasadas',
+      ];
+
+      this.visits = past.filter(b => b.status === 'CONFIRMED').length;
+      this.places = new Set(all.filter(b => b.status !== 'CANCELED').map(b => b.businessId)).size;
+      this.pendingReviews = past.filter(b => b.canReview).length;
     } catch (error) {
       this.loadError = ApiError.from(error);
     } finally {
@@ -91,14 +122,52 @@ export class AppointmentsComponent implements OnInit {
     }
   }
 
+  // ----- LA PRÓXIMA --------------------
+
+  get next(): BookingResponse | null {
+    return this.upcoming[0] ?? null;
+  }
+
+  get nextDay(): string {
+    return this.next ? String(parseLocal(this.next.startDateTime).getDate()) : '';
+  }
+
+  get nextMonth(): string {
+    return this.next ? MONTH_SHORT.format(parseLocal(this.next.startDateTime)).replace('.', '') : '';
+  }
+
+  get nextWhen(): string {
+    if (!this.next) return '';
+    const start = parseLocal(this.next.startDateTime);
+    return `${relativeDate(start)} · ${time(start)} – ${time(parseLocal(this.next.endDateTime))}`;
+  }
+
+  /** "Faltan 3 días", "Faltan 5 h", "En 20 min". */
+  get countdown(): string {
+    if (!this.next) return '';
+    const ms = parseLocal(this.next.startDateTime).getTime() - Date.now();
+    const minutes = Math.max(0, Math.round(ms / 60_000));
+    if (minutes < 60) return `En ${minutes} min`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `Faltan ${hours} h`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? 'Falta 1 día' : `Faltan ${days} días`;
+  }
+
+  get nextPrice(): string | null {
+    const price = this.next ? bookingPrice(this.next) : null;
+    return price === null ? null : euros(price);
+  }
+
+  // ----- ACCIONES --------------------
+
   openBooking(booking: BookingResponse): void {
-    this.router.navigate(['/appointments', booking.id]);
+    this.router.navigate(['/citas', booking.id]);
   }
 
   /**
    * Repetir la cita: al flujo de reserva con el mismo servicio y, si sigue
-   * atendiéndolo, con aquel mismo profesional. Volver a elegir lo que ya
-   * elegiste una vez es el trabajo que este botón existe para ahorrar.
+   * atendiéndolo, con aquel mismo profesional.
    */
   rebook(booking: BookingResponse): void {
     this.router.navigate(
@@ -108,11 +177,25 @@ export class AppointmentsComponent implements OnInit {
   }
 
   openLogin(): void {
-    this.session.openAuthModal('/appointments');
-    this.router.navigate(['/acceder'], { queryParams: { returnTo: '/appointments' } });
+    this.session.openAuthModal('/citas');
+    this.router.navigate(['/acceder'], { queryParams: { returnTo: '/citas' } });
   }
 
   goExplore(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/buscar']);
   }
+}
+
+function groupByMonth(list: BookingResponse[]): MonthGroup[] {
+  const groups: MonthGroup[] = [];
+  for (const booking of list) {
+    const label = capitalize(MONTH_YEAR.format(parseLocal(booking.startDateTime)));
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) {
+      last.items.push(booking);
+    } else {
+      groups.push({ label, items: [booking] });
+    }
+  }
+  return groups;
 }

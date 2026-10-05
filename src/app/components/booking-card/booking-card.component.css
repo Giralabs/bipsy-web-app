@@ -1,46 +1,73 @@
 :host { display: block; }
 
-/* 104 px de alto, que es también el lado de la foto: cuadrada, como en la
-   fila de negocios. Fijo y no medido del contenido para que la lista tenga un
-   ritmo regular — tres líneas o dos, todas las citas ocupan lo mismo. */
 .bk-card {
   display: flex;
-  align-items: stretch;
-  min-height: 104px;
-  border-radius: var(--r-lg);
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px 12px 12px;
+  border-radius: var(--r-xl);
   background: var(--clr-surface);
-  overflow: hidden;
   cursor: pointer;
-  transition: background-color .2s ease;
+  transition: background-color .2s ease, transform .2s cubic-bezier(.2,.8,.2,1);
 }
 
 .bk-card:hover { background: var(--clr-surface-hover); }
 .bk-card:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
 
-.bk-card__photo {
-  width: 104px;
-  flex-shrink: 0;
-  background: var(--clr-field);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+@media (hover: hover) and (min-width: 1025px) {
+  .bk-card:hover { transform: translateX(4px); }
 }
 
-.bk-card__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.bk-card__fallback { font-size: 24px; color: var(--clr-text-3); }
-
-.bk-card__info {
-  flex: 1;
-  min-width: 0;
-  padding: 12px;
+/* ── Hoja de calendario ── */
+.bk-card__leaf {
+  flex: 0 0 auto;
+  width: 68px;
+  height: 76px;
+  border-radius: var(--r-sm);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
+.bk-card__weekday,
+.bk-card__month {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  opacity: .75;
+}
+
+.bk-card__day {
+  margin: 3px 0 2px;
+  font-family: var(--ff-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+/* Cancelada o sin acudir: la hoja pasa a gris. El resto sigue legible. */
+.bk-card--off .bk-card__leaf { background: var(--clr-field); color: var(--clr-text-2); }
+.bk-card--off .bk-card__service { text-decoration: line-through; text-decoration-color: var(--clr-text-3); }
+
+.bk-card__thumb {
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+}
+
+.bk-card__info { flex: 1; min-width: 0; }
+
 .bk-card__service {
-  font-size: 0.875rem;      /* titleSmall: 14 px */
-  font-weight: 600;
+  font-family: var(--ff-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -.3px;
   color: var(--clr-text);
   white-space: nowrap;
   overflow: hidden;
@@ -48,57 +75,84 @@
 }
 
 .bk-card__business {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-top: 2px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--clr-text-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.bk-card__when {
-  margin-top: 8px;
-  display: flex;
+.bk-card__business .material-symbols-rounded { font-size: 15px; }
+
+.bk-card__when { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+
+.bk-card__chip {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--clr-text-2);
-  flex-wrap: wrap;
+  padding: 3px 9px 3px 7px;
+  border-radius: var(--r-pill);
+  background: var(--clr-field);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  font-variant-numeric: tabular-nums;
 }
 
-.bk-card__when-icon { font-size: 13px; }
-.bk-card__when span + .bk-card__when-icon { margin-left: 4px; }
+.bk-card__chip .material-symbols-rounded { font-size: 14px; color: var(--clr-text-2); }
+.bk-card__rel { font-size: 0.75rem; font-weight: 600; color: var(--clr-text-3); }
 
 .bk-card__aside {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  justify-content: space-between;
   gap: 8px;
-  padding: 12px 12px 12px 0;
-  flex-shrink: 0;
 }
 
+.bk-card__price {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--clr-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-card__chevron { font-size: 22px; color: var(--clr-text-3); }
+
 .bk-card__rebook {
-  width: 44px;
-  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px 0 10px;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--r-pill);
   background: var(--clr-mint);
   color: var(--clr-mint-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 700;
   cursor: pointer;
   transition: background-color .2s ease, transform .12s ease;
 }
 
-.bk-card__rebook .material-symbols-rounded { font-size: 20px; }
+.bk-card__rebook .material-symbols-rounded { font-size: 18px; }
 .bk-card__rebook:hover { background: var(--clr-mint-hover); }
-.bk-card__rebook:active { transform: scale(0.94); }
+.bk-card__rebook:active { transform: scale(0.95); }
 
-@media (max-width: 560px) {
-  .bk-card__photo { width: 88px; }
+@media (max-width: 640px) {
+  .bk-card { gap: 12px; padding: 10px 12px 10px 10px; align-items: flex-start; }
+  .bk-card__leaf { width: 56px; height: 64px; }
+  .bk-card__day { font-size: 1.5rem; }
+  .bk-card__thumb { display: none; }
+  .bk-card__service { font-size: 1rem; }
+  .bk-card__rel { display: none; }
+  .bk-card__rebook-label { display: none; }
+  .bk-card__rebook { padding: 0; width: 36px; justify-content: center; }
+  .bk-card__chevron { display: none; }
 }

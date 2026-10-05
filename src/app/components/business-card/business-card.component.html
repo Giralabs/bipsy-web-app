@@ -3,6 +3,7 @@
   <!-- La foto llega a los cantos: sin margen ni radio propio. -->
   <div class="biz-card__photo">
     <img [src]="imageUrl" [alt]="business.name" class="biz-card__img" loading="lazy" />
+    <span class="biz-card__shade" aria-hidden="true"></span>
 
     <!-- Insignias de la izquierda. Las dos pueden salir a la vez: un negocio
          recién abierto donde ya has reservado es las dos cosas. -->
@@ -31,6 +32,25 @@
         <span class="biz-card__score">Nuevo</span>
       }
     </div>
+
+    <!-- El corazón, abajo a la derecha de la foto. -->
+    @if (showFavorite) {
+      <button
+        type="button"
+        class="biz-card__fav"
+        [class.biz-card__fav--on]="isFavorite"
+        [attr.aria-pressed]="isFavorite"
+        [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+        [title]="isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+        (click)="onFavoriteClick($event)"
+      >
+        <span class="material-symbols-rounded" [class.fill]="isFavorite">favorite</span>
+      </button>
+    }
+
+    @if (categoryName) {
+      <span class="biz-card__cat">{{ categoryName }}</span>
+    }
   </div>
 
   <!-- Con la foto a sangre, el pie es lo único que separa el texto del canto. -->

@@ -15,10 +15,14 @@
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition: background-color .2s ease;
+  transition: background-color .2s ease, transform .25s cubic-bezier(.2,.8,.2,1);
 }
 
 .biz-card:hover { background: var(--clr-surface-hover); }
+
+@media (hover: hover) and (min-width: 1025px) {
+  .biz-card:hover { transform: translateY(-4px); }
+}
 
 /* ── Foto a sangre, 16:9 ──
    Es la proporción única de `GipsiImageRatios.businessCover`: la misma foto
@@ -77,6 +81,74 @@
   right: 12px;
   padding: 4px 9px;
   font-size: 0.75rem;
+}
+
+/* Un velo solo por abajo, donde van la categoría y el corazón. */
+.biz-card__shade {
+  position: absolute;
+  inset: auto 0 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(21, 23, 26, .55), transparent);
+  pointer-events: none;
+}
+
+.biz-card__cat {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  max-width: calc(100% - 70px);
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: rgba(46, 52, 59, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Favorito ──
+   Cristal oscuro sobre la foto en los dos temas; relleno rojo cuando está
+   guardado. En escritorio sale al pasar por encima, salvo que ya lo esté. */
+.biz-card__fav {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(46, 52, 59, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform .18s ease, background-color .2s ease, opacity .2s ease;
+}
+
+.biz-card__fav .material-symbols-rounded { font-size: 20px; }
+.biz-card__fav:hover { transform: scale(1.1); background: rgba(46, 52, 59, 0.9); }
+.biz-card__fav:active { transform: scale(0.9); }
+.biz-card__fav--on { background: #fff; color: #E5484D; }
+.biz-card__fav--on:hover { background: #fff; }
+.biz-card__fav--on .material-symbols-rounded { animation: heart-pop .35s cubic-bezier(.2,1.6,.4,1); }
+
+@keyframes heart-pop {
+  0% { transform: scale(.6); }
+  100% { transform: scale(1); }
+}
+
+@media (hover: hover) and (min-width: 1025px) {
+  .biz-card__fav:not(.biz-card__fav--on) { opacity: 0; }
+  .biz-card:hover .biz-card__fav,
+  .biz-card:focus-visible .biz-card__fav,
+  .biz-card__fav:focus-visible { opacity: 1; }
 }
 
 .biz-card__star { font-size: 14px; color: var(--clr-warn); }
@@ -154,6 +226,7 @@
 .biz-card__rebook:active { transform: scale(0.94); }
 
 @media (prefers-reduced-motion: reduce) {
+  .biz-card, .biz-card:hover { transition: none; transform: none; }
   .biz-card__img { transition: none; }
   .biz-card:hover .biz-card__img { transform: none; }
 }

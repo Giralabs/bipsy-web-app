@@ -428,7 +428,7 @@ export class BookingFlowComponent implements OnInit {
   }
 
   goToBooking(): void {
-    this.router.navigate(['/appointments']);
+    this.router.navigate(['/citas']);
   }
 
   /**

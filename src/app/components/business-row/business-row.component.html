@@ -1,13 +1,36 @@
 @if (visible) {
   <section class="row">
     <header class="row__head">
-      <h2 class="row__title">{{ title }}</h2>
-      @if (seeAllLink && businesses.length > 0) {
-        <a [routerLink]="seeAllLink" class="row__link">
-          Ver todos
-          <span class="material-symbols-rounded row__link-icon">chevron_right</span>
-        </a>
-      }
+      <div class="row__heading">
+        @if (icon) {
+          <span class="material-symbols-rounded fill row__icon" aria-hidden="true">{{ icon }}</span>
+        }
+        <div class="row__titles">
+          <h2 class="row__title">{{ title }}</h2>
+          @if (subtitle) {
+            <p class="row__subtitle">{{ subtitle }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="row__tools">
+        @if (seeAllLink && businesses.length > 0) {
+          <a [routerLink]="seeAllLink" class="row__link">
+            Ver todos
+            <span class="material-symbols-rounded row__link-icon">chevron_right</span>
+          </a>
+        }
+        @if (!loading && businesses.length > 3) {
+          <div class="row__arrows only-desk">
+            <button type="button" class="row__arrow" [disabled]="atStart" (click)="scrollBy(-1)" aria-label="Anteriores">
+              <span class="material-symbols-rounded">chevron_left</span>
+            </button>
+            <button type="button" class="row__arrow" [disabled]="atEnd" (click)="scrollBy(1)" aria-label="Siguientes">
+              <span class="material-symbols-rounded">chevron_right</span>
+            </button>
+          </div>
+        }
+      </div>
     </header>
 
     @if (loading) {
@@ -17,14 +40,22 @@
         }
       </div>
     } @else if (businesses.length === 0) {
-      <!-- El corazón a la izquierda del texto: es lo que pinta `_EmptyRowCard`
+      <!-- El icono a la izquierda del texto: es lo que pinta `_EmptyRowCard`
            en la app, y sin él la tarjeta es un párrafo suelto en una caja. -->
-      <p class="row__empty">
-        <span class="material-symbols-rounded">favorite</span>
-        <span>{{ emptyMessage }}</span>
-      </p>
+      <div class="row__empty">
+        <span class="row__empty-icon">
+          <span class="material-symbols-rounded fill">{{ emptyIcon }}</span>
+        </span>
+        <p class="row__empty-text">{{ emptyMessage }}</p>
+        @if (emptyActionLabel) {
+          <button type="button" class="row__empty-btn" (click)="emptyAction.emit()">
+            {{ emptyActionLabel }}
+            <span class="material-symbols-rounded">arrow_forward</span>
+          </button>
+        }
+      </div>
     } @else {
-      <div class="row__scroll">
+      <div class="row__scroll" #scroller appDragScroll (scroll)="onScroll()">
         @for (biz of businesses; track biz.id) {
           <div class="row__item">
             <app-business-card

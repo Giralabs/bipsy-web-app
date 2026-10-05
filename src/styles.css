@@ -448,6 +448,200 @@ html, body {
   .anim-fade-up, .skeleton, .spinner { animation: none; }
 }
 
+/* ============================================================
+   CABECERA DE PÁGINA — el motivo del hero de la portada
+   Tarjeta con el disco menta a sangre por la esquina y un icono
+   grande dentro. Mis citas, Ajustes, Favoritos y Reseñas la
+   comparten para que se lean como una sola app.
+   ============================================================ */
+.page { min-height: 100vh; }
+
+.page__inner {
+  width: min(1160px, 100% - 48px);
+  margin: 0 auto;
+  padding: 32px 0 96px;
+}
+
+.phead {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 188px;
+  padding: 32px 40px;
+  padding-right: 260px;
+  border-radius: var(--r-xxl);
+  background: var(--clr-surface);
+  overflow: hidden;
+}
+
+.phead__eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--clr-text-2);
+}
+
+.phead__title {
+  margin-top: 2px;
+  font-family: var(--ff-display);
+  font-size: clamp(2rem, 3.4vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.4px;
+  color: var(--clr-text);
+}
+
+.phead__sub {
+  margin-top: 10px;
+  max-width: 52ch;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+.phead__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
+.phead__art {
+  position: absolute;
+  right: -50px;
+  bottom: -110px;
+  width: 290px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #D4F7E3 0%, #A0E3BD 100%);
+  pointer-events: none;
+}
+
+.phead__art::after {
+  content: '';
+  position: absolute;
+  inset: -36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(192, 238, 211, .2);
+}
+
+.phead__art .material-symbols-rounded {
+  position: absolute;
+  top: 52px;
+  left: 70px;
+  font-size: 96px;
+  color: #2E343B;
+  transform: rotate(-10deg);
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 48;
+}
+
+/* Botón de cabecera: píldora menta con icono. */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-family: var(--ff);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.pill-btn:hover { background: var(--clr-mint-hover); }
+.pill-btn:active { transform: scale(.96); }
+.pill-btn .material-symbols-rounded { font-size: 20px; }
+.pill-btn--soft { background: var(--clr-field); color: var(--clr-text); }
+.pill-btn--soft:hover { background: var(--clr-subtle); }
+.pill-btn:disabled { opacity: .5; cursor: default; }
+
+/* Tarjeta lateral y sus cifras, para las columnas de apoyo. */
+.side-card {
+  padding: 20px;
+  border-radius: var(--r-xl);
+  background: var(--clr-surface);
+}
+
+.side-card + .side-card { margin-top: 12px; }
+
+.side-card__title {
+  font-family: var(--ff-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -.3px;
+}
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-radius: var(--r-sm);
+  background: var(--clr-field);
+  color: inherit;
+  text-decoration: none;
+}
+
+a.stat:hover { background: var(--clr-subtle); }
+
+.stat__value {
+  font-family: var(--ff-display);
+  font-size: 1.625rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.6px;
+  color: var(--clr-text);
+}
+
+.stat__label { font-size: 0.75rem; font-weight: 600; color: var(--clr-text-2); }
+
+@media (max-width: 1024px) {
+  .page__inner { width: calc(100% - 40px); padding-top: 16px; }
+  .phead { min-height: 150px; padding: 24px; padding-right: 150px; border-radius: var(--r-xl); }
+  .phead__art { width: 190px; right: -50px; bottom: -80px; }
+  .phead__art .material-symbols-rounded { top: 34px; left: 40px; font-size: 64px; }
+}
+
+@media (max-width: 480px) {
+  .phead { padding-right: 110px; }
+  .phead__art { width: 150px; right: -44px; bottom: -60px; }
+  .phead__art .material-symbols-rounded { top: 26px; left: 30px; font-size: 50px; }
+}
+
+/* ============================================================
+   AVISO FLOTANTE (toast)
+   Abajo y centrado, sobre la barra de pestañas en móvil.
+   ============================================================ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + var(--tabbar-space, 0px));
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 12px 18px 12px 14px;
+  border-radius: var(--r-pill);
+  background: var(--clr-text);
+  color: var(--clr-base);
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-float);
+  transform: translateX(-50%);
+  animation: toast-in .3s cubic-bezier(.2,1.4,.4,1) both;
+}
+
+.toast .material-symbols-rounded { font-size: 20px; color: var(--clr-success); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 16px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* Divider — dividerTheme: 0,5 px sangrado */
 .divider {
   height: 0.5px;
@@ -774,6 +968,63 @@ html, body {
 .google-btn:disabled { opacity: .55; cursor: not-allowed; }
 
 .google-btn__logo { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* Los dos botones sociales, uno debajo del otro y con el mismo hueco que hay
+   entre "Iniciar sesión" y "He olvidado mi contraseña": se leen como un
+   bloque, que es lo que son. */
+.social-btns { display: flex; flex-direction: column; gap: 10px; }
+
+/* Botón de Apple. Negro con el logotipo en blanco en los dos temas, como pide
+   su guía de marca y como lo pinta `SocialAuthButton` en las apps: es una
+   marca ajena y no se repinta con la nuestra. */
+.apple-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: var(--r-xl);
+  background: #000;
+  color: #fff;
+  font-family: var(--ff);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .12s ease;
+}
+
+.apple-btn:hover:not(:disabled) { background: #1c1c1e; }
+.apple-btn:active:not(:disabled) { transform: scale(0.96); }
+.apple-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Algo mayor que la G de Google: el logotipo de Apple pesa menos a igual
+   tamaño y los dos botones se veían desparejos. */
+.apple-btn__logo { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* El spinner de estos dos botones.
+   `.btn-spinner` vive en `button.component.css`, y con encapsulación emulada
+   esa regla SOLO se aplica dentro de <app-button>: aquí el `<span>` salía en
+   blanco y el botón parecía haberse quedado vacío al pulsarlo. */
+.google-btn .btn-spinner,
+.apple-btn .btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: .85;
+  animation: social-btn-spin 0.8s linear infinite;
+}
+
+@keyframes social-btn-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .google-btn .btn-spinner,
+  .apple-btn .btn-spinner { animation-duration: 2.4s; }
+}
 
 /* Aviso de "hecho" dentro de un flujo. */
 .flow__notice {

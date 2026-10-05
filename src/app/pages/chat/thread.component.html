@@ -44,21 +44,48 @@
               }
 
               @if (m.attachment) {
-                <div class="bubble__file" (mouseenter)="loadAttachment(m)">
-                  @if (attachmentUrls.get(m.id)) {
+                <!-- Una foto se pinta como foto; cualquier otra cosa, como
+                     documento. Antes todo adjunto bajado acababa en un <img>
+                     y un PDF se quedaba en icono de imagen rota. -->
+                @if (isImage(m)) {
+                  @if (attachmentUrls.get(m.id); as url) {
                     <img
                       class="bubble__img"
-                      [src]="attachmentUrls.get(m.id)"
+                      [src]="url"
                       [alt]="m.attachment.filename"
                       (click)="openImage(m)"
                     />
-                  } @else {
-                    <button type="button" class="bubble__file-btn" (click)="loadAttachment(m)">
-                      <span class="material-symbols-rounded">attach_file</span>
-                      {{ m.attachment.filename }}
+                  } @else if (failedAttachments.has(m.id)) {
+                    <button type="button" class="doc" (click)="retryAttachment(m)">
+                      <span class="doc__icon doc__icon--bad"><span class="material-symbols-rounded">broken_image</span></span>
+                      <span class="doc__text">
+                        <strong>{{ m.attachment.filename }}</strong>
+                        <small>No se ha podido cargar · Reintentar</small>
+                      </span>
                     </button>
+                  } @else {
+                    <span class="bubble__img-skeleton" aria-label="Cargando imagen">
+                      <span class="material-symbols-rounded">image</span>
+                    </span>
                   }
-                </div>
+                } @else {
+                  <button type="button" class="doc" [disabled]="m.pending || downloading.has(m.id)" (click)="openDocument(m)">
+                    <span class="doc__icon" [attr.data-kind]="docKind(m)">
+                      <span class="material-symbols-rounded">{{ docIcon(m) }}</span>
+                    </span>
+                    <span class="doc__text">
+                      <strong>{{ m.attachment.filename }}</strong>
+                      <small>{{ docMeta(m) }}</small>
+                    </span>
+                    <span class="doc__action">
+                      @if (m.pending || downloading.has(m.id)) {
+                        <span class="doc__spinner"></span>
+                      } @else {
+                        <span class="material-symbols-rounded">download</span>
+                      }
+                    </span>
+                  </button>
+                }
               }
 
               @if (m.body) {
@@ -66,11 +93,28 @@
               }
 
               <span class="bubble__meta">
-                {{ stamp(m) }}
-                @if (m.pending) {
-                  <span class="material-symbols-rounded bubble__tick">schedule</span>
-                } @else if (m.failed) {
-                  <span class="material-symbols-rounded bubble__tick bubble__tick--bad">error</span>
+                <span class="bubble__time">{{ stamp(m) }}</span>
+                <!-- Los tics, solo en los míos y como en la app: reloj
+                     mientras sale, uno al llegar al servidor, dos al llegar
+                     al negocio y dos en azul cuando lo ha leído. -->
+                @if (isMine(m)) {
+                  @switch (delivery(m)) {
+                    @case ('pending') {
+                      <span class="material-symbols-rounded bubble__tick" title="Enviando">schedule</span>
+                    }
+                    @case ('failed') {
+                      <span class="material-symbols-rounded bubble__tick bubble__tick--bad" title="No se ha enviado">error</span>
+                    }
+                    @case ('sent') {
+                      <span class="material-symbols-rounded bubble__tick" title="Enviado">check</span>
+                    }
+                    @case ('delivered') {
+                      <span class="material-symbols-rounded bubble__tick" title="Entregado">done_all</span>
+                    }
+                    @case ('read') {
+                      <span class="material-symbols-rounded bubble__tick bubble__tick--read" title="Leído">done_all</span>
+                    }
+                  }
                 }
               </span>
             </div>

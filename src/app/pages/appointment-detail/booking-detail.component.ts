@@ -12,14 +12,19 @@ import {
   BusinessResponse,
   CancellationFee,
   ReviewResponse,
+  bookingPrice,
   businessLocationDisplay,
   isBookingActive,
+  primaryCategory,
 } from '../../models/bipsy.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { BookingStatusPillComponent } from '../../components/status-pill/booking-status-pill.component';
-import { capitalize, longDate, parseLocal, time } from '../../shared/dates';
-import { businessPath } from '../../shared/slug';
-import { euros } from '../../shared/dates';
+import { capitalize, duration, euros, longDate, parseLocal, time } from '../../shared/dates';
+import { businessBookingPath, businessPath } from '../../shared/slug';
+import { fixImageUrl, placeholderImage } from '../../shared/image-url';
+
+const WEEKDAY = new Intl.DateTimeFormat('es-ES', { weekday: 'long' });
+const DAY_MONTH = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 
 /**
  * Detalle de una cita. Port de `BookingDetailScreen`.
@@ -147,6 +152,92 @@ export class BookingDetailComponent implements OnInit {
     return this.business ? businessLocationDisplay(this.business) : '';
   }
 
+  // ----- CABECERA Y BLOQUES --------------------
+
+  /** La portada del negocio; mientras llega, la de relleno de su categoría. */
+  get coverUrl(): string {
+    const b = this.business;
+    return fixImageUrl(b?.coverImageUrl || b?.profileImageUrl)
+      ?? placeholderImage(this.booking?.businessId ?? 0, b ? primaryCategory(b)?.code : undefined);
+  }
+
+  get serviceImage(): string | null {
+    return fixImageUrl(this.booking?.serviceImageUrl) ?? null;
+  }
+
+  get weekdayLabel(): string {
+    return this.booking ? capitalize(WEEKDAY.format(parseLocal(this.booking.startDateTime))) : '';
+  }
+
+  get dayMonthLabel(): string {
+    return this.booking ? DAY_MONTH.format(parseLocal(this.booking.startDateTime)) : '';
+  }
+
+  get durationLabel(): string {
+    if (!this.booking) return '';
+    const minutes = Math.round(
+      (parseLocal(this.booking.endDateTime).getTime() - parseLocal(this.booking.startDateTime).getTime()) / 60_000,
+    );
+    return duration(minutes);
+  }
+
+  get priceLabel(): string | null {
+    const price = this.booking ? bookingPrice(this.booking) : null;
+    return price === null ? null : euros(price);
+  }
+
+  /** "Faltan 3 días" para las futuras; nada para el resto. */
+  get countdown(): string | null {
+    if (!this.booking || !this.canCancel) return null;
+    const minutes = Math.round((parseLocal(this.booking.startDateTime).getTime() - Date.now()) / 60_000);
+    if (minutes < 60) return `Empieza en ${Math.max(minutes, 0)} min`;
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return `Faltan ${hours} h`;
+    const days = Math.round(hours / 24);
+    return days === 1 ? 'Es mañana' : `Faltan ${days} días`;
+  }
+
+  /** La cita ya pasó (o se canceló): se ofrece repetirla. */
+  get canRebook(): boolean {
+    return !!this.booking && !this.canCancel;
+  }
+
+  get directionsUrl(): string | null {
+    const b = this.business;
+    if (!b || b.worksAtHome) return null;
+    if (typeof b.latitude === 'number' && typeof b.longitude === 'number') {
+      return `https://www.google.com/maps/dir/?api=1&destination=${b.latitude},${b.longitude}`;
+    }
+    const where = [b.address, b.city].filter(Boolean).join(', ');
+    return where ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(where)}` : null;
+  }
+
+  /**
+   * Añadir a Google Calendar. Fechas sin zona a propósito: la cita es a esa
+   * hora en el reloj del negocio, y Calendar la interpreta en la del usuario.
+   */
+  get calendarUrl(): string | null {
+    const b = this.booking;
+    if (!b || !this.canCancel) return null;
+    const stamp = (value: string) => value.slice(0, 19).replace(/[-:]/g, '');
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: `${b.serviceName} · ${this.business?.name ?? b.businessName ?? 'Bipsy'}`,
+      dates: `${stamp(b.startDateTime)}/${stamp(b.endDateTime)}`,
+      details: `Cita reservada con Bipsy${b.workerName ? ' con ' + b.workerName : ''}.`,
+      location: this.locationDisplay,
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+
+  rebook(): void {
+    if (!this.booking) return;
+    this.router.navigate(
+      businessBookingPath({ id: this.booking.businessId, name: this.business?.name ?? this.booking.businessName }),
+      { queryParams: { serviceId: this.booking.serviceId, workerId: this.booking.workerId } },
+    );
+  }
+
   stars(count: number): number[] {
     return [1, 2, 3, 4, 5].map(i => (i <= count ? 1 : 0));
   }
@@ -179,7 +270,7 @@ export class BookingDetailComponent implements OnInit {
   }
 
   reschedule(): void {
-    this.router.navigate(['/appointments', this.booking!.id, 'cambiar']);
+    this.router.navigate(['/citas', this.booking!.id, 'cambiar']);
   }
 
   openBusiness(): void {

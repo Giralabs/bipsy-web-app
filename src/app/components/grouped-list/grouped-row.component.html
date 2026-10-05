@@ -9,7 +9,7 @@
   (keydown.space)="onClick(); $event.preventDefault()"
 >
   @if (icon) {
-    <span class="material-symbols-rounded row__icon">{{ icon }}</span>
+    <span class="material-symbols-rounded row__icon" [class.row__icon--destructive]="destructive">{{ icon }}</span>
   }
 
   <span class="row__label" [class.row__label--destructive]="destructive">

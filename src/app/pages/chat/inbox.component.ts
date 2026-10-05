@@ -76,6 +76,6 @@ export class ChatInboxComponent implements OnInit {
   }
 
   goExplore(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/']);
   }
 }

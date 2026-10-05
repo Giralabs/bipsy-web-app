@@ -4,7 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../../core/api-error';
 import { SessionService } from '../../../core/session.service';
-import { GoogleAuthService, GoogleSignInCancelled } from '../../../core/google-auth.service';
+import {
+  SocialAuthService,
+  SocialIdentity,
+  SocialProvider,
+  SocialSignInCancelled,
+  socialMessageFor,
+} from '../../../core/social-auth.service';
 import { ButtonComponent } from '../../../components/button/button.component';
 
 /**
@@ -21,7 +27,7 @@ import { ButtonComponent } from '../../../components/button/button.component';
 })
 export class LoginComponent implements OnInit {
   private readonly session = inject(SessionService);
-  private readonly google = inject(GoogleAuthService);
+  private readonly social = inject(SocialAuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -29,34 +35,45 @@ export class LoginComponent implements OnInit {
   password = '';
   showPassword = false;
   loading = false;
-  googleLoading = false;
   error: string | null = null;
   notice: string | null = null;
 
-  /** Cuenta nueva con Google: falta el teléfono antes de poder entrar. */
+  /** Cuál de los dos botones está girando. Null si ninguno. */
+  socialLoading: SocialProvider | null = null;
+
+  /** Cuenta nueva con Google o Apple: falta el teléfono antes de entrar. */
   needsPhone = false;
   phone = '';
-  private googleIdToken: string | null = null;
+  private identity: SocialIdentity | null = null;
 
-  private returnTo = '/home';
+  private returnTo = '/';
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
     // Quien escribe su correo para registrarse y resulta que ya tiene cuenta
     // no debería tener que volver a escribirlo aquí.
     this.username = params['email'] ?? '';
-    this.returnTo = params['returnTo'] ?? this.session.takeReturnTo() ?? '/home';
+    this.returnTo = params['returnTo'] ?? this.session.takeReturnTo() ?? '/';
     if (params['changed']) {
       this.notice = 'Contraseña cambiada. Ya puedes entrar con ella.';
     }
   }
 
   get googleAvailable(): boolean {
-    return this.google.isAvailable;
+    return this.social.googleAvailable;
+  }
+
+  get appleAvailable(): boolean {
+    return this.social.appleAvailable;
+  }
+
+  /** Si hay algo social que ofrecer, y por tanto separador que pintar. */
+  get socialAvailable(): boolean {
+    return this.googleAvailable || this.appleAvailable;
   }
 
   get busy(): boolean {
-    return this.loading || this.googleLoading;
+    return this.loading || this.socialLoading !== null;
   }
 
   async submit(): Promise<void> {
@@ -84,24 +101,24 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  // ----- GOOGLE --------------------
+  // ----- GOOGLE Y APPLE --------------------
 
-  async signInWithGoogle(): Promise<void> {
+  async signInWith(provider: SocialProvider): Promise<void> {
     if (this.busy) {
       return;
     }
-    this.googleLoading = true;
+    this.socialLoading = provider;
     this.error = null;
     try {
-      this.googleIdToken = await this.google.obtainIdToken();
-      await this.exchangeGoogleToken();
+      this.identity = await this.social.obtainIdentity(provider);
+      await this.exchangeToken();
     } catch (raw) {
-      if (raw instanceof GoogleSignInCancelled) {
+      if (raw instanceof SocialSignInCancelled) {
         return;
       }
-      this.error = googleMessageFor(raw);
+      this.error = socialMessageFor(raw, provider);
     } finally {
-      this.googleLoading = false;
+      this.socialLoading = null;
     }
   }
 
@@ -111,22 +128,23 @@ export class LoginComponent implements OnInit {
       this.error = 'Introduce tu teléfono';
       return;
     }
-    this.googleLoading = true;
+    const provider = this.identity?.provider ?? 'google';
+    this.socialLoading = provider;
     this.error = null;
     try {
-      await this.exchangeGoogleToken(this.phone.trim());
+      await this.exchangeToken(this.phone.trim());
     } catch (raw) {
-      this.error = googleMessageFor(raw);
+      this.error = socialMessageFor(raw, provider);
     } finally {
-      this.googleLoading = false;
+      this.socialLoading = null;
     }
   }
 
-  private async exchangeGoogleToken(phone?: string): Promise<void> {
-    if (!this.googleIdToken) {
+  private async exchangeToken(phone?: string): Promise<void> {
+    if (!this.identity) {
       return;
     }
-    const res = await this.google.signIn(this.googleIdToken, phone);
+    const res = await this.social.signIn(this.identity, phone);
     if (res.needsProfile) {
       // Cuenta nueva: el negocio necesita un teléfono para avisarte de tus
       // citas. Se pide aquí mismo en vez de mandar a otra pantalla.
@@ -149,11 +167,4 @@ function messageFor(error: ApiError): string {
   if (error.status === 401 || error.status === 400) return 'Usuario o contraseña incorrectos.';
   if (error.isTooManyRequests) return 'Demasiados intentos. Espera un momento.';
   return error.message || 'No hemos podido iniciar sesión. Inténtalo de nuevo.';
-}
-
-function googleMessageFor(raw: unknown): string {
-  const error = ApiError.from(raw);
-  if (error.networkError) return 'Sin conexión con el servidor.';
-  if (error.status > 0) return error.message;
-  return 'No se pudo continuar con Google. Inténtalo de nuevo.';
 }

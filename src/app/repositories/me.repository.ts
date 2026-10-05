@@ -59,9 +59,14 @@ export class MeRepository {
     return this.api.put<PrivacySettings>('/me/privacy', settings);
   }
 
-  /** Baja de la cuenta. Borrado lógico: el negocio conserva sus citas. */
-  deleteAccount(): Promise<void> {
-    return this.api.delete<void>('/customers/me');
+  /**
+   * Baja de la cuenta. Borrado lógico: el negocio conserva sus citas.
+   *
+   * ⚠️ El endpoint lleva `@RequestBody`: sin cuerpo respondía 400 siempre. La
+   * contraseña va solo si la cuenta tiene una; con Google se manda `{}`.
+   */
+  deleteAccount(password?: string): Promise<void> {
+    return this.api.delete<void>('/customers/me', password ? { password } : {});
   }
 
   // ----- FAVORITOS --------------------

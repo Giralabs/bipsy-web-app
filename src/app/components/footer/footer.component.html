@@ -20,22 +20,39 @@
           <img src="assets_apps/download_app_store.webp" alt="Descárgalo en el App Store" />
         </a>
       </div>
+
+      <!-- ── Redes ──
+           Apuntan a YouTube mientras no existan los perfiles, igual que las
+           tiendas. Ver docs/LEGAL-PENDIENTE.md, punto 5. -->
+      <div class="footer__socials">
+        <a href="https://www.youtube.com" target="_blank" rel="noopener" class="footer__social" aria-label="Bipsy en Instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2Zm0 4.6a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 0 0 0-10.4Zm0 8.6a3.4 3.4 0 1 1 0-6.8 3.4 3.4 0 0 1 0 6.8Zm5.4-9.9a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>
+          </svg>
+        </a>
+        <a href="https://www.youtube.com" target="_blank" rel="noopener" class="footer__social" aria-label="Bipsy en LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.4 20.5h-3.6v-5.6c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.7H9.3V9h3.4v1.6h.1c.5-.9 1.6-1.8 3.4-1.8 3.6 0 4.3 2.4 4.3 5.5v6.2ZM5.3 7.4a2.1 2.1 0 1 1 0-4.2 2.1 2.1 0 0 1 0 4.2ZM7.1 20.5H3.5V9h3.6v11.5Z"/>
+          </svg>
+        </a>
+      </div>
     </div>
 
     <!-- ── Navegación ── -->
     <nav class="footer__col" aria-label="Bipsy">
       <h2 class="footer__title">Bipsy</h2>
-      <a routerLink="/home">Explorar</a>
-      <a routerLink="/search">Buscar</a>
-      <a routerLink="/appointments">Mis citas</a>
+      <a routerLink="/">Explorar</a>
+      <a routerLink="/buscar">Buscar</a>
+      <a routerLink="/citas">Mis citas</a>
       <a routerLink="/favoritos">Favoritos</a>
+      <a routerLink="/resenas">Reseñas</a>
     </nav>
 
     <nav class="footer__col" aria-label="Cuenta">
       <h2 class="footer__title">Cuenta</h2>
       <a routerLink="/acceder">Iniciar sesión</a>
       <a routerLink="/crear-cuenta">Crear cuenta</a>
-      <a routerLink="/profile">Ajustes</a>
+      <a routerLink="/ajustes">Ajustes</a>
       <a routerLink="/pagos">Pagos</a>
     </nav>
 
@@ -54,6 +71,9 @@
          cookies» los esconde justo de quien los está buscando. -->
     <nav class="footer__col" aria-label="Ayuda">
       <h2 class="footer__title">Ayuda</h2>
+      <!-- First, because it answers most of what people come here asking.
+           It is a site of its own (bipsy-help-app), hence the href. -->
+      <a [href]="helpCentre">Centro de ayuda</a>
       @for (doc of helpDocs; track doc.slug) {
         <a [routerLink]="['/legal', doc.slug]">{{ doc.title }}</a>
       }

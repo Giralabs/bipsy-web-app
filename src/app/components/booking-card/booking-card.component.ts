@@ -1,17 +1,19 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BookingResponse } from '../../models/bipsy.models';
+import { BookingResponse, bookingPrice } from '../../models/bipsy.models';
 import { BookingStatusPillComponent } from '../status-pill/booking-status-pill.component';
-import { parseLocal, relativeDate, time } from '../../shared/dates';
+import { euros, parseLocal, relativeDate, time } from '../../shared/dates';
 import { fixImageUrl } from '../../shared/image-url';
+
+const WEEKDAY = new Intl.DateTimeFormat('es-ES', { weekday: 'short' });
+const MONTH = new Intl.DateTimeFormat('es-ES', { month: 'short' });
 
 /**
  * Una reserva en la lista de Mis citas. Port de `BookingCard`.
  *
- * Sin bajarle la opacidad por ser pasada: un 65 % apagaba la foto, el texto y
- * el estado a la vez, y la lista de "Pasadas" entera se leía como
- * deshabilitada cuando es justo donde se vuelve a reservar. Que sea pasada ya
- * lo dicen la fecha y la pastilla.
+ * La fecha va en hoja de calendario a la izquierda: en una lista de citas lo
+ * que se busca primero es el día. La foto del servicio, si la hay, acompaña.
+ * Las canceladas se apagan un poco, pero sin llegar a leerse deshabilitadas.
  */
 @Component({
   selector: 'app-booking-card',
@@ -31,21 +33,41 @@ export class BookingCardComponent {
   @Output() open = new EventEmitter<BookingResponse>();
   @Output() rebook = new EventEmitter<BookingResponse>();
 
-  /**
-   * La foto del SERVICIO manda, y la del negocio es el respaldo. Es lo que se
-   * reservó: en un centro con diez tratamientos, la misma portada en las diez
-   * citas no ayuda a distinguirlas de un vistazo.
-   */
+  private get start(): Date {
+    return parseLocal(this.booking.startDateTime);
+  }
+
   get imageUrl(): string | null {
     return fixImageUrl(this.booking.serviceImageUrl) ?? fixImageUrl(this.businessImageUrl);
   }
 
-  get dateLabel(): string {
-    return relativeDate(parseLocal(this.booking.startDateTime));
+  get weekday(): string {
+    return WEEKDAY.format(this.start).replace('.', '');
   }
 
-  get timeLabel(): string {
-    return time(parseLocal(this.booking.startDateTime));
+  get day(): string {
+    return String(this.start.getDate());
+  }
+
+  get month(): string {
+    return MONTH.format(this.start).replace('.', '');
+  }
+
+  get timeRange(): string {
+    return `${time(this.start)} – ${time(parseLocal(this.booking.endDateTime))}`;
+  }
+
+  get relative(): string {
+    return relativeDate(this.start);
+  }
+
+  get priceLabel(): string | null {
+    const price = bookingPrice(this.booking);
+    return price === null ? null : euros(price);
+  }
+
+  get isOff(): boolean {
+    return this.booking.status === 'CANCELED' || this.booking.status === 'NO_SHOW';
   }
 
   onRebookClick(event: MouseEvent): void {

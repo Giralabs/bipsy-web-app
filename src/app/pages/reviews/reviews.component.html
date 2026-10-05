@@ -1,0 +1,178 @@
+<div class="page anim-fade-up">
+  <div class="page__inner rv__inner">
+
+    <header class="phead">
+      <div>
+        <p class="phead__eyebrow">Tu opinión cuenta</p>
+        <h1 class="phead__title">Reseñas</h1>
+        <p class="phead__sub">
+          @if (isAuthenticated && !isLoading && pending.length > 0) {
+            {{ pending.length === 1 ? 'Tienes 1 visita por valorar.' : 'Tienes ' + pending.length + ' visitas por valorar.' }}
+            Cuenta qué tal te fue y ayuda a otros a elegir.
+          } @else {
+            Cuenta qué tal te fue y ayuda a otros a elegir.
+          }
+        </p>
+      </div>
+      <span class="phead__art" aria-hidden="true">
+        <span class="material-symbols-rounded">star</span>
+      </span>
+    </header>
+
+    @if (!isAuthenticated && !isLoading) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">lock</span>
+        <h3>Entra para ver tus reseñas</h3>
+        <p>Con tu cuenta puedes valorar los sitios donde has reservado.</p>
+        <app-button variant="primary" icon="login" (onClick)="goToLogin()">Iniciar sesión</app-button>
+      </div>
+    } @else {
+      <app-segmented
+        class="rv__segmented"
+        [labels]="tabs"
+        [selectedIndex]="selectedTab"
+        (selectedIndexChange)="selectedTab = $event"
+      />
+
+      @if (isLoading) {
+        <div class="rv__list">
+          @for (i of [1, 2, 3]; track i) {
+            <div class="skeleton rv__skeleton"></div>
+          }
+        </div>
+      } @else if (loadError) {
+        <div class="empty-state">
+          <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+          <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido cargar tus reseñas' }}</h3>
+          <p>{{ loadError.message }}</p>
+          <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+        </div>
+      } @else if (selectedTab === 0) {
+
+        <!-- ══════════ PENDIENTES ══════════ -->
+        @if (pending.length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-rounded">rate_review</span>
+            <h3>No tienes nada pendiente</h3>
+            <p>Cuando termine una cita, podrás valorarla aquí.</p>
+            <app-button variant="secondary" icon="event" (onClick)="goToAppointments()">Ver mis citas</app-button>
+          </div>
+        } @else {
+          <div class="rv__list">
+            @for (booking of pending; track booking.id) {
+              <article class="rv-card rv-card--pending">
+                <span class="rv-card__thumb">
+                  @if (image(booking); as src) {
+                    <img [src]="src" alt="" loading="lazy" />
+                  } @else {
+                    <span class="material-symbols-rounded">storefront</span>
+                  }
+                </span>
+                <div class="rv-card__body">
+                  <strong class="rv-card__title">{{ booking.businessName || 'Negocio' }}</strong>
+                  <span class="rv-card__meta">{{ booking.serviceName }} · {{ when(booking) }}</span>
+                  <span class="rv-card__ask">¿Qué tal te fue?</span>
+                </div>
+                <button type="button" class="rv-card__cta" (click)="openSheet(booking)">
+                  <span class="material-symbols-rounded fill">star</span>
+                  Valorar
+                </button>
+              </article>
+            }
+          </div>
+        }
+      } @else {
+
+        <!-- ══════════ TUS RESEÑAS ══════════ -->
+        @if (mine.length === 0) {
+          <div class="empty-state">
+            <span class="material-symbols-rounded">reviews</span>
+            <h3>Aún no has escrito ninguna</h3>
+            <p>Tus reseñas aparecerán aquí, con la respuesta del negocio si la hay.</p>
+          </div>
+        } @else {
+          <div class="rv__list">
+            @for (review of mine; track review.id) {
+              <article class="rv-card rv-card--mine">
+                <header class="rv-card__head">
+                  <a class="rv-card__title rv-card__link" [routerLink]="businessLink(review)">
+                    {{ businessOf(review) }}
+                  </a>
+                  <button type="button" class="rv-card__delete" (click)="remove(review)" aria-label="Borrar reseña" title="Borrar reseña">
+                    <span class="material-symbols-rounded">delete</span>
+                  </button>
+                </header>
+
+                <div class="rv-card__rating">
+                  @for (filled of stars(review.rating); track $index) {
+                    <span class="material-symbols-rounded rv-card__star" [class.fill]="filled">star</span>
+                  }
+                  <span class="rv-card__meta">
+                    @if (review.serviceName) { {{ review.serviceName }} · }{{ reviewDate(review) }}
+                  </span>
+                </div>
+
+                @if (review.comment) {
+                  <p class="rv-card__text">{{ review.comment }}</p>
+                }
+
+                @if (review.reply) {
+                  <div class="rv-card__reply">
+                    <span class="rv-card__reply-label">
+                      <span class="material-symbols-rounded">storefront</span>
+                      Respuesta del negocio
+                    </span>
+                    <p>{{ review.reply }}</p>
+                  </div>
+                }
+              </article>
+            }
+          </div>
+        }
+      }
+    }
+  </div>
+
+  <!-- ══════════ HOJA DE VALORAR ══════════ -->
+  @if (target) {
+    <div class="sheet-backdrop" (click)="closeSheet()">
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rv-sheet-title" (click)="$event.stopPropagation()">
+        <h2 class="sheet__title" id="rv-sheet-title">Valora {{ target.businessName || 'tu cita' }}</h2>
+        <p class="sheet__sub">{{ target.serviceName }} · {{ when(target) }}</p>
+
+        <div class="rv-picker" role="radiogroup" aria-label="Puntuación">
+          @for (n of [1, 2, 3, 4, 5]; track n) {
+            <button type="button" class="rv-picker__star" role="radio"
+                    [attr.aria-checked]="rating === n"
+                    [attr.aria-label]="n + (n === 1 ? ' estrella' : ' estrellas')"
+                    [class.rv-picker__star--on]="n <= rating"
+                    (click)="rating = n">
+              <span class="material-symbols-rounded fill">star</span>
+            </button>
+          }
+        </div>
+        <p class="rv-picker__word">{{ ratingWords[rating] }}</p>
+
+        <textarea class="rv-input" rows="4" [maxlength]="commentMax"
+                  placeholder="Cuéntanos tu experiencia (opcional)"
+                  [(ngModel)]="comment" name="review-comment"></textarea>
+        <p class="rv-counter">{{ comment.length }}/{{ commentMax }}</p>
+
+        @if (sheetError) {
+          <p class="flow__error"><span class="material-symbols-rounded fill">error</span>{{ sheetError }}</p>
+        }
+
+        <div class="sheet__actions">
+          <app-button variant="primary" [fullWidth]="true" [loading]="busy" (onClick)="submit()">Publicar reseña</app-button>
+          <app-button variant="ghost" [fullWidth]="true" (onClick)="closeSheet()">Cancelar</app-button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (toast) {
+    <div class="toast" role="status">
+      <span class="material-symbols-rounded fill">check_circle</span>{{ toast }}
+    </div>
+  }
+</div>

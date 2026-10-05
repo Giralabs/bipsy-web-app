@@ -1,7 +1,7 @@
 import { BusinessResponse } from '../models/bipsy.models';
 
 /**
- * URL legible de un negocio: `/business/barberia-el-maestro-3`.
+ * URL legible de un negocio: `/negocio/barberia-el-maestro-3`.
  *
  * **El id va al final y es lo único que se lee.** El nombre está para que la
  * dirección se entienda al verla y al compartirla, pero no se usa para
@@ -15,12 +15,12 @@ export function businessSlug(business: { id: number; name?: string }): string {
 
 /** Los segmentos de ruta para `routerLink` y `router.navigate`. */
 export function businessPath(business: { id: number; name?: string }): string[] {
-  return ['/business', businessSlug(business)];
+  return ['/negocio', businessSlug(business)];
 }
 
 /** Los del flujo de reserva de ese negocio. */
 export function businessBookingPath(business: { id: number; name?: string }): string[] {
-  return ['/business', businessSlug(business), 'reservar'];
+  return ['/negocio', businessSlug(business), 'reservar'];
 }
 
 /**

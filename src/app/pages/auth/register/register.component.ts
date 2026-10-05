@@ -4,7 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../../core/api-error';
 import { SessionService } from '../../../core/session.service';
-import { GoogleAuthService, GoogleSignInCancelled } from '../../../core/google-auth.service';
+import {
+  SocialAuthService,
+  SocialIdentity,
+  SocialProvider,
+  SocialSignInCancelled,
+  socialMessageFor,
+} from '../../../core/social-auth.service';
 import { AuthRepository } from '../../../repositories/auth.repository';
 import { ButtonComponent } from '../../../components/button/button.component';
 
@@ -27,7 +33,7 @@ type Step = 'email' | 'code' | 'profile';
 export class RegisterComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthRepository);
   private readonly session = inject(SessionService);
-  private readonly google = inject(GoogleAuthService);
+  private readonly social = inject(SocialAuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -48,20 +54,25 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private timer?: ReturnType<typeof setInterval>;
 
   private signupToken: string | null = null;
-  private returnTo = '/home';
+  private returnTo = '/';
 
-  // ----- GOOGLE --------------------
+  // ----- GOOGLE Y APPLE --------------------
   //
-  // Con Google el correo llega ya verificado, así que el alta se salta los dos
-  // primeros pasos: solo queda el teléfono, y solo si la cuenta es nueva.
-  googleLoading = false;
+  // Con cualquiera de los dos el correo llega ya verificado, así que el alta se
+  // salta los dos primeros pasos: solo queda el teléfono, y solo si la cuenta
+  // es nueva.
+  //
+  // Con Apple, además, el nombre solo llega la PRIMERA vez que se autoriza:
+  // viaja en la identidad hasta el backend, que es quien lo guarda al crear la
+  // cuenta.
+  socialLoading: SocialProvider | null = null;
   needsPhone = false;
-  private googleIdToken: string | null = null;
+  private identity: SocialIdentity | null = null;
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
     this.email = params['email'] ?? '';
-    this.returnTo = params['returnTo'] ?? this.session.takeReturnTo() ?? '/home';
+    this.returnTo = params['returnTo'] ?? this.session.takeReturnTo() ?? '/';
   }
 
   ngOnDestroy(): void {
@@ -69,52 +80,59 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   get googleAvailable(): boolean {
-    return this.google.isAvailable;
+    return this.social.googleAvailable;
   }
 
-  async signUpWithGoogle(): Promise<void> {
-    if (this.loading || this.googleLoading) {
+  get appleAvailable(): boolean {
+    return this.social.appleAvailable;
+  }
+
+  /** Si hay algo social que ofrecer, y por tanto separador que pintar. */
+  get socialAvailable(): boolean {
+    return this.googleAvailable || this.appleAvailable;
+  }
+
+  async signUpWith(provider: SocialProvider): Promise<void> {
+    if (this.loading || this.socialLoading) {
       return;
     }
-    this.googleLoading = true;
+    this.socialLoading = provider;
     this.error = null;
     try {
-      this.googleIdToken = await this.google.obtainIdToken();
-      await this.exchangeGoogleToken();
+      this.identity = await this.social.obtainIdentity(provider);
+      await this.exchangeToken();
     } catch (raw) {
-      if (raw instanceof GoogleSignInCancelled) {
+      if (raw instanceof SocialSignInCancelled) {
         return;
       }
-      const error = ApiError.from(raw);
-      this.error = error.status > 0
-        ? error.message
-        : 'No se pudo continuar con Google. Inténtalo de nuevo.';
+      this.error = socialMessageFor(raw, provider);
     } finally {
-      this.googleLoading = false;
+      this.socialLoading = null;
     }
   }
 
-  async submitGooglePhone(): Promise<void> {
+  async submitSocialPhone(): Promise<void> {
     if (this.phone.trim().length < 9) {
       this.error = 'Introduce tu teléfono';
       return;
     }
-    this.googleLoading = true;
+    const provider = this.identity?.provider ?? 'google';
+    this.socialLoading = provider;
     this.error = null;
     try {
-      await this.exchangeGoogleToken(this.phone.trim());
+      await this.exchangeToken(this.phone.trim());
     } catch (raw) {
-      this.error = ApiError.from(raw).message;
+      this.error = socialMessageFor(raw, provider);
     } finally {
-      this.googleLoading = false;
+      this.socialLoading = null;
     }
   }
 
-  private async exchangeGoogleToken(phone?: string): Promise<void> {
-    if (!this.googleIdToken) {
+  private async exchangeToken(phone?: string): Promise<void> {
+    if (!this.identity) {
       return;
     }
-    const res = await this.google.signIn(this.googleIdToken, phone);
+    const res = await this.social.signIn(this.identity, phone);
     if (res.needsProfile) {
       this.needsPhone = true;
       return;

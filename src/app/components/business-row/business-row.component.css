@@ -1,17 +1,35 @@
 :host { display: block; }
 
-.row { margin-bottom: 32px; }
+.row { margin-bottom: 36px; }
 
 .row__head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  /* 24 arriba y 12 abajo: el reparto de `_RowShell` (xxl sobre el título, md
+  /* 24 arriba y 14 abajo: el reparto de `_RowShell` (xxl sobre el título, md
      bajo él). Pegado a los cuadros de categoría, el título parecía su pie. */
   margin-top: 24px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
+
+.row__heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+/* El disco de marca junto al título: separa una fila de otra de un vistazo. */
+.row__icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--clr-mint-dim);
+  color: var(--clr-mint);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row__titles { min-width: 0; }
 
 /* headlineMedium: Bricolage Grotesque 24 px, 700, tracking -0,6. */
 .row__title {
@@ -21,6 +39,15 @@
   line-height: 1.15;
   letter-spacing: -0.6px;
 }
+
+.row__subtitle {
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.row__tools { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 
 .row__link {
   display: inline-flex;
@@ -37,71 +64,126 @@
 .row__link:hover { opacity: .7; }
 .row__link-icon { font-size: 18px; }
 
-/* La fila se arrastra en horizontal. El aire de la derecha evita que la
-   última tarjeta muera pegada al canto. */
+.row__arrows { display: flex; gap: 6px; }
+
+.row__arrow {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .2s ease, opacity .2s ease;
+}
+
+.row__arrow:hover:not(:disabled) { background: var(--clr-surface-hover); }
+.row__arrow:disabled { opacity: .35; cursor: default; }
+.row__arrow .material-symbols-rounded { font-size: 22px; }
+
+/* La fila se arrastra en horizontal. Arriba deja 6 px para que la tarjeta
+   pueda levantarse al pasar el ratón sin que la corte el desbordamiento. */
 .row__scroll {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   overflow-x: auto;
   align-items: stretch;
-  padding: 0 28px 4px 0;
-  margin-right: -28px;
+  padding: 6px 28px 6px 0;
+  margin: -6px -28px 0 0;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
 }
 
 .row__scroll::-webkit-scrollbar { display: none; }
 .row__scroll--static { overflow-x: hidden; }
+.row__scroll.is-dragging { scroll-snap-type: none; cursor: grabbing; }
 
-/* En una pantalla ancha caben más y más pequeñas: la tarjeta de 275 del móvil
-   ocupaba aquí un tercio de la fila y todo pesaba el doble de lo que dice. */
 .row__item {
-  flex: 0 0 244px;
-  min-width: 244px;
+  flex: 0 0 256px;
+  min-width: 256px;
   scroll-snap-align: start;
 }
 
-.row__skeleton { height: 200px; border-radius: var(--r-lg); }
+.row__skeleton { height: 214px; border-radius: var(--r-lg); }
 
+/* ── Vacía ── */
 .row__empty {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 16px;
+  padding: 18px 20px;
   /* Radio xl y no sm: es el de `_EmptyRowCard`. */
   border-radius: var(--r-xl);
   background: var(--clr-surface);
+}
+
+.row__empty-icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--clr-mint-dim);
+  color: var(--clr-mint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.row__empty-icon .material-symbols-rounded { font-size: 24px; }
+
+.row__empty-text {
+  flex: 1;
+  min-width: 0;
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.55;
   color: var(--clr-text-2);
 }
 
-.row__empty .material-symbols-rounded {
-  font-size: 22px;
+.row__empty-btn {
   flex: 0 0 auto;
-  color: var(--clr-text-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-family: var(--ff);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color .2s ease, transform .12s ease;
 }
 
+.row__empty-btn:hover { background: var(--clr-mint-hover); }
+.row__empty-btn:active { transform: scale(.96); }
+.row__empty-btn .material-symbols-rounded { font-size: 18px; }
+
 @media (max-width: 560px) {
-  /* 275, el ancho que `_GlassHomeCard` usa en las filas de la app. Estaba en
-     214 y las tarjetas salían enclenques al lado de las del móvil: con la foto
-     a 16:9, 60 px de ancho son 34 de foto. */
+  /* 275, el ancho que `_GlassHomeCard` usa en las filas de la app. */
   .row__item { flex-basis: 275px; min-width: 275px; }
+  .row__empty { flex-wrap: wrap; }
+  .row__empty-text { flex: 1 1 calc(100% - 64px); }
+  .row__empty-btn { margin-left: 64px; }
+  .row__icon { width: 34px; height: 34px; font-size: 18px; }
+  .row__title { font-size: 1.3125rem; }
 }
 
 /* ── Móvil: la fila a sangre, como en la app ──
-   El contenedor ya mete su relleno y la fila metía el suyo encima: la última
-   tarjeta moría pegada al canto por la derecha y la primera empezaba muy
-   adentro. A sangre, con el `screenHorizontal` de la app (20) a los dos
-   lados, la tarjeta cortada se ve cortada y no comida por el borde. */
+   A sangre, con el `screenHorizontal` de la app (20) a los dos lados, la
+   tarjeta cortada se ve cortada y no comida por el borde. */
 @media (max-width: 1024px) {
   .row__scroll {
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
-    padding: 0 20px 4px;
-    /* Sin esto el ajuste por proximidad se comía el relleno izquierdo: la
-       fila nacía con scrollLeft = 20 y la primera tarjeta pegada al borde. */
+    padding: 6px 20px 6px;
+    /* Sin esto el ajuste por proximidad se comía el relleno izquierdo. */
     scroll-padding-left: 20px;
   }
 }

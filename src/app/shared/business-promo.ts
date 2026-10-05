@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
  * la plantilla todavía no ha pintado y `querySelector` devolvería null.
  */
 export function scrollToBusinessPromo(router: Router): void {
-  router.navigate(['/home']).then(() => {
+  router.navigate(['/']).then(() => {
     setTimeout(() => {
       document.querySelector('.business-promo-card')?.scrollIntoView({
         behavior: 'smooth',

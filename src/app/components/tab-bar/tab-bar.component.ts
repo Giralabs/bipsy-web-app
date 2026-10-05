@@ -17,6 +17,8 @@ import { ChatSocketService } from '../../core/chat-socket.service';
 
 interface Tab {
   route: string;
+  /** Otras rutas que viven dentro de esta pestaña y también llevan barra. */
+  also?: string[];
   icon: string;
   label: string;
   /** Solo la pestaña de chat lleva contador. */
@@ -89,10 +91,11 @@ export class TabBarComponent implements OnInit, OnDestroy {
   }
 
   readonly tabs: Tab[] = [
-    { route: '/home', icon: 'explore', label: 'Explorar' },
+    // Buscar es parte de Explorar, como en la app: al buscar la barra no se va.
+    { route: '/', also: ['/buscar'], icon: 'explore', label: 'Explorar' },
     // Un reloj y no un calendario: una cita es una hora, no un mes. Mismo
     // criterio que la app.
-    { route: '/appointments', icon: 'schedule', label: 'Mis citas' },
+    { route: '/citas', icon: 'schedule', label: 'Mis citas' },
     { route: '/mensajes', icon: 'chat_bubble', label: 'Chat', badge: true },
   ];
 
@@ -268,7 +271,7 @@ export class TabBarComponent implements OnInit, OnDestroy {
     const path = url.split('?')[0];
     // Coincidencia exacta, no `startsWith`: `/mensajes/12` es el hilo, que en
     // la app va fuera del shell y no lleva barra.
-    const index = this.tabs.findIndex(tab => path === tab.route);
+    const index = this.tabs.findIndex(tab => path === tab.route || !!tab.also?.includes(path));
     this.active = index;
     if (index >= 0 && !this.dragging) {
       this.pos = index;

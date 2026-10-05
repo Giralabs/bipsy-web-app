@@ -1,40 +1,81 @@
-<div class="fav anim-fade-up">
-  <div class="fav__inner">
-    <h1 class="fav__heading">Tus favoritos</h1>
-    <p class="fav__sub">Los sitios que has guardado</p>
+<div class="page anim-fade-up">
+  <div class="page__inner">
 
-    @if (!isAuthenticated) {
-      <div class="empty-state">
+    <header class="phead">
+      <div>
+        <p class="phead__eyebrow">Tus sitios</p>
+        <h1 class="phead__title">Favoritos</h1>
+        <p class="phead__sub">
+          @if (isAuthenticated && !isLoading && businesses.length > 0) {
+            {{ businesses.length === 1 ? 'Tienes 1 sitio guardado.' : 'Tienes ' + businesses.length + ' sitios guardados.' }}
+            Reserva en ellos sin tener que buscarlos.
+          } @else {
+            Guarda con el corazón los sitios a los que vuelves y tenlos siempre a mano.
+          }
+        </p>
+        @if (!isAuthenticated) {
+          <div class="phead__actions">
+            <button type="button" class="pill-btn" (click)="goToLogin()">
+              <span class="material-symbols-rounded">login</span>Iniciar sesión
+            </button>
+          </div>
+        }
+      </div>
+      <span class="phead__art" aria-hidden="true">
         <span class="material-symbols-rounded">favorite</span>
-        <h3>Entra para ver tus favoritos</h3>
-        <p>Guarda los negocios a los que vuelves y tenlos siempre a mano.</p>
-        <app-button variant="primary" icon="login" (onClick)="goToLogin()">Iniciar sesión</app-button>
-      </div>
-    } @else if (isLoading) {
-      <div class="fav__grid">
-        @for (i of [1, 2, 3]; track i) {
-          <div class="skeleton fav__skeleton"></div>
-        }
-      </div>
-    } @else if (loadError) {
-      <div class="empty-state">
-        <span class="material-symbols-rounded">wifi_off</span>
-        <h3>No hemos podido cargar tus favoritos</h3>
-        <p>{{ loadError.message }}</p>
-      </div>
-    } @else if (businesses.length === 0) {
-      <div class="empty-state">
-        <span class="material-symbols-rounded">favorite_border</span>
-        <h3>Todavía no tienes favoritos</h3>
-        <p>Pulsa el corazón en la ficha de un negocio y aparecerá aquí.</p>
-        <app-button variant="primary" icon="explore" (onClick)="goExplore()">Explorar negocios</app-button>
-      </div>
-    } @else {
-      <div class="fav__grid">
-        @for (biz of businesses; track biz.id) {
-          <app-business-card [business]="biz" />
-        }
-      </div>
+      </span>
+    </header>
+
+    @if (isAuthenticated) {
+      @if (isLoading) {
+        <div class="fav__grid">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="skeleton fav__skeleton"></div>
+          }
+        </div>
+      } @else if (loadError) {
+        <div class="empty-state">
+          <span class="material-symbols-rounded">wifi_off</span>
+          <h3>No hemos podido cargar tus favoritos</h3>
+          <p>{{ loadError.message }}</p>
+        </div>
+      } @else if (businesses.length > 0) {
+        <div class="fav__grid">
+          @for (biz of businesses; track biz.id) {
+            <app-business-card [business]="biz" />
+          }
+        </div>
+      } @else {
+        <div class="fav__empty">
+          <span class="fav__hearts" aria-hidden="true">
+            <span class="material-symbols-rounded fill">favorite</span>
+            <span class="material-symbols-rounded fill">favorite</span>
+            <span class="material-symbols-rounded fill">favorite</span>
+          </span>
+          <div class="fav__empty-text">
+            <h3>Aún no has guardado ningún sitio</h3>
+            <p>Pulsa el corazón en cualquier tarjeta o en la ficha de un negocio y aparecerá aquí.</p>
+          </div>
+          <button type="button" class="pill-btn" (click)="goExplore()">
+            <span class="material-symbols-rounded">explore</span>Explorar
+          </button>
+        </div>
+      }
+    }
+
+    <!-- Sugerencias: con la lista vacía, o sin sesión, la página no se queda en blanco. -->
+    @if (!isLoading && suggestions.length > 0 && (!isAuthenticated || businesses.length === 0)) {
+      <section class="fav__suggest">
+        <h2 class="fav__suggest-title">
+          <span class="material-symbols-rounded fill">auto_awesome</span>
+          Te pueden gustar
+        </h2>
+        <div class="fav__grid">
+          @for (biz of suggestions; track biz.id) {
+            <app-business-card [business]="biz" />
+          }
+        </div>
+      </section>
     }
   </div>
 </div>

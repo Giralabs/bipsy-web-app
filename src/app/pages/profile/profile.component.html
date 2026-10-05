@@ -1,211 +1,385 @@
-<div class="settings anim-fade-up">
-  <div class="settings__inner">
-
-    <h1 class="settings__heading">Ajustes</h1>
+<div class="page settings anim-fade-up">
+  <div class="page__inner">
 
     @if (!isAuthenticated) {
 
-      <!-- Sin sesión: la única puerta, y las dos formas de cruzarla. -->
-      <div class="empty-state">
-        <span class="material-symbols-rounded">account_circle</span>
-        <h3>Entra en Bipsy</h3>
-        <p>Con tu cuenta guardas tus citas, tus favoritos y tus reseñas.</p>
-        <div class="settings__signin">
-          <app-button variant="primary" icon="login" [fullWidth]="true" (onClick)="goToLogin()">
-            Iniciar sesión
-          </app-button>
-          <app-button variant="secondary" [fullWidth]="true" (onClick)="goToRegister()">
-            Crear cuenta
-          </app-button>
+      <header class="phead">
+        <div>
+          <p class="phead__eyebrow">Tu cuenta</p>
+          <h1 class="phead__title">Ajustes</h1>
+          <p class="phead__sub">Con tu cuenta guardas tus citas, tus favoritos y tus reseñas.</p>
+          <div class="phead__actions">
+            <button type="button" class="pill-btn" (click)="goToLogin()">
+              <span class="material-symbols-rounded">login</span>Iniciar sesión
+            </button>
+            <button type="button" class="pill-btn pill-btn--soft" (click)="goToRegister()">Crear cuenta</button>
+          </div>
         </div>
-      </div>
+        <span class="phead__art" aria-hidden="true">
+          <span class="material-symbols-rounded">account_circle</span>
+        </span>
+      </header>
 
     } @else {
+      <div class="st" [class.st--open]="mobileOpen">
 
-      <!-- Cabecera con la foto o las iniciales. -->
-      <div class="settings__me">
-        @if (profile?.profileImageUrl) {
-          <img class="settings__avatar-img" [src]="profile!.profileImageUrl" [alt]="profile!.name || ''" />
-        } @else {
-          <span class="settings__avatar">{{ profile?.initials || 'U' }}</span>
-        }
-        <span class="settings__me-text">
-          <strong>{{ profile?.name }}</strong>
-          <small>{{ profile?.email }}</small>
-        </span>
-      </div>
+        <!-- ══════════ MENÚ ══════════ -->
+        <aside class="st__side">
+          <section class="me">
+            <span class="me__banner" aria-hidden="true"><span class="me__disc"></span></span>
 
-      @if (notice) {
-        <p class="settings__notice">
-          <span class="material-symbols-rounded fill">check_circle</span>{{ notice }}
-        </p>
-      }
-      @if (error) {
-        <p class="flow__error" role="alert">
-          <span class="material-symbols-rounded fill">error</span>{{ error }}
-        </p>
-      }
+            <button type="button" class="me__avatar" (click)="selectSection('profile')" aria-label="Cambiar foto de perfil">
+              @if (profile?.profileImageUrl) {
+                <img [src]="profile!.profileImageUrl" [alt]="profile!.name || ''" />
+              } @else {
+                <span class="me__initials">{{ profile?.initials || 'U' }}</span>
+              }
+              <span class="me__cam"><span class="material-symbols-rounded">photo_camera</span></span>
+            </button>
 
-      <!-- ══════════ MI CUENTA ══════════ -->
-      <app-grouped-section header="Mi cuenta">
-        <app-grouped-row
-          label="Editar perfil"
-          icon="person"
-          [value]="profile?.name"
-          [navigates]="true"
-          (action)="openPanel('edit')"
-        />
-        <app-grouped-row label="Mis citas" icon="event" [navigates]="true" (action)="go('/appointments')" />
-        <app-grouped-row label="Favoritos" icon="favorite" [navigates]="true" (action)="go('/favoritos')" />
-        <app-grouped-row label="Pagos" icon="credit_card" [navigates]="true" (action)="go('/pagos')" />
-      </app-grouped-section>
+            <h1 class="me__name">{{ profile?.name }}</h1>
+            <p class="me__line">{{ profile?.email }}</p>
 
-      @if (panel === 'edit') {
-        <div class="form-group settings__panel">
-          <!-- La foto, arriba del formulario y con sus dos acciones al lado.
-               Se elige aquí pero se sube al pulsar Guardar, como en la app. -->
-          <div class="avatar-edit">
-            @if (shownPhoto) {
-              <img class="avatar-edit__img" [src]="shownPhoto" alt="" />
-            } @else {
-              <span class="avatar-edit__initials">{{ profile?.initials || 'U' }}</span>
+            <div class="stats me__stats">
+              <a class="stat" routerLink="/citas">
+                <span class="stat__value">{{ bookingsCount ?? '–' }}</span>
+                <span class="stat__label">Citas</span>
+              </a>
+              <a class="stat" routerLink="/favoritos">
+                <span class="stat__value">{{ favoritesCount }}</span>
+                <span class="stat__label">Favoritos</span>
+              </a>
+              <a class="stat" routerLink="/resenas">
+                <span class="stat__value">{{ reviewsCount ?? '–' }}</span>
+                <span class="stat__label">Reseñas</span>
+              </a>
+            </div>
+          </section>
+
+          <nav class="menu" aria-label="Apartados de los ajustes">
+            <p class="menu__label">Ajustes</p>
+            @for (item of sections; track item.id) {
+              <button
+                type="button"
+                class="menu__item"
+                [class.menu__item--on]="section === item.id"
+                [class.menu__item--danger]="item.id === 'account'"
+                [attr.aria-current]="section === item.id ? 'page' : null"
+                (click)="selectSection(item.id)"
+              >
+                <span class="menu__icon"><span class="material-symbols-rounded">{{ item.icon }}</span></span>
+                <span class="menu__text">
+                  <strong>{{ item.label }}</strong>
+                  <small>{{ item.hint }}</small>
+                </span>
+                <span class="material-symbols-rounded menu__chevron">chevron_right</span>
+              </button>
             }
+          </nav>
 
-            <div class="avatar-edit__actions">
-              <label class="avatar-edit__btn">
-                <span class="material-symbols-rounded">photo_camera</span>
-                {{ shownPhoto ? 'Cambiar foto' : 'Elegir foto' }}
-                <input type="file" accept="image/*" hidden (change)="onPhotoPicked($event)"
-                       [disabled]="saving" />
-              </label>
+          <nav class="menu" aria-label="Accesos">
+            <p class="menu__label">Tu actividad</p>
+            @for (item of quickLinks; track item.path) {
+              <a class="menu__item" [routerLink]="item.path">
+                <span class="menu__icon menu__icon--soft"><span class="material-symbols-rounded">{{ item.icon }}</span></span>
+                <span class="menu__text">
+                  <strong>{{ item.label }}</strong>
+                  <small>{{ item.hint }}</small>
+                </span>
+                <span class="material-symbols-rounded menu__chevron">arrow_outward</span>
+              </a>
+            }
+          </nav>
+        </aside>
 
-              @if (canRemovePhoto) {
-                <button type="button" class="avatar-edit__btn avatar-edit__btn--bad"
-                        [disabled]="saving" (click)="markPhotoForRemoval()">
-                  <span class="material-symbols-rounded">delete</span>
-                  Quitar
-                </button>
-              }
+        <!-- ══════════ CONTENIDO ══════════ -->
+        <main class="st__main">
+          <button type="button" class="flow__back st__back" (click)="backToMenu()">
+            <span class="material-symbols-rounded">arrow_back</span>
+            Ajustes
+          </button>
 
-              @if (pendingPhotoUrl || removePhoto) {
-                <p class="avatar-edit__pending">Se aplicará al guardar.</p>
-              }
+          <header class="pane__head">
+            <span class="pane__icon" [class.pane__icon--danger]="section === 'account'">
+              <span class="material-symbols-rounded">{{ currentSection.icon }}</span>
+            </span>
+            <div>
+              <h2 class="pane__title">{{ currentSection.label }}</h2>
+              <p class="pane__sub">{{ currentSection.hint }}</p>
             </div>
-          </div>
+          </header>
 
-          <div class="form-group__box">
-            <div class="form-row">
-              <label class="form-row__label" for="pf-name">Nombre</label>
-              <input id="pf-name" class="form-row__input" type="text" [(ngModel)]="formName"
-                     name="name" maxlength="80" [disabled]="saving" />
-            </div>
-            <div class="form-row">
-              <label class="form-row__label" for="pf-email">Correo</label>
-              <input id="pf-email" class="form-row__input" type="email" [(ngModel)]="formEmail"
-                     name="email" maxlength="120" [disabled]="saving" />
-            </div>
-            <div class="form-row">
-              <label class="form-row__label" for="pf-phone">Teléfono</label>
-              <input id="pf-phone" class="form-row__input" type="tel" [(ngModel)]="formPhone"
-                     name="phone" maxlength="20" [disabled]="saving" />
-            </div>
-          </div>
-          <div class="settings__panel-actions">
-            <app-button variant="primary" [loading]="saving" (onClick)="saveProfile()">Guardar</app-button>
-            <app-button variant="ghost" (onClick)="cancelEdit()">Cancelar</app-button>
-          </div>
-        </div>
-      }
+          @if (notice) {
+            <p class="st__notice" role="status">
+              <span class="material-symbols-rounded fill">check_circle</span>{{ notice }}
+            </p>
+          }
+          @if (error) {
+            <p class="flow__error st__error" role="alert">
+              <span class="material-symbols-rounded fill">error</span>{{ error }}
+            </p>
+          }
 
-      <!-- ══════════ SEGURIDAD ══════════ -->
-      <app-grouped-section header="Seguridad">
-        <app-grouped-row
-          [label]="passwordRowLabel"
-          icon="lock"
-          [navigates]="true"
-          (action)="openPanel('password')"
-        />
-        <app-grouped-row
-          label="Cerrar sesión en otros dispositivos"
-          icon="devices"
-          [navigates]="true"
-          (action)="revokeAllSessions()"
-        />
-      </app-grouped-section>
+          @switch (section) {
 
-      @if (panel === 'password') {
-        <div class="form-group settings__panel">
-          <div class="form-group__box">
-            @if (profile?.hasPassword) {
-              <div class="form-row">
-                <label class="form-row__label" for="pf-cur">Actual</label>
-                <input id="pf-cur" class="form-row__input" type="password" name="current-password"
-                       autocomplete="current-password" [(ngModel)]="currentPassword" [disabled]="saving" />
+            <!-- ── Perfil ── -->
+            @case ('profile') {
+              <section class="card">
+                <div class="photo">
+                  @if (shownPhoto) {
+                    <img class="photo__img" [src]="shownPhoto" alt="" />
+                  } @else {
+                    <span class="photo__initials">{{ profile?.initials || 'U' }}</span>
+                  }
+                  <div class="photo__body">
+                    <strong>Foto de perfil</strong>
+                    <small>
+                      @if (pendingPhotoUrl || removePhoto) {
+                        Se aplicará al guardar.
+                      } @else {
+                        La ven los negocios en tus citas y en el chat.
+                      }
+                    </small>
+                    <div class="photo__actions">
+                      <label class="chip-btn">
+                        <span class="material-symbols-rounded">upload</span>
+                        {{ shownPhoto ? 'Cambiar' : 'Subir foto' }}
+                        <input type="file" accept="image/*" hidden (change)="onPhotoPicked($event)" [disabled]="saving" />
+                      </label>
+                      @if (canRemovePhoto) {
+                        <button type="button" class="chip-btn chip-btn--bad" [disabled]="saving" (click)="markPhotoForRemoval()">
+                          <span class="material-symbols-rounded">delete</span>Quitar
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="card">
+                <h3 class="card__title">Datos personales</h3>
+                <div class="fields">
+                  <label class="field">
+                    <span class="field__label">Nombre</span>
+                    <input class="field__input" type="text" [(ngModel)]="formName" name="name" maxlength="80"
+                           autocomplete="name" [disabled]="saving" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Teléfono</span>
+                    <input class="field__input" type="tel" [(ngModel)]="formPhone" name="phone" maxlength="20"
+                           autocomplete="tel" [disabled]="saving" />
+                  </label>
+                  <label class="field field--wide">
+                    <span class="field__label">Correo electrónico</span>
+                    <input class="field__input" type="email" [(ngModel)]="formEmail" name="email" maxlength="120"
+                           autocomplete="email" [disabled]="saving" />
+                  </label>
+                </div>
+              </section>
+
+              <div class="savebar" [class.savebar--on]="profileDirty">
+                <span class="savebar__text">
+                  <span class="material-symbols-rounded">{{ profileDirty ? 'edit_note' : 'check' }}</span>
+                  {{ profileDirty ? 'Tienes cambios sin guardar' : 'Todo guardado' }}
+                </span>
+                <div class="savebar__actions">
+                  <button type="button" class="pill-btn pill-btn--soft" [disabled]="!profileDirty || saving" (click)="cancelEdit()">Descartar</button>
+                  <button type="button" class="pill-btn" [disabled]="!profileDirty || saving" (click)="saveProfile()">
+                    {{ saving ? 'Guardando…' : 'Guardar cambios' }}
+                  </button>
+                </div>
               </div>
             }
-            <div class="form-row">
-              <label class="form-row__label" for="pf-new">Nueva</label>
-              <input id="pf-new" class="form-row__input" type="password" name="new-password"
-                     autocomplete="new-password" [(ngModel)]="newPassword" [disabled]="saving" />
-            </div>
-          </div>
-          <p class="form-group__footer">Al menos 8 caracteres, con letras y números.</p>
-          <div class="settings__panel-actions">
-            <app-button variant="primary" [loading]="saving" (onClick)="savePassword()">Guardar</app-button>
-            <app-button variant="ghost" (onClick)="openPanel('none')">Cancelar</app-button>
-          </div>
-        </div>
-      }
 
-      <!-- ══════════ GENERAL ══════════ -->
-      <app-grouped-section header="General">
-        <app-grouped-row label="Avisos" icon="notifications" [navigates]="true" (action)="openPanel('notices')" />
-        <app-grouped-row label="Términos de uso" icon="description" [navigates]="true" (action)="go('/legal/terminos')" />
-        <app-grouped-row label="Política de privacidad" icon="shield" [navigates]="true" (action)="go('/legal/privacidad')" />
-      </app-grouped-section>
-
-      @if (panel === 'notices') {
-        <div class="form-group settings__panel">
-          <div class="form-group__box">
-            @if (pushAvailable) {
-              <label class="settings__toggle">
-                <span>
-                  Avisos en este navegador
-                  @if (pushDenied) {
-                    <small>Bloqueados. Se cambia desde los ajustes del navegador.</small>
+            <!-- ── Seguridad ── -->
+            @case ('security') {
+              <section class="card">
+                <h3 class="card__title">{{ passwordRowLabel }}</h3>
+                <p class="card__text">
+                  @if (profile?.hasPassword) {
+                    Al cambiarla se cierran tus sesiones en los demás dispositivos; en este sigues dentro.
+                  } @else {
+                    Entraste con Google. Crea una contraseña para poder entrar también con tu correo.
                   }
-                </span>
-                <input
-                  type="checkbox"
-                  [checked]="pushOn"
-                  [disabled]="pushBusy || pushDenied"
-                  (change)="togglePush()"
-                />
-              </label>
-            }
-            <label class="settings__toggle">
-              <span>Novedades de Bipsy</span>
-              <input type="checkbox" [(ngModel)]="newsletterBipsy" [disabled]="saving" />
-            </label>
-            <label class="settings__toggle">
-              <span>Novedades de Giralabs</span>
-              <input type="checkbox" [(ngModel)]="newsletterGiralabs" [disabled]="saving" />
-            </label>
-          </div>
-          <div class="settings__panel-actions">
-            <app-button variant="primary" [loading]="saving" (onClick)="savePrivacy()">Guardar</app-button>
-            <app-button variant="ghost" (onClick)="openPanel('none')">Cerrar</app-button>
-          </div>
-        </div>
-      }
+                </p>
+                <div class="fields">
+                  @if (profile?.hasPassword) {
+                    <label class="field">
+                      <span class="field__label">Contraseña actual</span>
+                      <input class="field__input" type="password" name="current-password" autocomplete="current-password"
+                             [(ngModel)]="currentPassword" [disabled]="saving" />
+                    </label>
+                  }
+                  <label class="field">
+                    <span class="field__label">Nueva contraseña</span>
+                    <input class="field__input" type="password" name="new-password" autocomplete="new-password"
+                           [(ngModel)]="newPassword" [disabled]="saving" />
+                  </label>
+                </div>
+                <div class="rules">
+                  <span class="rule" [class.rule--ok]="newPassword.length >= 8">
+                    <span class="material-symbols-rounded">{{ newPassword.length >= 8 ? 'check_circle' : 'radio_button_unchecked' }}</span>8 caracteres
+                  </span>
+                  <span class="rule" [class.rule--ok]="hasLetter">
+                    <span class="material-symbols-rounded">{{ hasLetter ? 'check_circle' : 'radio_button_unchecked' }}</span>Una letra
+                  </span>
+                  <span class="rule" [class.rule--ok]="hasDigit">
+                    <span class="material-symbols-rounded">{{ hasDigit ? 'check_circle' : 'radio_button_unchecked' }}</span>Un número
+                  </span>
+                </div>
+                <div class="card__actions">
+                  <button type="button" class="pill-btn" [disabled]="saving || !newPassword" (click)="savePassword()">
+                    <span class="material-symbols-rounded">key</span>{{ passwordRowLabel }}
+                  </button>
+                </div>
+              </section>
 
-      <!-- ══════════ LAS DOS SALIDAS ══════════ -->
-      <app-grouped-section
-        footer="Al eliminar la cuenta se borran tus datos y tus reservas. No se puede deshacer."
-      >
-        <app-grouped-row label="Cerrar sesión" [destructive]="true" (action)="logout()" />
-        <app-grouped-row label="Eliminar cuenta" [destructive]="true" (action)="deleteAccount()" />
-      </app-grouped-section>
+              <section class="card card--row">
+                <span class="card__icon"><span class="material-symbols-rounded">devices</span></span>
+                <div class="card__body">
+                  <h3 class="card__title">Sesiones en otros dispositivos</h3>
+                  <p class="card__text">¿Has entrado en un ordenador que no es tuyo? Ciérralas todas menos esta.</p>
+                </div>
+                <button type="button" class="pill-btn pill-btn--soft" [disabled]="saving" (click)="revokeAllSessions()">Cerrar sesiones</button>
+              </section>
+            }
+
+            <!-- ── Avisos ── -->
+            @case ('notices') {
+              <section class="card card--list">
+                @if (pushAvailable) {
+                  <label class="toggle">
+                    <span class="card__icon"><span class="material-symbols-rounded">notifications_active</span></span>
+                    <span class="toggle__text">
+                      <strong>Avisos en este navegador</strong>
+                      <small>
+                        @if (pushDenied) {
+                          Bloqueados. Se cambia desde los ajustes del navegador.
+                        } @else {
+                          Recordatorios de tus citas y mensajes del negocio.
+                        }
+                      </small>
+                    </span>
+                    <input type="checkbox" class="switch" [checked]="pushOn" [disabled]="pushBusy || pushDenied" (change)="togglePush()" />
+                  </label>
+                }
+                <label class="toggle">
+                  <span class="card__icon"><span class="material-symbols-rounded">campaign</span></span>
+                  <span class="toggle__text">
+                    <strong>Novedades de Bipsy</strong>
+                    <small>Funciones nuevas y sitios que acaban de llegar.</small>
+                  </span>
+                  <input type="checkbox" class="switch" [(ngModel)]="newsletterBipsy" (ngModelChange)="savePrivacy()" [disabled]="saving" />
+                </label>
+                <label class="toggle">
+                  <span class="card__icon"><span class="material-symbols-rounded">mail</span></span>
+                  <span class="toggle__text">
+                    <strong>Novedades de Giralabs</strong>
+                    <small>Lo que preparamos en el resto de nuestras apps.</small>
+                  </span>
+                  <input type="checkbox" class="switch" [(ngModel)]="newsletterGiralabs" (ngModelChange)="savePrivacy()" [disabled]="saving" />
+                </label>
+              </section>
+              <p class="pane__foot">Los cambios se guardan al momento.</p>
+            }
+
+            <!-- ── Ayuda ── -->
+            @case ('help') {
+              <section class="card card--list">
+                @for (item of faq; track item.q; let i = $index) {
+                  <div class="faq" [class.faq--open]="openFaq === i">
+                    <button type="button" class="faq__q" [attr.aria-expanded]="openFaq === i"
+                            (click)="openFaq = openFaq === i ? null : i">
+                      {{ item.q }}
+                      <span class="material-symbols-rounded faq__chevron">expand_more</span>
+                    </button>
+                    @if (openFaq === i) {
+                      <p class="faq__a">{{ item.a }}</p>
+                    }
+                  </div>
+                }
+              </section>
+              <section class="card card--row card--tint">
+                <span class="card__icon"><span class="material-symbols-rounded">forum</span></span>
+                <div class="card__body">
+                  <h3 class="card__title">¿Algo de una cita concreta?</h3>
+                  <p class="card__text">Lo más rápido es hablar con el negocio: tienes el chat en el detalle de la cita.</p>
+                </div>
+                <a class="pill-btn pill-btn--soft" routerLink="/mensajes">Ir al chat</a>
+              </section>
+            }
+
+            <!-- ── Legal ── -->
+            @case ('legal') {
+              <section class="card card--list">
+                <a class="linkrow" routerLink="/legal/terminos">
+                  <span class="card__icon"><span class="material-symbols-rounded">description</span></span>
+                  <strong>Términos de uso</strong>
+                  <span class="material-symbols-rounded linkrow__go">chevron_right</span>
+                </a>
+                <a class="linkrow" routerLink="/legal/privacidad">
+                  <span class="card__icon"><span class="material-symbols-rounded">shield</span></span>
+                  <strong>Política de privacidad</strong>
+                  <span class="material-symbols-rounded linkrow__go">chevron_right</span>
+                </a>
+                <a class="linkrow" routerLink="/legal/cookies">
+                  <span class="card__icon"><span class="material-symbols-rounded">cookie</span></span>
+                  <strong>Política de cookies</strong>
+                  <span class="material-symbols-rounded linkrow__go">chevron_right</span>
+                </a>
+              </section>
+              <p class="pane__foot">Bipsy · Versión 0.1.0 Beta</p>
+            }
+
+            <!-- ── Cuenta ── -->
+            @case ('account') {
+              <section class="card card--row">
+                <span class="card__icon"><span class="material-symbols-rounded">logout</span></span>
+                <div class="card__body">
+                  <h3 class="card__title">Cerrar sesión</h3>
+                  <p class="card__text">Sales de Bipsy en este navegador. Tus citas siguen en pie.</p>
+                </div>
+                <button type="button" class="pill-btn pill-btn--soft" (click)="logout()">Cerrar sesión</button>
+              </section>
+
+              <section class="card card--danger">
+                <div class="card--row">
+                  <span class="card__icon card__icon--danger"><span class="material-symbols-rounded">delete_forever</span></span>
+                  <div class="card__body">
+                    <h3 class="card__title">Eliminar cuenta</h3>
+                    <p class="card__text">Tus reservas pasadas se conservan anonimizadas y las futuras se cancelan. No se puede deshacer.</p>
+                  </div>
+                  @if (!deleteOpen) {
+                    <button type="button" class="pill-btn pill-btn--danger" (click)="deleteOpen = true">Eliminar</button>
+                  }
+                </div>
+
+                @if (deleteOpen) {
+                  <div class="danger-zone">
+                    @if (profile?.hasPassword) {
+                      <label class="field">
+                        <span class="field__label">Escribe tu contraseña para confirmar</span>
+                        <input class="field__input" type="password" name="delete-password" autocomplete="current-password"
+                               [(ngModel)]="deletePassword" [disabled]="saving" />
+                      </label>
+                    }
+                    <label class="check">
+                      <input type="checkbox" [(ngModel)]="deleteConfirmed" [disabled]="saving" />
+                      Entiendo que perderé mi cuenta y no se puede recuperar
+                    </label>
+                    <div class="card__actions">
+                      <button type="button" class="pill-btn pill-btn--soft" (click)="deleteOpen = false">Cancelar</button>
+                      <button type="button" class="pill-btn pill-btn--danger" [disabled]="!canDelete || saving" (click)="deleteAccount()">
+                        {{ saving ? 'Eliminando…' : 'Eliminar mi cuenta' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </section>
+            }
+          }
+        </main>
+      </div>
     }
   </div>
 </div>

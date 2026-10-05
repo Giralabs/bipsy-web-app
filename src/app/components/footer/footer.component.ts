@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HELP_INDEX, LEGAL_INDEX } from '../../pages/legal/legal.index';
 import { LEGAL_COMPANY } from '../../pages/legal/legal.models';
+import { HELP_CLIENTS_URL } from '../../data/site.data';
 
 /**
  * Pie de la web.
@@ -32,4 +33,7 @@ export class FooterComponent {
 
   /** Contacto y seguridad, en su propia columna. */
   readonly helpDocs = HELP_INDEX;
+
+  /** The help centre lives in its own app, so this one leaves the site. */
+  readonly helpCentre = HELP_CLIENTS_URL;
 }
