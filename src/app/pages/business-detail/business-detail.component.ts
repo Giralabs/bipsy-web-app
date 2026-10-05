@@ -20,7 +20,7 @@ import {
 import { ButtonComponent } from '../../components/button/button.component';
 import { duration, euros } from '../../shared/dates';
 import { fixImageUrl, placeholderImage } from '../../shared/image-url';
-import { businessBookingPath, businessIdFromParam } from '../../shared/slug';
+import { businessBookingPath, businessPath, businessShareUrl } from '../../shared/slug';
 
 /** Los siete días en orden, con el nombre que manda el backend. */
 const WEEKDAYS: { code: string; label: string }[] = [
@@ -69,6 +69,8 @@ export class BusinessDetailComponent implements OnInit {
   isFavorite = false;
   favoriteBusy = false;
   chatBusy = false;
+  /** Enseña "Enlace copiado" un momento tras copiarlo al portapapeles. */
+  linkCopied = false;
   chatError: string | null = null;
   scheduleOpen = false;
   /** Enseña 5 normas como mucho: la ficha ya es larga. */
@@ -80,20 +82,15 @@ export class BusinessDetailComponent implements OnInit {
     });
 
     this.route.paramMap.subscribe(params => {
-      void this.load(businessIdFromParam(params.get('id')));
+      void this.load(params.get('id'));
     });
   }
 
-  async load(id: number | null): Promise<void> {
-    if (id === null) {
-      this.loadError = new ApiError(404, 'No hemos encontrado este negocio.');
-      this.isLoading = false;
-      return;
-    }
+  async load(param: string | null): Promise<void> {
     this.isLoading = true;
     this.loadError = null;
     try {
-      this.business = await this.bipsy.getBusinessById(id);
+      this.business = await this.bipsy.resolveBusiness(param);
       this.isFavorite = this.session.isFavorite(this.business.id);
     } catch (error) {
       this.loadError = ApiError.from(error);
@@ -101,6 +98,8 @@ export class BusinessDetailComponent implements OnInit {
       return;
     }
     this.isLoading = false;
+    this.useCanonicalUrl(this.business);
+    const id = this.business.id;
 
     // El resto se pide en paralelo y NINGUNO tumba la ficha: sin galería o sin
     // horario la ficha sigue sirviendo para lo que se viene, que es reservar.
@@ -217,6 +216,53 @@ export class BusinessDetailComponent implements OnInit {
   }
 
   // ----- ACCIONES --------------------
+
+  /**
+   * Cambia la barra de direcciones al enlace actual si se entró por uno
+   * antiguo (`nombre-id`), sin recargar ni tocar el historial: así lo que el
+   * visitante copie desde ahí es siempre el slug.
+   */
+  private useCanonicalUrl(business: BusinessResponse): void {
+    const canonical = this.router.serializeUrl(
+      this.router.createUrlTree(businessPath(business)),
+    );
+    if (business.slug && this.location.path() !== canonical) {
+      this.location.replaceState(canonical);
+    }
+  }
+
+  /**
+   * Comparte el enlace del negocio: el menú nativo del sistema si existe
+   * (móvil) y, si no, lo copia al portapapeles. Cancelar el menú no es un
+   * error.
+   */
+  async share(): Promise<void> {
+    if (!this.business) {
+      return;
+    }
+    const url = businessShareUrl(window.location.origin, this.business);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: this.business.name, url });
+      } catch (error) {
+        if ((error as DOMException)?.name !== 'AbortError') {
+          await this.copyLink(url);
+        }
+      }
+      return;
+    }
+    await this.copyLink(url);
+  }
+
+  private async copyLink(url: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(url);
+      this.linkCopied = true;
+      setTimeout(() => (this.linkCopied = false), 2500);
+    } catch {
+      window.prompt('Copia el enlace del negocio:', url);
+    }
+  }
 
   goBack(): void {
     this.location.back();

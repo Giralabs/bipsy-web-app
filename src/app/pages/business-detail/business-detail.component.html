@@ -25,16 +25,28 @@
           Volver
         </button>
 
-        <button
-          type="button"
-          class="cover__btn cover__btn--icon"
-          [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
-          [disabled]="favoriteBusy"
-          (click)="toggleFavorite()"
-        >
-          <span class="material-symbols-rounded" [class.fill]="isFavorite"
-                [style.color]="isFavorite ? '#E67676' : ''">favorite</span>
-        </button>
+        <div class="cover__actions">
+          <button
+            type="button"
+            class="cover__btn cover__btn--icon"
+            [attr.aria-label]="linkCopied ? 'Enlace copiado' : 'Compartir negocio'"
+            [title]="linkCopied ? 'Enlace copiado' : 'Compartir'"
+            (click)="share()"
+          >
+            <span class="material-symbols-rounded">{{ linkCopied ? 'check' : 'share' }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="cover__btn cover__btn--icon"
+            [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+            [disabled]="favoriteBusy"
+            (click)="toggleFavorite()"
+          >
+            <span class="material-symbols-rounded" [class.fill]="isFavorite"
+                  [style.color]="isFavorite ? '#E67676' : ''">favorite</span>
+          </button>
+        </div>
       </div>
 
       <div class="cover__info">

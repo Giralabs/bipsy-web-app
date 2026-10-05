@@ -33,6 +33,12 @@
   gap: 12px;
 }
 
+.cover__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Los botones sobre la foto conservan el cristal: desenfocar una imagen sí
    desenfoca algo. Es el único sitio donde el modo plano lo mantiene. */
 .cover__btn {
