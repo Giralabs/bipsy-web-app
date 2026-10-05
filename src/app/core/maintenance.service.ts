@@ -10,8 +10,12 @@ interface MaintenanceState {
   message: string | null;
 }
 
-/** La web abierta, que es como se arranca y a lo que se vuelve ante la duda. */
-const OPEN: MaintenanceState = { maintenance: false, bypass: false, message: null };
+/**
+ * La web cerrada al público, que es como se arranca y a lo que se vuelve ante
+ * la duda: mientras el backend solo corra en las máquinas del equipo, que nadie
+ * conteste significa que quien mira no es del equipo.
+ */
+const CLOSED: MaintenanceState = { maintenance: true, bypass: false, message: null };
 
 /** Cada cuánto se vuelve a preguntar mientras la pestaña está a la vista. */
 const RECHECK_MS = 60_000;
@@ -27,12 +31,13 @@ const RECHECK_MS = 60_000;
  * plan gratuito de Render— y nadie debería mirar una pantalla en blanco por un
  * interruptor que casi siempre está apagado.
  *
- * **Ante la duda, abierta.** Si la pregunta falla o se agota el tiempo, la web
- * funciona con normalidad: un servidor que no contesta no puede cerrar la web
- * a todo el mundo. La única excepción es cuando el servidor YA confirmó el
- * mantenimiento en esta misma visita: un fallo de red posterior no es una
- * respuesta, y abrir la web para volver a cerrarla al minuto siguiente —justo
- * mientras se despliega el backend, que es cuando más falla— sería peor.
+ * **Ante la duda, cerrada.** La web está en mantenimiento hasta que el
+ * servidor diga lo contrario, y siempre que no se le pueda preguntar. El
+ * backend todavía no está alojado —corre en las máquinas del equipo—, así que
+ * para el público no hay a quién preguntar y solo ve la pantalla de
+ * mantenimiento; el equipo, con el backend arrancado, recibe la respuesta de
+ * verdad y entra por /admin con la contraseña. Si el servidor YA contestó en
+ * esta visita, un fallo de red posterior no cambia lo que dijo.
  *
  * **La última respuesta se recuerda** en `localStorage` para arrancar desde
  * ella: sin eso, recargar en pleno mantenimiento enseñaba la web un instante
@@ -157,18 +162,11 @@ export class MaintenanceService {
         return;
       }
       const error = ApiError.from(raw);
-      // Un 404 es un backend que todavía no conoce el interruptor: no hay
-      // mantenimiento que valga, se hubiera confirmado antes o no.
       if (this.confirmed && !error.isNotFound) {
         return;
       }
-      this.state.set(OPEN);
-      // Si el servidor contestó —aunque fuera con un error— lo guardado ya no
-      // es de fiar. Si ni siquiera se pudo conectar, se conserva: sigue siendo
-      // lo último que se supo, y la próxima respuesta lo corregirá.
-      if (!error.networkError) {
-        this.remove(MaintenanceService.STATE);
-      }
+      // Sin respuesta que valga, cerrada: se conserva el mensaje que hubiera.
+      this.state.set({ ...CLOSED, message: this.state().message });
     }
   }
 
@@ -203,7 +201,7 @@ export class MaintenanceService {
       const raw = this.read(MaintenanceService.STATE);
       const saved = raw ? (JSON.parse(raw) as Partial<MaintenanceState> | null) : null;
       if (saved?.maintenance !== true) {
-        return OPEN;
+        return CLOSED;
       }
       return {
         maintenance: true,
@@ -213,7 +211,7 @@ export class MaintenanceService {
       };
     } catch {
       // Lo guardado no es JSON: alguien lo ha tocado. Como si no hubiera nada.
-      return OPEN;
+      return CLOSED;
     }
   }
 
