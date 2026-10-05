@@ -1,33 +1,44 @@
 import { BusinessResponse } from '../models/bipsy.models';
 
+/** Lo mínimo de un negocio para construir su dirección. */
+type BusinessRef = { id: number; name?: string; slug?: string };
+
 /**
- * URL legible de un negocio: `/negocio/barberia-el-maestro-3`.
+ * Parte de la URL de un negocio: `/negocio/barberia-el-maestro`.
  *
- * **El id va al final y es lo único que se lee.** El nombre está para que la
- * dirección se entienda al verla y al compartirla, pero no se usa para
- * resolver nada: si el negocio se renombra, el enlace antiguo sigue abriendo
- * la ficha correcta en vez de dar un 404.
+ * Es el slug que fija el backend al crear el negocio y que no cambia al
+ * renombrarlo: acaba impreso en códigos QR. Sin él —listas que solo traen el
+ * id y el nombre, como las citas— se cae al formato antiguo `nombre-id`, que
+ * `resolveBusiness` sigue entendiendo.
  */
-export function businessSlug(business: { id: number; name?: string }): string {
+export function businessSlug(business: BusinessRef): string {
+  if (business.slug) {
+    return business.slug;
+  }
   const name = slugify(business.name ?? '');
   return name ? `${name}-${business.id}` : String(business.id);
 }
 
 /** Los segmentos de ruta para `routerLink` y `router.navigate`. */
-export function businessPath(business: { id: number; name?: string }): string[] {
+export function businessPath(business: BusinessRef): string[] {
   return ['/negocio', businessSlug(business)];
 }
 
 /** Los del flujo de reserva de ese negocio. */
-export function businessBookingPath(business: { id: number; name?: string }): string[] {
+export function businessBookingPath(business: BusinessRef): string[] {
   return ['/negocio', businessSlug(business), 'reservar'];
+}
+
+/** El enlace que se comparte, con el origen de la web en la que se está. */
+export function businessShareUrl(origin: string, business: BusinessRef): string {
+  return `${origin}/negocio/${businessSlug(business)}`;
 }
 
 /**
  * Saca el id de un parámetro de ruta.
  *
- * Acepta tanto `barberia-el-maestro-3` como `3`, porque los enlaces viejos —y
- * cualquiera que teclee la ruta a mano— tienen que seguir funcionando.
+ * Solo para los enlaces antiguos: acepta `barberia-el-maestro-3` y `3`. Los
+ * actuales llevan el slug y se resuelven por él (ver `resolveBusiness`).
  */
 export function businessIdFromParam(param: string | null): number | null {
   if (!param) {

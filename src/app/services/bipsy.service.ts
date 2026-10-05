@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { ApiError } from '../core/api-error';
 import { SessionService } from '../core/session.service';
+import { businessIdFromParam } from '../shared/slug';
 import { BookingRepository } from '../repositories/booking.repository';
 import { BusinessSearchQuery, CatalogRepository } from '../repositories/catalog.repository';
 import { MeRepository } from '../repositories/me.repository';
@@ -115,6 +116,29 @@ export class BipsyService {
     } catch (error) {
       const demo = DEMO_BUSINESSES.find(b => String(b.id) === String(id)) ?? DEMO_BUSINESSES[0];
       return this.orDemo(error, demo);
+    }
+  }
+
+  /**
+   * Abre un negocio desde el parámetro de la ruta.
+   *
+   * Primero se prueba como slug —el enlace actual— y, si no existe, como el
+   * formato antiguo `nombre-id` o un id suelto, para que no se rompa ningún
+   * enlace ya compartido.
+   */
+  async resolveBusiness(param: string | null): Promise<BusinessResponse> {
+    if (!param) {
+      throw new ApiError(404, 'No hemos encontrado este negocio.');
+    }
+    try {
+      return await this.catalog.businessBySlug(param);
+    } catch (error) {
+      const apiError = ApiError.from(error);
+      const legacyId = businessIdFromParam(param);
+      if ((apiError.isNotFound || apiError.networkError) && legacyId !== null) {
+        return this.getBusinessById(legacyId);
+      }
+      throw apiError;
     }
   }
 
