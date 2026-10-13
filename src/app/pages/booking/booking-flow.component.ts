@@ -125,6 +125,15 @@ export class BookingFlowComponent implements OnInit {
   guestCardSecret: string | null = null;
 
   /**
+   * El correo que ha escrito ya tiene cuenta, o tiene citas sin confirmar.
+   *
+   * Los dos llegan como 409 al pedir la cita, y en los dos la salida es la
+   * misma: entrar. Decirlo sin ofrecer el botón deja al cliente leyendo un
+   * mensaje correcto y sin nada que pulsar.
+   */
+  guestNeedsLogin = false;
+
+  /**
    * La solicitud de cita, cuando se reserva sin cuenta.
    *
    * ⚠️ No es una cita: es lo que queda pendiente de que confirme el correo. La
@@ -389,6 +398,12 @@ export class BookingFlowComponent implements OnInit {
     }
   }
 
+  /** Al cambiar los datos, el aviso de «entra con tu cuenta» deja de aplicar. */
+  onGuestDataChanged(): void {
+    this.guestNeedsLogin = false;
+    this.error = null;
+  }
+
   /** Lo que falta por rellenar en el paso de datos, o null si está completo. */
   get guestFormError(): string | null {
     if (this.guestName.trim().length < 2) return 'Dinos cómo te llamas.';
@@ -399,6 +414,19 @@ export class BookingFlowComponent implements OnInit {
 
   get guestFormComplete(): boolean {
     return this.guestFormError === null;
+  }
+
+  /**
+   * «Entrar con mi cuenta», cuando el correo escrito ya tiene una.
+   *
+   * Lleva el correo puesto y `returnTo` a esta misma reserva, así que al entrar
+   * vuelve aquí y sigue con sesión: el servicio y la hora elegidos no se
+   * pierden, porque la URL del flujo los lleva.
+   */
+  goToLogin(): void {
+    this.router.navigate(['/acceder'], {
+      queryParams: { email: this.guestEmail.trim(), returnTo: this.router.url },
+    });
   }
 
   /** Del paso de datos al resumen. */
@@ -587,6 +615,10 @@ export class BookingFlowComponent implements OnInit {
         this.hasCard = false;
         void this.checkCard();
       }
+      // Sin cuenta, un 409 es «ese correo ya tiene cuenta» o «tienes citas sin
+      // confirmar»: las dos se resuelven entrando, y conviene ofrecerlo.
+      this.guestNeedsLogin = this.isGuest && error.isConflict;
+      if (this.guestNeedsLogin) this.step = 'guest';
       this.error = bookingErrorMessage(error);
     } finally {
       this.submitting = false;
@@ -749,8 +781,21 @@ export class BookingFlowComponent implements OnInit {
 /** El fallo al reservar dicho en cristiano, no con el código HTTP. */
 function bookingErrorMessage(error: ApiError): string {
   if (error.networkError) return 'Sin conexión. Comprueba tu red.';
+  // El 401 es el único donde el texto del servidor no ayuda: dice que falta un
+  // token, y lo que el cliente necesita saber es que vuelva a entrar.
+  if (error.isUnauthorized) return 'Tu sesión ha caducado. Inicia sesión de nuevo.';
+
+  // ⚠️ El mensaje del SERVIDOR manda cuando lo hay.
+  //
+  // Esta función se escribió para `POST /bookings`, donde el único conflicto
+  // posible era el hueco ocupado, así que traducía cualquier 409 a «Ese horario
+  // ya no está disponible». Con el camino sin cuenta eso pasó a ser falso: ahí
+  // un 409 es «ese correo ya tiene cuenta» o «tienes 3 citas sin confirmar», y
+  // las dos se enseñaban como un problema de horario — que manda a mirar donde
+  // no es y no deja arreglarlo.
+  if (error.message?.trim()) return error.message;
+
   if (error.isPaymentRequired) return 'Este negocio pide una tarjeta guardada para reservar.';
   if (error.isConflict) return 'Ese horario ya no está disponible. Elige otro.';
-  if (error.isUnauthorized) return 'Tu sesión ha caducado. Inicia sesión de nuevo.';
-  return error.message || 'No se ha podido crear la reserva.';
+  return 'No se ha podido crear la reserva.';
 }

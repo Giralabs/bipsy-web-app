@@ -263,7 +263,8 @@
                 <label class="form-row__label" for="guest-email">Correo</label>
                 <input id="guest-email" class="form-row__input" type="email" name="email"
                        autocomplete="email" inputmode="email" placeholder="maria@correo.com"
-                       maxlength="120" [(ngModel)]="guestEmail" />
+                       maxlength="120" [(ngModel)]="guestEmail"
+                       (ngModelChange)="onGuestDataChanged()" />
               </div>
             }
             <div class="form-row">
@@ -290,6 +291,16 @@
           <p class="flow__error" role="alert">
             <span class="material-symbols-rounded fill">error</span>{{ error }}
           </p>
+        }
+
+        <!-- Ese correo ya tiene cuenta: el mensaje por sí solo deja al cliente
+             sin nada que pulsar. El botón lleva el correo puesto y vuelve aquí. -->
+        @if (guestNeedsLogin) {
+          <div class="flow__actions">
+            <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToLogin()">
+              Entrar con mi cuenta
+            </app-button>
+          </div>
         }
 
         <div class="flow__actions">
