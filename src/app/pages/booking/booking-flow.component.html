@@ -14,16 +14,45 @@
       <!-- ══════════ HECHO ══════════ -->
       <div class="bf__done">
         <span class="material-symbols-rounded fill bf__done-icon">check_circle</span>
-        <h1 class="flow__title">Reserva enviada</h1>
+        <h1 class="flow__title">{{ doneTitle }}</h1>
         <p class="flow__subtitle">
           {{ service?.name }} en {{ business.name }}<br />
           {{ dayLabel }} a las {{ startTime }}
         </p>
-        <div class="flow__actions">
-          <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToBooking()">
-            Ver mis citas
-          </app-button>
-        </div>
+
+        @if (guestBooking) {
+          <!-- Sin cuenta, lo que hay que decirle es DÓNDE está su cita: no la va
+               a encontrar en ninguna aplicación, y el correo es el único sitio
+               donde queda. -->
+          <p class="bf__done-note">
+            @if (guestBooking.status === 'PENDING') {
+              {{ business.name }} tiene que confirmarla. Te escribimos a
+              <strong>{{ guestEmail }}</strong> en cuanto lo haga.
+            } @else {
+              Te la hemos mandado a <strong>{{ guestEmail }}</strong>. Desde ese
+              correo puedes verla o avisar si no puedes ir.
+            }
+          </p>
+          <div class="flow__actions">
+            <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToBooking()">
+              Ver mi cita
+            </app-button>
+            <app-button variant="secondary" size="medium" [fullWidth]="true" (onClick)="createAccount()">
+              Crear cuenta con este correo
+            </app-button>
+          </div>
+          <p class="bf__done-small">
+            Con cuenta tendrás tus próximas citas en la app, chat con el negocio
+            y no tendrás que escribir tus datos otra vez. Esta cita se queda
+            donde está: la sigues gestionando desde el correo.
+          </p>
+        } @else {
+          <div class="flow__actions">
+            <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToBooking()">
+              Ver mis citas
+            </app-button>
+          </div>
+        }
       </div>
 
     } @else {
@@ -160,6 +189,65 @@
       }
 
       <!-- ══════════ 5. CONFIRMAR ══════════ -->
+      <!-- ══════════ 5. TUS DATOS (sin cuenta) ══════════
+           Va DESPUÉS de elegir hora, no antes: pedir datos a quien todavía no
+           sabe si hay hueco es perder gente por nada. -->
+      @if (step === 'guest') {
+        <h1 class="flow__title">¿Quién reserva?</h1>
+        <p class="flow__subtitle">
+          Sin cuenta y sin contraseña. Te mandamos la cita al correo y desde ahí
+          puedes verla o cancelarla.
+        </p>
+
+        <div class="form-group">
+          <div class="form-group__box">
+            <div class="form-row">
+              <label class="form-row__label" for="guest-name">Nombre</label>
+              <input id="guest-name" class="form-row__input" type="text" name="name"
+                     autocomplete="name" placeholder="María García" maxlength="120"
+                     [(ngModel)]="guestName" />
+            </div>
+            <div class="form-row">
+              <label class="form-row__label" for="guest-email">Correo</label>
+              <input id="guest-email" class="form-row__input" type="email" name="email"
+                     autocomplete="email" inputmode="email" placeholder="maria@correo.com"
+                     maxlength="120" [(ngModel)]="guestEmail" />
+            </div>
+            <div class="form-row">
+              <label class="form-row__label" for="guest-phone">Teléfono</label>
+              <input id="guest-phone" class="form-row__input" type="tel" name="phone"
+                     autocomplete="tel" inputmode="tel" placeholder="612 345 678"
+                     maxlength="20" [(ngModel)]="guestPhone" />
+            </div>
+          </div>
+          <p class="form-group__footer">
+            El correo es donde vive tu cita, y el teléfono es por si el negocio
+            necesita avisarte de algo.
+          </p>
+        </div>
+
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ error }}
+          </p>
+        }
+
+        <div class="flow__actions">
+          <app-button
+            variant="primary"
+            size="large"
+            [fullWidth]="true"
+            [disabled]="!guestFormComplete"
+            (onClick)="continueAsGuest()"
+          >
+            Continuar
+          </app-button>
+          <app-button variant="text" size="medium" [fullWidth]="true" routerLink="/acceder">
+            Ya tengo cuenta
+          </app-button>
+        </div>
+      }
+
       @if (step === 'confirm') {
         <h1 class="flow__title">Revisa tu cita</h1>
 
@@ -180,6 +268,9 @@
                 {{ workerName }}
               </strong>
             </div>
+            @if (isGuest) {
+              <div class="bf__summary-row"><span>A nombre de</span><strong>{{ guestName }}</strong></div>
+            }
             <div class="bf__summary-row"><span>Día</span><strong>{{ dayLabel }}</strong></div>
             <div class="bf__summary-row"><span>Hora</span><strong>{{ startTime }}</strong></div>
             <div class="bf__summary-row"><span>Duración</span><strong>{{ service ? durationLabel(service) : '' }}</strong></div>
@@ -254,12 +345,19 @@
         </div>
       }
 
-      <!-- La hoja de tarjeta, la misma que en Ajustes › Pagos. -->
+      <!-- La hoja de tarjeta, la misma que en Ajustes › Pagos.
+           Sin cuenta cambia en dos cosas: el secreto viene del endpoint público
+           (aquí no hay sesión con la que pedirlo) y la tarjeta NO se registra
+           aquí —la cuelga de su ficha el POST de la reserva, que es lo único
+           que sabe a quién—. -->
       @if (cardSheetOpen) {
         <app-add-card-sheet
           [publishableKey]="stripeKey"
+          [clientSecret]="isGuest ? guestCardSecret : null"
+          [registerOnSave]="!isGuest"
           reason="Se guarda para poder cobrar la tarifa solo si cancelas tarde o no acudes. Ahora no se te cobra nada."
           (saved)="onCardSaved()"
+          (confirmed)="onGuestCardConfirmed($event)"
           (closed)="onCardSheetClosed()"
         ></app-add-card-sheet>
       }

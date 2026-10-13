@@ -152,6 +152,25 @@
 .bf__done { text-align: center; padding-top: 40px; }
 .bf__done-icon { font-size: 72px; color: var(--clr-mint); margin-bottom: 16px; }
 
+/* Sin cuenta, dónde está su cita. Es la frase más importante de la pantalla:
+   no la va a encontrar en ninguna aplicación. */
+.bf__done-note {
+  margin: 0 auto 24px;
+  max-width: 34ch;
+  color: var(--clr-text-2);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.bf__done-note strong { color: var(--clr-text); }
+
+.bf__done-small {
+  margin: 16px auto 0;
+  max-width: 38ch;
+  color: var(--clr-text-3);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
 /* Las dos salidas de un día sin huecos, una al lado de la otra. */
 .bf__empty-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 

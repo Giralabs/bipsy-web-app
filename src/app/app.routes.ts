@@ -40,6 +40,14 @@ export const routes: Routes = [
       import('./pages/appointment-detail/appointments.component').then(m => m.AppointmentsComponent),
   },
   {
+    // Singular y a propósito: `citas/:id` es la lista de un usuario con sesión y
+    // haría match con el UUID de un token. Esta es la cita de quien NO tiene
+    // cuenta, y es el destino del enlace de su correo.
+    path: 'cita/:token',
+    loadComponent: () =>
+      import('./pages/guest-booking/guest-booking.component').then(m => m.GuestBookingComponent),
+  },
+  {
     path: 'citas/:id',
     loadComponent: () =>
       import('./pages/appointment-detail/booking-detail.component').then(m => m.BookingDetailComponent),

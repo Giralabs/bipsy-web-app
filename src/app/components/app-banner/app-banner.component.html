@@ -1,22 +1,24 @@
-@if (available && !dismissed) {
-  <aside class="appbanner">
-    <button type="button" class="appbanner__close" (click)="dismiss()" aria-label="Cerrar">
-      <span class="material-symbols-rounded">close</span>
-    </button>
+<!-- Sin botón de cerrar: el aviso se queda. Quien reserva en la web sin cuenta
+     es justamente a quien hay que decirle que existe la app. -->
+<aside class="appbanner">
+  <!-- El símbolo sobre fondo, como se ve el icono en la pantalla de inicio. -->
+  <span class="appbanner__icon" aria-hidden="true">
+    <img src="assets_bipsy/Resized/256px/Brand Marks/mint_symbol_nobackground.webp"
+         alt="" class="theme-dark-only" />
+    <img src="assets_bipsy/Resized/256px/Brand Marks/carbon_symbol_nobackground.webp"
+         alt="" class="theme-light-only" />
+  </span>
 
-    <!-- El símbolo sobre fondo, como se ve el icono en la pantalla de inicio. -->
-    <span class="appbanner__icon" aria-hidden="true">
-      <img src="assets_bipsy/Resized/256px/Brand Marks/mint_symbol_nobackground.webp"
-           alt="" class="theme-dark-only" />
-      <img src="assets_bipsy/Resized/256px/Brand Marks/carbon_symbol_nobackground.webp"
-           alt="" class="theme-light-only" />
-    </span>
+  <span class="appbanner__text">
+    <strong>Bipsy</strong>
+    <small>Pide cita sin llamar, desde la app</small>
+  </span>
 
-    <span class="appbanner__text">
-      <strong>Bipsy</strong>
-      <small>Pide cita sin llamar</small>
-    </span>
-
+  @if (linkReady) {
     <a class="appbanner__go" [href]="store.url" target="_blank" rel="noopener">Obtener</a>
-  </aside>
-}
+  } @else {
+    <!-- Las fichas no existen todavía. Un botón que diera un 404 o que llevara
+         a una búsqueda —y sacara la app de otro— sería peor que esto. -->
+    <span class="appbanner__go appbanner__go--soon">Próximamente</span>
+  }
+</aside>

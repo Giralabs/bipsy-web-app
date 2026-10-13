@@ -42,7 +42,31 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
   /** Texto bajo el título. Cada sitio explica por qué se pide la tarjeta. */
   @Input() reason: string | null = null;
 
+  /**
+   * Secreto del SetupIntent, cuando quien abre la hoja ya lo tiene.
+   *
+   * Lo usa la reserva **sin cuenta**: ahí el intent no se puede pedir a
+   * `/payments/methods/setup-intent`, que exige sesión, sino al endpoint
+   * público que además devuelve el token firmado de la tarjeta. Sin esto,
+   * `open()` lo pide por su cuenta, que es lo que hace Ajustes › Pagos.
+   */
+  @Input() clientSecret: string | null = null;
+
+  /**
+   * Si la tarjeta se registra aquí mismo contra la cuenta del cliente.
+   *
+   * En false la hoja solo confirma la tarjeta con Stripe y emite su id por
+   * [confirmed]. Es lo que necesita una reserva sin cuenta: el titular al que
+   * colgarla todavía no existe en la base de datos, y lo crea el POST de la
+   * reserva con esa misma llamada.
+   */
+  @Input() registerOnSave = true;
+
   @Output() saved = new EventEmitter<PaymentMethodResponse>();
+
+  /** La tarjeta confirmada y sin registrar (`pm_...`). Ver [registerOnSave]. */
+  @Output() confirmed = new EventEmitter<string>();
+
   @Output() closed = new EventEmitter<void>();
 
   @ViewChild('cardHost') cardHost?: ElementRef<HTMLElement>;
@@ -100,7 +124,10 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
         this.error = 'No hemos podido cargar la pasarela de pago.';
         return false;
       }
-      const clientSecret = await this.payments.createSetupIntent();
+      // El que le hayan dado, o uno propio. Sin cuenta solo vale el primero:
+      // pedirlo aquí sería un 401 en mitad de una reserva que no necesita
+      // ninguna sesión.
+      const clientSecret = this.clientSecret ?? await this.payments.createSetupIntent();
       this.elements = this.stripe.elements({ clientSecret, appearance: { theme: 'night' } });
       this.ready = true;
       return true;
@@ -140,6 +167,12 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
         return;
       }
 
+      if (!this.registerOnSave) {
+        // Sin cuenta: la tarjeta se queda confirmada en Stripe y la cuelga de su
+        // ficha el POST de la reserva, que es lo único que sabe a quién.
+        this.confirmed.emit(paymentMethodId);
+        return;
+      }
       this.saved.emit(await this.payments.registerMethod(paymentMethodId));
     } catch (raw) {
       this.error = ApiError.from(raw).message;
