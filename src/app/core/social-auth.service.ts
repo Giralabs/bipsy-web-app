@@ -173,13 +173,24 @@ export class SocialAuthService {
    *
    * `phone` solo hace falta la primera vez (cuenta nueva): el backend responde
    * `needsProfile` y la pantalla lo pide antes de reintentar.
+   *
+   * `email` solo cuando **Apple no lo da**. Apple entrega el correo una única
+   * vez, la primera que se autoriza la app, así que un token puede llegar sin
+   * él; entonces la respuesta trae `email: null` y hay que pedirlo igual que el
+   * teléfono. Si el proveedor sí lo manda, el servidor **ignora** este: lo
+   * contrario permitiría quedarse con la cuenta de otro mandando su dirección.
    */
-  async signIn(identity: SocialIdentity, phone?: string): Promise<SocialSignInResponse> {
+  async signIn(
+    identity: SocialIdentity,
+    phone?: string,
+    email?: string,
+  ): Promise<SocialSignInResponse> {
     const res = await this.api.post<SocialSignInResponse>(
       identity.provider === 'apple' ? '/auth/apple' : '/auth/google',
       {
         idToken: identity.idToken,
         ...(phone ? { phone } : {}),
+        ...(email ? { email } : {}),
         ...(identity.name ? { name: identity.name } : {}),
       },
       false,

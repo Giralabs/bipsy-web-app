@@ -1,0 +1,69 @@
+/* Se abre desde un correo, casi siempre en el móvil, y tiene un solo trabajo:
+   que el botón de confirmar se vea y se entienda qué se confirma. */
+.cb { min-height: 100vh; display: flex; justify-content: center; padding: 48px 20px 96px; }
+.cb__inner { width: 100%; max-width: 480px; text-align: center; }
+
+.cb__icon { font-size: 64px; color: var(--clr-mint); margin-bottom: 12px; }
+.cb__icon--off { color: var(--clr-danger); }
+
+.cb__title {
+  margin: 0 0 8px;
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--clr-text);
+}
+
+.cb__lead {
+  margin: 0 auto 28px;
+  max-width: 36ch;
+  color: var(--clr-text-2);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.cb__card { text-align: left; }
+
+.cb__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.cb__row + .cb__row { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+.cb__row strong { color: var(--clr-text); font-weight: 600; text-align: right; }
+.cb__row--total strong { font-size: 1.125rem; font-weight: 800; }
+
+.cb__note {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--clr-mint-dim);
+  color: var(--clr-text-2);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.cb__note .material-symbols-rounded { font-size: 18px; flex: 0 0 auto; color: var(--clr-mint); }
+.cb__note strong { color: var(--clr-text); font-weight: 700; }
+
+/* El plazo, debajo del botón: es lo que explica la prisa sin convertir la
+   pantalla en una cuenta atrás. */
+.cb__deadline {
+  margin: 16px auto 0;
+  max-width: 38ch;
+  color: var(--clr-text-3);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.cb__deadline strong { color: var(--clr-text-2); }

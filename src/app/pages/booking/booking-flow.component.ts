@@ -10,7 +10,7 @@ import { WaitlistRepository } from '../../repositories/waitlist.repository';
 import {
   AvailabilitySlot,
   BusinessResponse,
-  GuestBookingResponse,
+  GuestRequestResponse,
   ServiceResponse,
   WorkerResponse,
   chargesCancellation,
@@ -20,6 +20,13 @@ import { AddCardSheetComponent } from '../../components/add-card-sheet/add-card-
 import { AvatarComponent } from '../../components/avatar/avatar.component';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { GuestBookingRepository } from '../../repositories/guest-booking.repository';
+import {
+  SocialAuthService,
+  SocialIdentity,
+  SocialProvider,
+  SocialSignInCancelled,
+  socialMessageFor,
+} from '../../core/social-auth.service';
 import { isValidEmail, isValidPhone } from '../../shared/validation';
 import { euros, isoDate, isoLocalDateTime, longDate, duration, relativeDate } from '../../shared/dates';
 import { businessIdFromParam, businessPath } from '../../shared/slug';
@@ -61,6 +68,7 @@ export class BookingFlowComponent implements OnInit {
   private readonly waitlist = inject(WaitlistRepository);
   private readonly payments = inject(PaymentRepository);
   private readonly guest = inject(GuestBookingRepository);
+  private readonly social = inject(SocialAuthService);
 
   @ViewChild(AddCardSheetComponent) cardSheet?: AddCardSheetComponent;
   private readonly route = inject(ActivatedRoute);
@@ -116,8 +124,36 @@ export class BookingFlowComponent implements OnInit {
   /** Secreto del SetupIntent público. Se pide una vez y se reutiliza. */
   guestCardSecret: string | null = null;
 
-  /** La cita creada sin cuenta. Es de donde sale el enlace para volver a ella. */
-  guestBooking?: GuestBookingResponse;
+  /**
+   * La solicitud de cita, cuando se reserva sin cuenta.
+   *
+   * ⚠️ No es una cita: es lo que queda pendiente de que confirme el correo. La
+   * cita nace al pulsar el enlace, y hasta entonces **el hueco sigue libre**.
+   */
+  guestRequest?: GuestRequestResponse;
+
+  // ----- ENTRAR CON GOOGLE O APPLE --------------------
+  //
+  // Va en el paso de datos, arriba: es más rápido que escribir tres campos y
+  // además deja cuenta, así que la próxima vez no hay que escribir nada. Y el
+  // correo lo verifica el proveedor, así que esa cita NO hay que confirmarla.
+
+  /** El proveedor con el que se está entrando, o null. Bloquea los dos botones. */
+  socialBusy: SocialProvider | null = null;
+
+  /** La identidad obtenida, mientras falta el teléfono (o el correo). */
+  private socialIdentity: SocialIdentity | null = null;
+
+  /** El backend pide teléfono para crear la cuenta. */
+  socialNeedsPhone = false;
+
+  /**
+   * Y además el correo, porque Apple no lo ha dado.
+   *
+   * Apple entrega el correo una única vez, la primera que se autoriza la app.
+   * Si esa vez fue en otro sitio, el token llega sin él.
+   */
+  socialNeedsEmail = false;
 
   // ----- TARJETA --------------------
   //
@@ -262,6 +298,96 @@ export class BookingFlowComponent implements OnInit {
   }
 
   // ----- SIN CUENTA --------------------
+
+  get googleAvailable(): boolean {
+    return this.social.googleAvailable;
+  }
+
+  get appleAvailable(): boolean {
+    return this.social.appleAvailable;
+  }
+
+  get socialAvailable(): boolean {
+    return this.googleAvailable || this.appleAvailable;
+  }
+
+  /**
+   * Entrar con Google o con Apple sin salir de la reserva.
+   *
+   * El popup no recarga la página, así que el servicio y la hora elegidos siguen
+   * ahí. Al tener sesión, el flujo se pasa al camino con cuenta: ni paso de
+   * datos, ni confirmar la cita por correo.
+   */
+  async continueWith(provider: SocialProvider): Promise<void> {
+    if (this.socialBusy) return;
+    this.socialBusy = provider;
+    this.error = null;
+    try {
+      this.socialIdentity = await this.social.obtainIdentity(provider);
+      await this.exchangeSocial();
+    } catch (raw) {
+      // Cancelar no es un error: cerró el popup y sigue donde estaba.
+      if (raw instanceof SocialSignInCancelled) return;
+      this.error = socialMessageFor(raw, provider);
+    } finally {
+      this.socialBusy = null;
+    }
+  }
+
+  /**
+   * Canjea la identidad por la sesión, pidiendo lo que falte.
+   *
+   * El teléfono es obligatorio para reservar y ninguno de los dos proveedores lo
+   * da. El correo solo falta con Apple, y entonces la cuenta nace sin verificar
+   * — lo que la verifica después es que le llegue algo a esa dirección.
+   */
+  private async exchangeSocial(): Promise<void> {
+    if (!this.socialIdentity) return;
+    const res = await this.social.signIn(
+      this.socialIdentity,
+      this.guestPhone.trim() || undefined,
+      this.guestEmail.trim() || undefined,
+    );
+
+    if (res.needsProfile) {
+      // El nombre que da el proveedor es mejor que el que escribiría a mano.
+      if (res.name && !this.guestName.trim()) this.guestName = res.name;
+      if (res.email) this.guestEmail = res.email;
+      this.socialNeedsPhone = true;
+      // Apple sin correo: hay que pedirlo también.
+      this.socialNeedsEmail = !res.email;
+      return;
+    }
+
+    // Con sesión, esto ya no es una reserva sin cuenta.
+    await this.session.onRegistered();
+    this.isGuest = false;
+    this.socialNeedsPhone = false;
+    this.socialNeedsEmail = false;
+    this.socialIdentity = null;
+    this.step = 'confirm';
+    void this.checkCard();
+  }
+
+  /** Reintenta el canje con el teléfono (y el correo) ya escritos. */
+  async submitSocialProfile(): Promise<void> {
+    const problema = this.socialNeedsEmail && !isValidEmail(this.guestEmail.trim())
+      ? 'Ese correo no parece válido.'
+      : !isValidPhone(this.guestPhone) ? 'Ese teléfono no parece válido.' : null;
+    if (problema) {
+      this.error = problema;
+      return;
+    }
+    this.socialBusy = this.socialIdentity?.provider ?? 'google';
+    this.error = null;
+    try {
+      await this.exchangeSocial();
+    } catch (raw) {
+      this.error = ApiError.from(raw).message;
+    } finally {
+      this.socialBusy = null;
+    }
+  }
 
   /** Lo que falta por rellenar en el paso de datos, o null si está completo. */
   get guestFormError(): string | null {
@@ -427,7 +553,9 @@ export class BookingFlowComponent implements OnInit {
     this.error = null;
     try {
       if (this.isGuest) {
-        const booking = await this.guest.createBooking({
+        // Esto NO crea la cita: manda un correo con un enlace, y la cita nace al
+        // confirmarlo. Mientras, el hueco sigue libre para cualquiera.
+        this.guestRequest = await this.guest.requestBooking({
           serviceId: this.service.id,
           workerId: this.workerId,
           startDateTime: isoLocalDateTime(this.day, this.startTime),
@@ -439,8 +567,6 @@ export class BookingFlowComponent implements OnInit {
           cardToken: this.guestCardToken,
           paymentMethodId: this.guestPaymentMethodId,
         });
-        this.guestBooking = booking;
-        this.bookingId = booking.bookingId;
         this.step = 'done';
         return;
       }
@@ -569,23 +695,28 @@ export class BookingFlowComponent implements OnInit {
   }
 
   goToBooking(): void {
-    // Sin cuenta su cita no está en «Mis citas», porque no hay cuenta a la que
-    // colgarla: su sitio es la página del token, que es también la del enlace
-    // que le llega por correo.
-    if (this.guestBooking?.token) {
-      this.router.navigate(['/cita', this.guestBooking.token]);
-      return;
-    }
     this.router.navigate(['/citas']);
   }
 
   /**
-   * «Crear cuenta» desde el final de una reserva sin cuenta.
+   * «Ya lo he confirmado»: lleva a la página del enlace.
    *
-   * Lleva el correo y el nombre ya puestos, que es lo que convierte un alta en
-   * dos campos. ⚠️ La cita que acaba de hacer NO se mueve a la cuenta nueva: su
-   * titular es la ficha del negocio y nada reescribe eso hoy. Se le dice en la
-   * pantalla, en vez de dejar que lo descubra buscándola en Mis citas.
+   * Existe para quien confirma desde el móvil y vuelve a esta pestaña, y para
+   * quien quiere ver qué pide el correo antes de abrirlo. No confirma nada: eso
+   * solo pasa al pulsar el enlace.
+   */
+  goToRequest(): void {
+    if (this.guestRequest?.requestToken) {
+      this.router.navigate(['/confirmar', this.guestRequest.requestToken]);
+    }
+  }
+
+  /**
+   * «Crear cuenta» con el correo y el nombre ya puestos.
+   *
+   * ⚠️ La cita NO se mueve a la cuenta nueva: su titular es la ficha del negocio
+   * y nada reescribe eso hoy. Se le dice en la pantalla, en vez de dejar que lo
+   * descubra buscándola en Mis citas.
    */
   createAccount(): void {
     this.router.navigate(['/crear-cuenta'], {
@@ -593,12 +724,9 @@ export class BookingFlowComponent implements OnInit {
     });
   }
 
-  /** El texto del final, que no es el mismo si el negocio acepta a mano. */
+  /** El texto del final. Sin cuenta, lo que falta es el correo. */
   get doneTitle(): string {
-    if (this.guestBooking) {
-      return this.guestBooking.status === 'PENDING' ? 'Cita solicitada' : 'Cita confirmada';
-    }
-    return 'Reserva enviada';
+    return this.guestRequest ? 'Confirma tu cita' : 'Reserva enviada';
   }
 
   /**

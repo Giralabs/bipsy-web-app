@@ -4,6 +4,7 @@ import {
   CreateGuestBookingRequest,
   GuestBookingResponse,
   GuestCardSetup,
+  GuestRequestResponse,
   PrepareGuestCardRequest,
 } from '../models/bipsy.models';
 
@@ -24,13 +25,32 @@ export class GuestBookingRepository {
   private readonly api = inject(ApiService);
 
   /**
-   * Reserva. Devuelve la cita con su token.
+   * Pide la cita. **No la crea**: manda un correo con un enlace, y la cita nace
+   * al confirmarlo.
    *
    * Si el negocio pide tarjeta, `cardToken` y `paymentMethodId` son
    * obligatorios y salen de `prepareCard`: el servidor responde 402 sin ellos.
    */
-  createBooking(req: CreateGuestBookingRequest): Promise<GuestBookingResponse> {
-    return this.api.post<GuestBookingResponse>('/public/bookings', req, false);
+  requestBooking(req: CreateGuestBookingRequest): Promise<GuestRequestResponse> {
+    return this.api.post<GuestRequestResponse>('/public/bookings', req, false);
+  }
+
+  /**
+   * La solicitud que hay detrás del enlace del correo.
+   *
+   * Puede dar 409 aunque el enlace sea bueno: el hueco **no está reservado**
+   * mientras no confirme, así que otra persona puede haberlo cogido. La página
+   * lo dice antes de ofrecer el botón.
+   */
+  requestByToken(token: string): Promise<GuestRequestResponse> {
+    return this.api.get<GuestRequestResponse>(
+      `/public/bookings/solicitudes/${encodeURIComponent(token)}`, undefined, false);
+  }
+
+  /** Confirma la solicitud: aquí nace la cita, con su propio token. */
+  confirmRequest(token: string): Promise<GuestBookingResponse> {
+    return this.api.post<GuestBookingResponse>(
+      `/public/bookings/solicitudes/${encodeURIComponent(token)}/confirmar`, {}, false);
   }
 
   /**

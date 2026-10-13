@@ -163,6 +163,56 @@
 }
 .bf__done-note strong { color: var(--clr-text); }
 
+/* Los dos botones de entrar, uno debajo del otro: con dos el ancho completo se
+   lee mejor que una fila partida, y en móvil no hay sitio para otra cosa. */
+.bf__social { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+
+.bf__social-note {
+  margin: 2px 0 0;
+  color: var(--clr-text-3);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* La frontera entre el camino corto y el largo. Una regla con el texto encima
+   deja claro que son dos opciones y no dos pasos. */
+.bf__or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 4px;
+  color: var(--clr-text-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bf__or::before,
+.bf__or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--clr-border);
+}
+
+/* Esperando el correo: ni verde de hecho ni rojo de error. Está a medias. */
+.bf__done-icon--wait { color: var(--clr-text-3); }
+
+.bf__done-warn {
+  display: flex;
+  gap: 10px;
+  margin: 0 auto 24px;
+  max-width: 36ch;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--clr-field);
+  color: var(--clr-text-2);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.bf__done-warn .material-symbols-rounded { font-size: 18px; flex: 0 0 auto; }
+
 .bf__done-small {
   margin: 16px auto 0;
   max-width: 38ch;

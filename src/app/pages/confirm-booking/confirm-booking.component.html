@@ -1,0 +1,111 @@
+<div class="cb anim-fade-up">
+  <div class="cb__inner">
+
+    @if (loading) {
+      <div class="loading-state"><div class="spinner"></div><span>Cargando tu cita…</span></div>
+
+    } @else if (invalidLink) {
+      <!-- Caducado, ya usado o inventado: desde fuera no se distinguen, y no hace
+           falta. Lo único que importa es qué puede hacer ahora. -->
+      <span class="material-symbols-rounded cb__icon cb__icon--off">link_off</span>
+      <h1 class="cb__title">Este enlace ya no vale</h1>
+      <p class="cb__lead">
+        O ya habías confirmado la cita, o ha pasado el plazo. Pedirla nuevamente
+        es cuestión de un minuto.
+      </p>
+      <div class="flow__actions">
+        <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="bookAgain()">
+          Pedir cita otra vez
+        </app-button>
+      </div>
+
+    } @else if (slotGone) {
+      <!-- El precio de no bloquear la agenda con citas sin confirmar: alguien se
+           adelantó. Se dice claro y se ofrece la única salida real. -->
+      <span class="material-symbols-rounded cb__icon cb__icon--off">event_busy</span>
+      <h1 class="cb__title">Esa hora ya está cogida</h1>
+      <p class="cb__lead">
+        Alguien la ha reservado mientras tanto. El hueco no se guarda hasta que
+        confirmas, así que esta vez se te ha adelantado — elige otra hora y la
+        confirmas en un toque.
+      </p>
+      <div class="flow__actions">
+        <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="bookAgain()">
+          Elegir otra hora
+        </app-button>
+      </div>
+
+    } @else if (!request) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">error</span>
+        <h3>No hemos podido cargar tu cita</h3>
+        <p>{{ error }}</p>
+      </div>
+
+    } @else {
+      <span class="material-symbols-rounded cb__icon">event_available</span>
+      <h1 class="cb__title">Confirma tu cita</h1>
+      <p class="cb__lead">
+        Esto es lo que has pedido en {{ request.businessName }}. Al confirmar, la
+        hora queda reservada a tu nombre.
+      </p>
+
+      <div class="form-group">
+        <div class="form-group__box cb__card">
+          <div class="cb__row"><span>Servicio</span><strong>{{ request.serviceName }}</strong></div>
+          <div class="cb__row"><span>Día</span><strong>{{ dayLabel }}</strong></div>
+          <div class="cb__row"><span>Hora</span><strong>{{ timeLabel }}</strong></div>
+          @if (request.workerName) {
+            <div class="cb__row"><span>Profesional</span><strong>{{ request.workerName }}</strong></div>
+          }
+          @if (request.address) {
+            <div class="cb__row"><span>Dónde</span><strong>{{ request.address }}</strong></div>
+          }
+          <div class="cb__row"><span>A nombre de</span><strong>{{ request.holderName }}</strong></div>
+          <div class="cb__row cb__row--total"><span>Precio</span><strong>{{ priceLabel }}</strong></div>
+        </div>
+      </div>
+
+      @if (request.hasCard) {
+        <p class="cb__note">
+          <span class="material-symbols-rounded">credit_card</span>
+          <span>
+            Tu tarjeta queda guardada como garantía al confirmar.
+            <strong>Ahora no se te cobra nada.</strong>
+          </span>
+        </p>
+      }
+
+      @if (request.policyText) {
+        <p class="form-group__footer">{{ request.policyText }}</p>
+      }
+
+      @if (error) {
+        <p class="flow__error" role="alert">
+          <span class="material-symbols-rounded fill">error</span>{{ error }}
+        </p>
+      }
+
+      <div class="flow__actions">
+        <app-button
+          variant="primary"
+          size="large"
+          [fullWidth]="true"
+          [loading]="busy"
+          (onClick)="confirm()"
+        >
+          Confirmar mi cita
+        </app-button>
+      </div>
+
+      <p class="cb__deadline">
+        @if (request.minutesLeft > 0) {
+          Te quedan <strong>{{ request.minutesLeft }} minutos</strong>. Hasta que
+          confirmes, esta hora sigue libre para otra persona.
+        } @else {
+          El plazo está a punto de terminar. Confirma ya o vuelve a pedir la cita.
+        }
+      </p>
+    }
+  </div>
+</div>

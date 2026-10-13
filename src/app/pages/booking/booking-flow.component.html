@@ -13,40 +13,42 @@
 
       <!-- ══════════ HECHO ══════════ -->
       <div class="bf__done">
-        <span class="material-symbols-rounded fill bf__done-icon">check_circle</span>
-        <h1 class="flow__title">{{ doneTitle }}</h1>
-        <p class="flow__subtitle">
-          {{ service?.name }} en {{ business.name }}<br />
-          {{ dayLabel }} a las {{ startTime }}
-        </p>
-
-        @if (guestBooking) {
-          <!-- Sin cuenta, lo que hay que decirle es DÓNDE está su cita: no la va
-               a encontrar en ninguna aplicación, y el correo es el único sitio
-               donde queda. -->
+        @if (guestRequest) {
+          <!-- ⚠️ Todavía NO hay cita. Lo que hay que dejar clarísimo es que falta
+               un paso y que el hueco no está guardado: decirle «reservado» aquí
+               sería la peor mentira de todo el flujo. -->
+          <span class="material-symbols-rounded bf__done-icon bf__done-icon--wait">mark_email_unread</span>
+          <h1 class="flow__title">{{ doneTitle }}</h1>
+          <p class="flow__subtitle">
+            Te hemos enviado un correo a<br />
+            <strong>{{ guestRequest.email }}</strong>
+          </p>
           <p class="bf__done-note">
-            @if (guestBooking.status === 'PENDING') {
-              {{ business.name }} tiene que confirmarla. Te escribimos a
-              <strong>{{ guestEmail }}</strong> en cuanto lo haga.
-            } @else {
-              Te la hemos mandado a <strong>{{ guestEmail }}</strong>. Desde ese
-              correo puedes verla o avisar si no puedes ir.
-            }
+            Ábrelo y pulsa <strong>«Confirmar mi cita»</strong>. Tienes
+            <strong>{{ guestRequest.minutesLeft }} minutos</strong>, y hasta entonces
+            el hueco de {{ dayLabel }} a las {{ startTime }} sigue libre para otra
+            persona.
+          </p>
+          <p class="bf__done-warn">
+            <span class="material-symbols-rounded">info</span>
+            <span>
+              Si no te llega, revisa que el correo esté bien escrito y vuelve a
+              pedir la cita. Es el único sitio donde vivirá: por eso lo
+              confirmamos.
+            </span>
           </p>
           <div class="flow__actions">
-            <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToBooking()">
-              Ver mi cita
-            </app-button>
-            <app-button variant="secondary" size="medium" [fullWidth]="true" (onClick)="createAccount()">
-              Crear cuenta con este correo
+            <app-button variant="secondary" size="medium" [fullWidth]="true" (onClick)="goToRequest()">
+              Ya lo he confirmado
             </app-button>
           </div>
-          <p class="bf__done-small">
-            Con cuenta tendrás tus próximas citas en la app, chat con el negocio
-            y no tendrás que escribir tus datos otra vez. Esta cita se queda
-            donde está: la sigues gestionando desde el correo.
-          </p>
         } @else {
+          <span class="material-symbols-rounded fill bf__done-icon">check_circle</span>
+          <h1 class="flow__title">{{ doneTitle }}</h1>
+          <p class="flow__subtitle">
+            {{ service?.name }} en {{ business.name }}<br />
+            {{ dayLabel }} a las {{ startTime }}
+          </p>
           <div class="flow__actions">
             <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToBooking()">
               Ver mis citas
@@ -194,25 +196,76 @@
            sabe si hay hueco es perder gente por nada. -->
       @if (step === 'guest') {
         <h1 class="flow__title">¿Quién reserva?</h1>
-        <p class="flow__subtitle">
-          Sin cuenta y sin contraseña. Te mandamos la cita al correo y desde ahí
-          puedes verla o cancelarla.
-        </p>
+
+        @if (socialNeedsPhone) {
+          <!-- Entró con Google o Apple y falta lo que ningún proveedor da. -->
+          <p class="flow__subtitle">
+            Ya casi está. Solo falta
+            {{ socialNeedsEmail ? 'tu correo y tu teléfono' : 'tu teléfono' }}.
+          </p>
+        } @else {
+          <p class="flow__subtitle">
+            Sin cuenta y sin contraseña: te mandamos un correo para confirmar la
+            cita. O entra en un toque y no escribes nada.
+          </p>
+
+          <!-- Arriba porque es el camino corto: más rápido que tres campos, y
+               deja cuenta para la próxima vez. Además el correo lo verifica el
+               proveedor, así que esta cita no hay que confirmarla. -->
+          @if (socialAvailable) {
+            <div class="bf__social">
+              @if (googleAvailable) {
+                <app-button
+                  variant="secondary"
+                  size="large"
+                  [fullWidth]="true"
+                  [loading]="socialBusy === 'google'"
+                  [disabled]="socialBusy !== null"
+                  (onClick)="continueWith('google')"
+                >
+                  Continuar con Google
+                </app-button>
+              }
+              @if (appleAvailable) {
+                <app-button
+                  variant="secondary"
+                  size="large"
+                  [fullWidth]="true"
+                  [loading]="socialBusy === 'apple'"
+                  [disabled]="socialBusy !== null"
+                  (onClick)="continueWith('apple')"
+                >
+                  Continuar con Apple
+                </app-button>
+              }
+              <p class="bf__social-note">
+                Con cuenta no tienes que confirmar nada: la cita queda hecha al
+                momento y la tienes en la app.
+              </p>
+            </div>
+
+            <div class="bf__or"><span>o déjanos tus datos</span></div>
+          }
+        }
 
         <div class="form-group">
           <div class="form-group__box">
-            <div class="form-row">
-              <label class="form-row__label" for="guest-name">Nombre</label>
-              <input id="guest-name" class="form-row__input" type="text" name="name"
-                     autocomplete="name" placeholder="María García" maxlength="120"
-                     [(ngModel)]="guestName" />
-            </div>
-            <div class="form-row">
-              <label class="form-row__label" for="guest-email">Correo</label>
-              <input id="guest-email" class="form-row__input" type="email" name="email"
-                     autocomplete="email" inputmode="email" placeholder="maria@correo.com"
-                     maxlength="120" [(ngModel)]="guestEmail" />
-            </div>
+            @if (!socialNeedsPhone) {
+              <div class="form-row">
+                <label class="form-row__label" for="guest-name">Nombre</label>
+                <input id="guest-name" class="form-row__input" type="text" name="name"
+                       autocomplete="name" placeholder="María García" maxlength="120"
+                       [(ngModel)]="guestName" />
+              </div>
+            }
+            @if (!socialNeedsPhone || socialNeedsEmail) {
+              <div class="form-row">
+                <label class="form-row__label" for="guest-email">Correo</label>
+                <input id="guest-email" class="form-row__input" type="email" name="email"
+                       autocomplete="email" inputmode="email" placeholder="maria@correo.com"
+                       maxlength="120" [(ngModel)]="guestEmail" />
+              </div>
+            }
             <div class="form-row">
               <label class="form-row__label" for="guest-phone">Teléfono</label>
               <input id="guest-phone" class="form-row__input" type="tel" name="phone"
@@ -221,8 +274,15 @@
             </div>
           </div>
           <p class="form-group__footer">
-            El correo es donde vive tu cita, y el teléfono es por si el negocio
-            necesita avisarte de algo.
+            @if (socialNeedsEmail) {
+              Apple no nos ha dado tu correo —solo lo da la primera vez—, así que
+              escríbelo: es donde te mandamos la cita.
+            } @else if (socialNeedsPhone) {
+              El teléfono es por si el negocio necesita avisarte de algo.
+            } @else {
+              Al correo te mandamos un enlace para confirmar la cita, y el
+              teléfono es por si el negocio necesita avisarte.
+            }
           </p>
         </div>
 
@@ -233,18 +293,30 @@
         }
 
         <div class="flow__actions">
-          <app-button
-            variant="primary"
-            size="large"
-            [fullWidth]="true"
-            [disabled]="!guestFormComplete"
-            (onClick)="continueAsGuest()"
-          >
-            Continuar
-          </app-button>
-          <app-button variant="text" size="medium" [fullWidth]="true" routerLink="/acceder">
-            Ya tengo cuenta
-          </app-button>
+          @if (socialNeedsPhone) {
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              [loading]="socialBusy !== null"
+              (onClick)="submitSocialProfile()"
+            >
+              Continuar
+            </app-button>
+          } @else {
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              [disabled]="!guestFormComplete"
+              (onClick)="continueAsGuest()"
+            >
+              Continuar sin cuenta
+            </app-button>
+            <app-button variant="text" size="medium" [fullWidth]="true" routerLink="/acceder">
+              Ya tengo cuenta y contraseña
+            </app-button>
+          }
         </div>
       }
 

@@ -799,6 +799,32 @@ export interface GuestBookingResponse {
   feeChargedCents: number;
 }
 
+/**
+ * Lo que devuelve pedir una cita sin cuenta: **todavía no hay cita**.
+ *
+ * Hay que confirmarla desde el correo, y eso es lo que verifica que el correo
+ * existe. Si no llega, estaba mal escrito — y este objeto trae la dirección a la
+ * que se mandó precisamente para que el cliente pueda comprobarlo en pantalla.
+ */
+export interface GuestRequestResponse {
+  requestToken: string;
+  email: string;
+  expiresAt: string;
+  /** Los minutos que quedan, ya calculados: el navegador no sabe la hora del servidor. */
+  minutesLeft: number;
+  businessName: string;
+  businessId: number;
+  serviceName: string;
+  workerName?: string;
+  holderName: string;
+  startDateTime: string;
+  priceCents: number;
+  servicePlace?: string;
+  address?: string;
+  policyText?: string;
+  hasCard: boolean;
+}
+
 /** Lo que se manda a `POST /public/bookings/tarjeta`. */
 export interface PrepareGuestCardRequest {
   serviceId: number;
