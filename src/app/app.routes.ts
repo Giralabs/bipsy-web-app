@@ -40,18 +40,9 @@ export const routes: Routes = [
       import('./pages/appointment-detail/appointments.component').then(m => m.AppointmentsComponent),
   },
   {
-    // El enlace del correo de quien reserva SIN cuenta: aquí todavía no hay cita,
-    // hay una solicitud, y confirmarla es lo que la crea. Es lo que hace que el
-    // correo verifique el correo.
-    path: 'confirmar/:token',
-    loadComponent: () =>
-      import('./pages/confirm-booking/confirm-booking.component')
-        .then(m => m.ConfirmBookingComponent),
-  },
-  {
     // Singular y a propósito: `citas/:id` es la lista de un usuario con sesión y
-    // haría match con el UUID de un token. Esta es la cita de quien NO tiene
-    // cuenta, una vez confirmada.
+    // haría match con el UUID de un token. Esta es la cita que el NEGOCIO le dio
+    // a alguien sin app, y el destino del correo con el que la gestiona.
     path: 'cita/:token',
     loadComponent: () =>
       import('./pages/guest-booking/guest-booking.component').then(m => m.GuestBookingComponent),

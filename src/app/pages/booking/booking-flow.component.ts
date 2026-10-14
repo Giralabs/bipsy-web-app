@@ -10,7 +10,6 @@ import { WaitlistRepository } from '../../repositories/waitlist.repository';
 import {
   AvailabilitySlot,
   BusinessResponse,
-  GuestRequestResponse,
   ServiceResponse,
   WorkerResponse,
   chargesCancellation,
@@ -31,7 +30,7 @@ import { isValidEmail, isValidPhone } from '../../shared/validation';
 import { euros, isoDate, isoLocalDateTime, longDate, duration, relativeDate } from '../../shared/dates';
 import { businessIdFromParam, businessPath } from '../../shared/slug';
 
-type Step = 'service' | 'worker' | 'date' | 'time' | 'guest' | 'confirm' | 'done';
+type Step = 'service' | 'worker' | 'date' | 'time' | 'auth' | 'confirm' | 'done';
 
 /**
  * Flujo de reserva. Port de `BookingFlowScreen` y sus cuatro pasos.
@@ -105,41 +104,22 @@ export class BookingFlowComponent implements OnInit {
 
   bookingId?: number;
 
-  // ----- SIN CUENTA --------------------
+  // ----- ENTRAR PARA RESERVAR --------------------
   //
-  // Se decide una vez al cargar, cuando la sesión ya está resuelta, y no se
-  // vuelve a preguntar: a mitad de una reserva nadie inicia sesión, y si lo
-  // hiciera en otra pestaña, cambiar de camino aquí perdería los datos que
-  // lleva escritos.
-  /** Reserva sin cuenta: no había sesión al entrar. */
-  isGuest = false;
+  // Hace falta cuenta para reservar, y se pide en su propio paso DESPUÉS de
+  // elegir la hora. Se decide una vez al cargar, cuando la sesión ya está
+  // resuelta, y se apaga en cuanto entra.
 
-  guestName = '';
-  guestEmail = '';
-  guestPhone = '';
+  /** No había sesión al entrar: hará falta pasar por el paso de entrada. */
+  needsAuth = false;
 
-  /** Token firmado de la tarjeta (15 min) y la tarjeta ya confirmada. */
-  private guestCardToken?: string;
-  private guestPaymentMethodId?: string;
-  /** Secreto del SetupIntent público. Se pide una vez y se reutiliza. */
-  guestCardSecret: string | null = null;
+  /** El camino de siempre: correo y contraseña. */
+  authEmail = '';
+  authPassword = '';
+  authBusy = false;
 
-  /**
-   * El correo que ha escrito ya tiene cuenta, o tiene citas sin confirmar.
-   *
-   * Los dos llegan como 409 al pedir la cita, y en los dos la salida es la
-   * misma: entrar. Decirlo sin ofrecer el botón deja al cliente leyendo un
-   * mensaje correcto y sin nada que pulsar.
-   */
-  guestNeedsLogin = false;
-
-  /**
-   * La solicitud de cita, cuando se reserva sin cuenta.
-   *
-   * ⚠️ No es una cita: es lo que queda pendiente de que confirme el correo. La
-   * cita nace al pulsar el enlace, y hasta entonces **el hueco sigue libre**.
-   */
-  guestRequest?: GuestRequestResponse;
+  /** El teléfono, que ni Google ni Apple dan y el servidor exige para el alta. */
+  socialPhone = '';
 
   // ----- ENTRAR CON GOOGLE O APPLE --------------------
   //
@@ -201,11 +181,10 @@ export class BookingFlowComponent implements OnInit {
     const status = await firstValueFrom(
       this.session.status$.pipe(filter(value => value !== 'unknown'), take(1)),
     );
-    // Sin sesión NO se echa al login. Antes sí, y era el muro que dejaba el
-    // enlace público de un negocio sin servir para lo único que importa: pedir
-    // hora. Lo que se hace es tomar el otro camino, que son los mismos pasos
-    // más uno de datos.
-    this.isGuest = status !== 'authenticated';
+    // Sin sesión NO se echa al login, que era el muro que dejaba el enlace
+    // público de un negocio sin servir para lo único que importa. Se deja mirar
+    // y elegir, y entrar se pide en su paso, con la hora ya elegida.
+    this.needsAuth = status !== 'authenticated';
 
     try {
       const [business, services] = await Promise.all([
@@ -295,18 +274,18 @@ export class BookingFlowComponent implements OnInit {
       return;
     }
     this.startTime = slot.start;
-    // Sin cuenta hay un paso más antes del resumen: quién reserva. Va DESPUÉS de
-    // elegir hora, no antes, por lo mismo que la tarjeta en la app: pedir datos
-    // a quien todavía no sabe si hay hueco es perder gente por nada.
-    this.step = this.isGuest ? 'guest' : 'confirm';
+    // Entrar va DESPUÉS de elegir la hora, no antes: pedírselo a quien todavía
+    // no sabe si hay hueco es perder gente por nada, y es el mismo criterio con
+    // el que la app pide la tarjeta al final.
+    this.step = this.needsAuth ? 'auth' : 'confirm';
     // Se mira al entrar en el resumen y no antes: solo hace falta aquí, y
     // preguntarlo en cada paso serían tres llamadas para nada.
-    if (!this.isGuest) {
+    if (!this.needsAuth) {
       void this.checkCard();
     }
   }
 
-  // ----- SIN CUENTA --------------------
+  // ----- ENTRAR PARA RESERVAR --------------------
 
   get googleAvailable(): boolean {
     return this.social.googleAvailable;
@@ -354,35 +333,29 @@ export class BookingFlowComponent implements OnInit {
     if (!this.socialIdentity) return;
     const res = await this.social.signIn(
       this.socialIdentity,
-      this.guestPhone.trim() || undefined,
-      this.guestEmail.trim() || undefined,
+      this.socialPhone.trim() || undefined,
+      this.authEmail.trim() || undefined,
     );
 
     if (res.needsProfile) {
-      // El nombre que da el proveedor es mejor que el que escribiría a mano.
-      if (res.name && !this.guestName.trim()) this.guestName = res.name;
-      if (res.email) this.guestEmail = res.email;
+      // El correo lo da el proveedor salvo con Apple, que solo lo entrega la
+      // primera vez; entonces hay que pedirlo también.
+      if (res.email) this.authEmail = res.email;
       this.socialNeedsPhone = true;
       // Apple sin correo: hay que pedirlo también.
       this.socialNeedsEmail = !res.email;
       return;
     }
 
-    // Con sesión, esto ya no es una reserva sin cuenta.
     await this.session.onRegistered();
-    this.isGuest = false;
-    this.socialNeedsPhone = false;
-    this.socialNeedsEmail = false;
-    this.socialIdentity = null;
-    this.step = 'confirm';
-    void this.checkCard();
+    this.onSignedIn();
   }
 
   /** Reintenta el canje con el teléfono (y el correo) ya escritos. */
   async submitSocialProfile(): Promise<void> {
-    const problema = this.socialNeedsEmail && !isValidEmail(this.guestEmail.trim())
+    const problema = this.socialNeedsEmail && !isValidEmail(this.authEmail.trim())
       ? 'Ese correo no parece válido.'
-      : !isValidPhone(this.guestPhone) ? 'Ese teléfono no parece válido.' : null;
+      : !isValidPhone(this.socialPhone) ? 'Ese teléfono no parece válido.' : null;
     if (problema) {
       this.error = problema;
       return;
@@ -398,49 +371,52 @@ export class BookingFlowComponent implements OnInit {
     }
   }
 
-  /** Al cambiar los datos, el aviso de «entra con tu cuenta» deja de aplicar. */
-  onGuestDataChanged(): void {
-    this.guestNeedsLogin = false;
-    this.error = null;
-  }
-
-  /** Lo que falta por rellenar en el paso de datos, o null si está completo. */
-  get guestFormError(): string | null {
-    if (this.guestName.trim().length < 2) return 'Dinos cómo te llamas.';
-    if (!isValidEmail(this.guestEmail.trim())) return 'Ese correo no parece válido.';
-    if (!isValidPhone(this.guestPhone)) return 'Ese teléfono no parece válido.';
-    return null;
-  }
-
-  get guestFormComplete(): boolean {
-    return this.guestFormError === null;
+  /** Si el formulario de correo y contraseña está completo. */
+  get authFormComplete(): boolean {
+    return isValidEmail(this.authEmail.trim()) && this.authPassword.length > 0;
   }
 
   /**
-   * «Entrar con mi cuenta», cuando el correo escrito ya tiene una.
+   * Entrar con correo y contraseña, sin salir de la reserva.
    *
-   * Lleva el correo puesto y `returnTo` a esta misma reserva, así que al entrar
-   * vuelve aquí y sigue con sesión: el servicio y la hora elegidos no se
-   * pierden, porque la URL del flujo los lleva.
+   * Vive aquí y no en `/acceder` por lo que pasa después: al terminar se sigue
+   * en el resumen con la hora que ya estaba elegida. Mandarlo al login obligaría
+   * a volver y a reconstruir el flujo desde la URL.
    */
-  goToLogin(): void {
-    this.router.navigate(['/acceder'], {
-      queryParams: { email: this.guestEmail.trim(), returnTo: this.router.url },
-    });
+  async signIn(): Promise<void> {
+    if (!this.authFormComplete || this.authBusy) return;
+    this.authBusy = true;
+    this.error = null;
+    try {
+      await this.session.login({
+        username: this.authEmail.trim(),
+        password: this.authPassword,
+      });
+      this.onSignedIn();
+    } catch (raw) {
+      this.error = ApiError.from(raw).message;
+    } finally {
+      this.authBusy = false;
+    }
   }
 
-  /** Del paso de datos al resumen. */
-  continueAsGuest(): void {
-    const problema = this.guestFormError;
-    if (problema) {
-      this.error = problema;
-      return;
-    }
-    this.error = null;
+  /** Lo que pasa en cuanto hay sesión, venga del correo o de un proveedor. */
+  private onSignedIn(): void {
+    this.needsAuth = false;
+    this.socialNeedsPhone = false;
+    this.socialNeedsEmail = false;
+    this.socialIdentity = null;
+    // No se queda en memoria más de lo que hace falta.
+    this.authPassword = '';
     this.step = 'confirm';
-    // La tarjeta se mira ahora, con el correo ya escrito: el endpoint que
-    // prepara el intent lo necesita.
     void this.checkCard();
+  }
+
+  /** Crear cuenta, con el correo ya escrito y vuelta a esta misma reserva. */
+  goToSignup(): void {
+    this.router.navigate(['/crear-cuenta'], {
+      queryParams: { email: this.authEmail.trim(), returnTo: this.router.url },
+    });
   }
 
   /**
@@ -453,13 +429,6 @@ export class BookingFlowComponent implements OnInit {
   private async checkCard(): Promise<void> {
     if (!this.business?.requiresCard) {
       this.hasCard = true;
-      return;
-    }
-    // Sin cuenta no hay tarjeta guardada que buscar: o la pone ahora o no
-    // reserva. Y la clave publicable llega con el intent, en `prepareCard`, así
-    // que aquí no hace falta pedir nada.
-    if (this.isGuest) {
-      this.hasCard = !!this.guestPaymentMethodId;
       return;
     }
     try {
@@ -476,11 +445,7 @@ export class BookingFlowComponent implements OnInit {
 
   /** True cuando falta la tarjeta que el negocio exige. */
   get needsCard(): boolean {
-    if (!this.business?.requiresCard) return false;
-    // Sin cuenta la tarjeta no puede estar ya guardada: hace falta hasta que la
-    // pone en esta misma pantalla.
-    if (this.isGuest) return !this.guestPaymentMethodId;
-    return this.hasCard === false;
+    return !!this.business?.requiresCard && this.hasCard === false;
   }
 
   /** El botón del resumen cambia de texto y de acción según falte o no. */
@@ -493,32 +458,6 @@ export class BookingFlowComponent implements OnInit {
   }
 
   async openCardSheet(): Promise<void> {
-    // Sin cuenta hay que pedir el intent antes de abrir la hoja: de ahí salen el
-    // secreto, la clave publicable y el token firmado que hay que devolver al
-    // reservar. Y va ANTES de crear la cita a propósito: si fuera después, quien
-    // no termina de poner la tarjeta le dejaría al negocio una cita sin la
-    // garantía con la que la habría aceptado.
-    if (this.isGuest && !this.guestCardSecret) {
-      if (!this.service) return;
-      this.submitting = true;
-      this.error = null;
-      try {
-        const setup = await this.guest.prepareCard({
-          serviceId: this.service.id,
-          name: this.guestName.trim(),
-          email: this.guestEmail.trim(),
-        });
-        this.guestCardSecret = setup.clientSecret;
-        this.guestCardToken = setup.cardToken;
-        this.stripeKey = setup.publishableKey;
-      } catch (raw) {
-        this.error = ApiError.from(raw).message;
-        return;
-      } finally {
-        this.submitting = false;
-      }
-    }
-
     if (!this.stripeKey) {
       this.error = 'La pasarela de pago no está disponible ahora mismo. '
         + 'Prueba más tarde o elige otro negocio.';
@@ -540,17 +479,6 @@ export class BookingFlowComponent implements OnInit {
   /** Tarjeta guardada: se cierra la hoja y se confirma sin más pasos. */
   onCardSaved(): void {
     this.cardSheetOpen = false;
-    this.hasCard = true;
-    void this.confirm();
-  }
-
-  /**
-   * Lo mismo sin cuenta: la tarjeta queda confirmada en Stripe y la cuelga de
-   * su ficha el POST de la reserva, que es lo único que sabe a quién.
-   */
-  onGuestCardConfirmed(paymentMethodId: string): void {
-    this.cardSheetOpen = false;
-    this.guestPaymentMethodId = paymentMethodId;
     this.hasCard = true;
     void this.confirm();
   }
@@ -580,24 +508,6 @@ export class BookingFlowComponent implements OnInit {
     this.submitting = true;
     this.error = null;
     try {
-      if (this.isGuest) {
-        // Esto NO crea la cita: manda un correo con un enlace, y la cita nace al
-        // confirmarlo. Mientras, el hueco sigue libre para cualquiera.
-        this.guestRequest = await this.guest.requestBooking({
-          serviceId: this.service.id,
-          workerId: this.workerId,
-          startDateTime: isoLocalDateTime(this.day, this.startTime),
-          notes: this.notes.trim() || undefined,
-          acceptedPolicy: this.acceptedPolicy,
-          name: this.guestName.trim(),
-          email: this.guestEmail.trim(),
-          phone: this.guestPhone.trim(),
-          cardToken: this.guestCardToken,
-          paymentMethodId: this.guestPaymentMethodId,
-        });
-        this.step = 'done';
-        return;
-      }
       const booking = await this.bipsy.createBooking({
         serviceId: this.service.id,
         workerId: this.workerId,
@@ -615,10 +525,6 @@ export class BookingFlowComponent implements OnInit {
         this.hasCard = false;
         void this.checkCard();
       }
-      // Sin cuenta, un 409 es «ese correo ya tiene cuenta» o «tienes citas sin
-      // confirmar»: las dos se resuelven entrando, y conviene ofrecerlo.
-      this.guestNeedsLogin = this.isGuest && error.isConflict;
-      if (this.guestNeedsLogin) this.step = 'guest';
       this.error = bookingErrorMessage(error);
     } finally {
       this.submitting = false;
@@ -670,8 +576,10 @@ export class BookingFlowComponent implements OnInit {
       case 'worker': this.step = 'service'; break;
       case 'date': this.step = this.showWorkerStep ? 'worker' : 'service'; break;
       case 'time': this.step = 'date'; break;
-      case 'guest': this.step = 'time'; break;
-      case 'confirm': this.step = this.isGuest ? 'guest' : 'time'; break;
+      case 'auth': this.step = 'time'; break;
+      // Al volver desde el resumen no se pasa por el paso de entrar: ya hay
+      // sesión, así que enseñarlo otra vez sería un paso que no lleva a nada.
+      case 'confirm': this.step = 'time'; break;
       default:
         // ⚠️ VOLVER, no navegar a la ficha.
         //
@@ -730,36 +638,7 @@ export class BookingFlowComponent implements OnInit {
     this.router.navigate(['/citas']);
   }
 
-  /**
-   * «Ya lo he confirmado»: lleva a la página del enlace.
-   *
-   * Existe para quien confirma desde el móvil y vuelve a esta pestaña, y para
-   * quien quiere ver qué pide el correo antes de abrirlo. No confirma nada: eso
-   * solo pasa al pulsar el enlace.
-   */
-  goToRequest(): void {
-    if (this.guestRequest?.requestToken) {
-      this.router.navigate(['/confirmar', this.guestRequest.requestToken]);
-    }
-  }
 
-  /**
-   * «Crear cuenta» con el correo y el nombre ya puestos.
-   *
-   * ⚠️ La cita NO se mueve a la cuenta nueva: su titular es la ficha del negocio
-   * y nada reescribe eso hoy. Se le dice en la pantalla, en vez de dejar que lo
-   * descubra buscándola en Mis citas.
-   */
-  createAccount(): void {
-    this.router.navigate(['/crear-cuenta'], {
-      queryParams: { email: this.guestEmail.trim(), name: this.guestName.trim() },
-    });
-  }
-
-  /** El texto del final. Sin cuenta, lo que falta es el correo. */
-  get doneTitle(): string {
-    return this.guestRequest ? 'Confirma tu cita' : 'Reserva enviada';
-  }
 
   /**
    * Los días que se pueden elegir, desde hoy hasta el horizonte del negocio.

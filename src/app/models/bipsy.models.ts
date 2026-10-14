@@ -743,29 +743,12 @@ export interface MaintenanceUnlock {
 }
 
 // ============================================================
-// RESERVAR SIN CUENTA (V112)
+// LA CITA DE QUIEN NO TIENE CUENTA (V107)
 // ============================================================
 //
-// El flujo del enlace publico de un negocio: alguien que entra desde un
-// navegador, deja su nombre, su correo y su telefono, y reserva. No hay sesion
-// en ningun momento, asi que lo que identifica su cita despues es el `token`
-// que devuelve la reserva, y lo unico que lo guarda es su correo.
-
-/** Lo que se manda a `POST /public/bookings`. */
-export interface CreateGuestBookingRequest {
-  serviceId: number;
-  workerId?: number;
-  /** ISO local, sin zona. En UTC la cita se desplaza en la agenda del negocio. */
-  startDateTime: string;
-  notes?: string;
-  acceptedPolicy: boolean;
-  name: string;
-  email: string;
-  phone: string;
-  /** Los dos solo si el negocio pide tarjeta. Ver `GuestCardSetup`. */
-  cardToken?: string;
-  paymentMethodId?: string;
-}
+// Reservar sin cuenta NO existe: la reserva desde la web exige entrar. Esto es
+// la cita que el negocio teclea en su agenda para alguien que no se baja apps,
+// y que esa persona gestiona desde el enlace de su correo.
 
 /**
  * Una cita de invitado, entera.
@@ -797,49 +780,4 @@ export interface GuestBookingResponse {
   policyText?: string;
   /** Lo cobrado por cancelar tarde, en centimos. 0 casi siempre. */
   feeChargedCents: number;
-}
-
-/**
- * Lo que devuelve pedir una cita sin cuenta: **todavía no hay cita**.
- *
- * Hay que confirmarla desde el correo, y eso es lo que verifica que el correo
- * existe. Si no llega, estaba mal escrito — y este objeto trae la dirección a la
- * que se mandó precisamente para que el cliente pueda comprobarlo en pantalla.
- */
-export interface GuestRequestResponse {
-  requestToken: string;
-  email: string;
-  expiresAt: string;
-  /** Los minutos que quedan, ya calculados: el navegador no sabe la hora del servidor. */
-  minutesLeft: number;
-  businessName: string;
-  businessId: number;
-  serviceName: string;
-  workerName?: string;
-  holderName: string;
-  startDateTime: string;
-  priceCents: number;
-  servicePlace?: string;
-  address?: string;
-  policyText?: string;
-  hasCard: boolean;
-}
-
-/** Lo que se manda a `POST /public/bookings/tarjeta`. */
-export interface PrepareGuestCardRequest {
-  serviceId: number;
-  name: string;
-  email: string;
-}
-
-/**
- * Lo que hace falta para pedirle la tarjeta a quien no tiene cuenta.
- *
- * El `cardToken` hay que devolverlo al reservar: dentro van el correo, el
- * negocio y el cliente de Stripe, firmados. Dura 15 minutos.
- */
-export interface GuestCardSetup {
-  cardToken: string;
-  clientSecret: string;
-  publishableKey: string;
 }

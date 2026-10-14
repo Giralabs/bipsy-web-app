@@ -10,6 +10,7 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiError } from '../../core/api-error';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { PaymentMethodResponse } from '../../models/bipsy.models';
@@ -29,7 +30,7 @@ import { ButtonComponent } from '../button/button.component';
 @Component({
   selector: 'app-add-card-sheet',
   standalone: true,
-  imports: [CommonModule, ButtonComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent],
   templateUrl: './add-card-sheet.component.html',
   styleUrl: './add-card-sheet.component.css',
 })
@@ -43,29 +44,20 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
   @Input() reason: string | null = null;
 
   /**
-   * Secreto del SetupIntent, cuando quien abre la hoja ya lo tiene.
+   * Si el cliente quiere dejarla guardada para próximas reservas.
    *
-   * Lo usa la reserva **sin cuenta**: ahí el intent no se puede pedir a
-   * `/payments/methods/setup-intent`, que exige sesión, sino al endpoint
-   * público que además devuelve el token firmado de la tarjeta. Sin esto,
-   * `open()` lo pide por su cuenta, que es lo que hace Ajustes › Pagos.
-   */
-  @Input() clientSecret: string | null = null;
-
-  /**
-   * Si la tarjeta se registra aquí mismo contra la cuenta del cliente.
+   * **Empieza sin marcar a propósito**: guardar la tarjeta de alguien es una
+   * decisión, no lo que pasa si no haces nada.
    *
-   * En false la hoja solo confirma la tarjeta con Stripe y emite su id por
-   * [confirmed]. Es lo que necesita una reserva sin cuenta: el titular al que
-   * colgarla todavía no existe en la base de datos, y lo crea el POST de la
-   * reserva con esa misma llamada.
+   * ⚠️ Sin marcar NO significa que se borre al salir. La tarjeta es la garantía
+   * con la que el negocio acepta la cita, así que sigue vinculada mientras
+   * alguna cita pueda generar un cargo —cancelar tarde, no presentarse— y la
+   * retira después `PaymentMethodCleanupScheduler`. Lo que decide esta casilla
+   * es si se queda **más allá de eso**.
    */
-  @Input() registerOnSave = true;
+  keepSaved = false;
 
   @Output() saved = new EventEmitter<PaymentMethodResponse>();
-
-  /** La tarjeta confirmada y sin registrar (`pm_...`). Ver [registerOnSave]. */
-  @Output() confirmed = new EventEmitter<string>();
 
   @Output() closed = new EventEmitter<void>();
 
@@ -124,10 +116,7 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
         this.error = 'No hemos podido cargar la pasarela de pago.';
         return false;
       }
-      // El que le hayan dado, o uno propio. Sin cuenta solo vale el primero:
-      // pedirlo aquí sería un 401 en mitad de una reserva que no necesita
-      // ninguna sesión.
-      const clientSecret = this.clientSecret ?? await this.payments.createSetupIntent();
+      const clientSecret = await this.payments.createSetupIntent();
       this.elements = this.stripe.elements({ clientSecret, appearance: { theme: 'night' } });
       this.ready = true;
       return true;
@@ -167,13 +156,7 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
         return;
       }
 
-      if (!this.registerOnSave) {
-        // Sin cuenta: la tarjeta se queda confirmada en Stripe y la cuelga de su
-        // ficha el POST de la reserva, que es lo único que sabe a quién.
-        this.confirmed.emit(paymentMethodId);
-        return;
-      }
-      this.saved.emit(await this.payments.registerMethod(paymentMethodId));
+      this.saved.emit(await this.payments.registerMethod(paymentMethodId, this.keepSaved));
     } catch (raw) {
       this.error = ApiError.from(raw).message;
     } finally {
