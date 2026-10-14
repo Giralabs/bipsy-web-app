@@ -1,0 +1,135 @@
+<div class="gb anim-fade-up">
+  <div class="gb__inner">
+
+    @if (loading) {
+      <div class="loading-state"><div class="spinner"></div><span>Cargando tu cita…</span></div>
+
+    } @else if (invalidLink) {
+      <!-- No se distingue «no existió nunca» de «ya no está»: convertiría la
+           página en un oráculo con el que ir probando enlaces. -->
+      <div class="empty-state">
+        <span class="material-symbols-rounded">link_off</span>
+        <h3>Este enlace no vale</h3>
+        <p>
+          El enlace no es correcto o la cita ya no existe. Si crees que es un
+          error, habla con el negocio.
+        </p>
+      </div>
+
+    } @else if (!booking) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded">error</span>
+        <h3>No hemos podido cargar tu cita</h3>
+        <p>{{ error }}</p>
+      </div>
+
+    } @else {
+
+      @if (canceled) {
+        <!-- ══════════ CANCELADA ══════════ -->
+        <span class="material-symbols-rounded gb__icon gb__icon--off">event_busy</span>
+        <h1 class="gb__title">
+          {{ justCanceled ? 'Avisado, gracias' : 'Esta cita ya no está' }}
+        </h1>
+        <p class="gb__lead">
+          @if (justCanceled) {
+            Le hemos dicho a {{ booking.businessName }} que no podrás ir y el hueco
+            ha quedado libre.
+          } @else {
+            Se canceló{{ booking.cancelReason ? ': ' + booking.cancelReason : '' }}.
+          }
+        </p>
+        @if (feeCharged) {
+          <!-- Si ha habido cargo se dice AQUÍ y con el importe. Enterarse por el
+               extracto del banco es la peor forma posible. -->
+          <p class="gb__fee">
+            Se ha cobrado la tarifa de cancelación que aceptaste:
+            <strong>{{ feeCharged }}</strong>.
+          </p>
+        } @else {
+          <p class="gb__lead gb__lead--quiet">No se te ha cobrado nada.</p>
+        }
+
+      } @else {
+        <!-- ══════════ LA CITA ══════════ -->
+        @if (booking.past) {
+          <span class="material-symbols-rounded gb__icon gb__icon--past">history</span>
+          <h1 class="gb__title">Esta cita ya pasó</h1>
+          <p class="gb__lead">Esto es lo que reservaste en {{ booking.businessName }}.</p>
+        } @else if (pending) {
+          <span class="material-symbols-rounded gb__icon gb__icon--wait">schedule</span>
+          <h1 class="gb__title">Pendiente de confirmar</h1>
+          <p class="gb__lead">
+            {{ booking.businessName }} tiene que aceptar tu cita. Te escribimos en
+            cuanto lo haga.
+          </p>
+        } @else {
+          <span class="material-symbols-rounded fill gb__icon">check_circle</span>
+          <h1 class="gb__title">Tu cita</h1>
+          <p class="gb__lead">Te esperan en {{ booking.businessName }}.</p>
+        }
+
+        <div class="form-group">
+          <div class="form-group__box gb__card">
+            <div class="gb__row"><span>Servicio</span><strong>{{ booking.serviceName }}</strong></div>
+            <div class="gb__row"><span>Día</span><strong>{{ dayLabel }}</strong></div>
+            <div class="gb__row"><span>Hora</span><strong>{{ timeLabel }}</strong></div>
+            @if (booking.workerName) {
+              <div class="gb__row"><span>Profesional</span><strong>{{ booking.workerName }}</strong></div>
+            }
+            @if (booking.address) {
+              <div class="gb__row"><span>Dónde</span><strong>{{ booking.address }}</strong></div>
+            }
+            <div class="gb__row"><span>A nombre de</span><strong>{{ booking.holderName }}</strong></div>
+            <div class="gb__row gb__row--total"><span>Precio</span><strong>{{ priceLabel }}</strong></div>
+          </div>
+        </div>
+
+        @if (booking.acknowledged && !booking.past) {
+          <p class="gb__ack">
+            <span class="material-symbols-rounded fill">task_alt</span>
+            Ya has dicho que irás. Te esperan.
+          </p>
+        }
+
+        @if (booking.policyText && !booking.past) {
+          <p class="form-group__footer">{{ booking.policyText }}</p>
+        }
+
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill">error</span>{{ error }}
+          </p>
+        }
+
+        @if (booking.cancellable) {
+          <div class="flow__actions">
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              [loading]="busy"
+              (onClick)="confirm()"
+            >
+              {{ booking.acknowledged ? 'Sigo confirmando que iré' : 'Sí, allí estaré' }}
+            </app-button>
+            <app-button
+              variant="text"
+              size="medium"
+              [fullWidth]="true"
+              [disabled]="busy"
+              (onClick)="cancel()"
+            >
+              No puedo ir
+            </app-button>
+          </div>
+          <p class="gb__note">
+            No tienes que hacer nada para que la cita sea tuya: ya está reservada.
+            Avisa solo si no puedes ir, y cuanto antes mejor — el hueco se lo
+            queda otra persona.
+          </p>
+        }
+      }
+    }
+  </div>
+</div>

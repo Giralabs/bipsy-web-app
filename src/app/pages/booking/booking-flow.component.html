@@ -159,7 +159,25 @@
         }
       }
 
-      <!-- ══════════ 5. CONFIRMAR ══════════ -->
+      <!-- ══════════ 5. ENTRAR ══════════
+           Después de elegir la hora, no antes: pedírselo a quien todavía no sabe
+           si hay hueco es perder gente por nada. Y aquí dentro, no en /acceder,
+           para que la hora elegida no se pierda.
+
+           El formulario es EL MISMO de /acceder, no una copia: `app-login-form`.
+           Tenía uno propio y se notaba —ni el ojo de la contraseña ni el enlace
+           de recuperarla—, y una puerta que se parece a la de casa pero no lo es
+           no se le pone delante a quien va a escribir su contraseña. -->
+      @if (step === 'auth') {
+        <app-login-form
+          title="Entra para reservar"
+          subtitle="Tu cita queda en la app y no tendrás que escribir tus datos otra vez."
+          submitLabel="Entrar y reservar"
+          [returnTo]="returnToHere"
+          (signedIn)="onSignedIn()"
+        ></app-login-form>
+      }
+
       @if (step === 'confirm') {
         <h1 class="flow__title">Revisa tu cita</h1>
 
@@ -258,7 +276,7 @@
       @if (cardSheetOpen) {
         <app-add-card-sheet
           [publishableKey]="stripeKey"
-          reason="Se guarda para poder cobrar la tarifa solo si cancelas tarde o no acudes. Ahora no se te cobra nada."
+          reason="Se usa para cobrar la tarifa solo si cancelas tarde o no acudes. Ahora no se te cobra nada."
           (saved)="onCardSaved()"
           (closed)="onCardSheetClosed()"
         ></app-add-card-sheet>

@@ -27,6 +27,7 @@ import { SessionService } from '../../core/session.service';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
 import { SearchBarComponent } from '../../components/search-bar/search-bar.component';
 import { ButtonComponent } from '../../components/button/button.component';
+import { APP_STORE_URL, PLAY_STORE_URL } from '../../data/app-links';
 
 type Coords = { lat: number; lng: number };
 
@@ -55,6 +56,11 @@ type Coords = { lat: number; lng: number };
   styleUrls: ['./home.component.css', './home-blocks.css']
 })
 export class HomeComponent implements OnInit {
+  // Los badges de las tiendas, del mismo sitio que la tira de descarga.
+  // Apuntaban a youtube.com, heredado de la plantilla.
+  readonly appStoreUrl = APP_STORE_URL;
+  readonly playStoreUrl = PLAY_STORE_URL;
+
   private readonly bipsyService = inject(BipsyService);
   private readonly catalog = inject(CatalogRepository);
   private readonly session = inject(SessionService);

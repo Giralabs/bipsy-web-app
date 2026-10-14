@@ -741,3 +741,43 @@ export interface MaintenanceUnlock {
   token: string;
   expiresAt: string;
 }
+
+// ============================================================
+// LA CITA DE QUIEN NO TIENE CUENTA (V107)
+// ============================================================
+//
+// Reservar sin cuenta NO existe: la reserva desde la web exige entrar. Esto es
+// la cita que el negocio teclea en su agenda para alguien que no se baja apps,
+// y que esa persona gestiona desde el enlace de su correo.
+
+/**
+ * Una cita de invitado, entera.
+ *
+ * Viene completa a proposito: la pinta una pagina sin sesion, que no puede
+ * pedir el negocio ni el servicio aparte.
+ */
+export interface GuestBookingResponse {
+  bookingId: number;
+  /** Solo al crearla. Al leerla ya lo tiene quien pregunta. */
+  token?: string;
+  status: BookingStatus;
+  businessName: string;
+  businessId: number;
+  serviceName: string;
+  workerName?: string;
+  holderName: string;
+  startDateTime: string;
+  endDateTime: string;
+  priceCents: number;
+  servicePlace?: string;
+  address?: string;
+  /** Si ya dijo que iria. Es un acuse, no un requisito. */
+  acknowledged: boolean;
+  cancelReason?: string;
+  /** Lo decide el servidor: el navegador puede estar en otra zona horaria. */
+  past: boolean;
+  cancellable: boolean;
+  policyText?: string;
+  /** Lo cobrado por cancelar tarde, en centimos. 0 casi siempre. */
+  feeChargedCents: number;
+}

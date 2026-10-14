@@ -10,6 +10,7 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiError } from '../../core/api-error';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { PaymentMethodResponse } from '../../models/bipsy.models';
@@ -29,7 +30,7 @@ import { ButtonComponent } from '../button/button.component';
 @Component({
   selector: 'app-add-card-sheet',
   standalone: true,
-  imports: [CommonModule, ButtonComponent],
+  imports: [CommonModule, FormsModule, ButtonComponent],
   templateUrl: './add-card-sheet.component.html',
   styleUrl: './add-card-sheet.component.css',
 })
@@ -42,7 +43,22 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
   /** Texto bajo el título. Cada sitio explica por qué se pide la tarjeta. */
   @Input() reason: string | null = null;
 
+  /**
+   * Si el cliente quiere dejarla guardada para próximas reservas.
+   *
+   * **Empieza sin marcar a propósito**: guardar la tarjeta de alguien es una
+   * decisión, no lo que pasa si no haces nada.
+   *
+   * ⚠️ Sin marcar NO significa que se borre al salir. La tarjeta es la garantía
+   * con la que el negocio acepta la cita, así que sigue vinculada mientras
+   * alguna cita pueda generar un cargo —cancelar tarde, no presentarse— y la
+   * retira después `PaymentMethodCleanupScheduler`. Lo que decide esta casilla
+   * es si se queda **más allá de eso**.
+   */
+  keepSaved = false;
+
   @Output() saved = new EventEmitter<PaymentMethodResponse>();
+
   @Output() closed = new EventEmitter<void>();
 
   @ViewChild('cardHost') cardHost?: ElementRef<HTMLElement>;
@@ -140,7 +156,7 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
         return;
       }
 
-      this.saved.emit(await this.payments.registerMethod(paymentMethodId));
+      this.saved.emit(await this.payments.registerMethod(paymentMethodId, this.keepSaved));
     } catch (raw) {
       this.error = ApiError.from(raw).message;
     } finally {

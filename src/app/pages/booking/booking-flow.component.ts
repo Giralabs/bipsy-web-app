@@ -17,11 +17,12 @@ import {
 import { ButtonComponent } from '../../components/button/button.component';
 import { AddCardSheetComponent } from '../../components/add-card-sheet/add-card-sheet.component';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { LoginFormComponent } from '../../components/login-form/login-form.component';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { euros, isoDate, isoLocalDateTime, longDate, duration, relativeDate } from '../../shared/dates';
 import { businessIdFromParam, businessPath } from '../../shared/slug';
 
-type Step = 'service' | 'worker' | 'date' | 'time' | 'confirm' | 'done';
+type Step = 'service' | 'worker' | 'date' | 'time' | 'auth' | 'confirm' | 'done';
 
 /**
  * Flujo de reserva. Port de `BookingFlowScreen` y sus cuatro pasos.
@@ -29,11 +30,29 @@ type Step = 'service' | 'worker' | 'date' | 'time' | 'confirm' | 'done';
  * El paso de profesional se salta cuando no hay nada que elegir —negocio
  * autónomo, o un servicio con un solo profesional—, pero el `workerId` se
  * rellena igualmente: sin él el `POST /bookings` falla.
+ *
+ * **Elegir es público y entrar va al final.** Los cuatro pasos de elegir no
+ * piden nada —el catálogo y la disponibilidad son públicos—, y la cuenta se pide
+ * en un quinto paso, ya con la hora elegida. Antes esto era un muro: se echaba
+ * al login antes de cargar nada, así que el enlace de un negocio no servía para
+ * lo único que importa. Pedirlo al final cuesta lo mismo a quien ya tiene cuenta
+ * y no espanta a quien todavía no sabe si hay hueco.
+ *
+ * Ese paso no tiene formulario propio: monta `app-login-form`, el mismo de
+ * `/acceder`. Y se queda DENTRO del flujo —en vez de navegar al acceso y
+ * volver— porque así la hora elegida no se pierde.
  */
 @Component({
   selector: 'app-booking-flow',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, AddCardSheetComponent, AvatarComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonComponent,
+    AddCardSheetComponent,
+    AvatarComponent,
+    LoginFormComponent,
+  ],
   templateUrl: './booking-flow.component.html',
   styleUrl: './booking-flow.component.css',
 })
@@ -78,6 +97,16 @@ export class BookingFlowComponent implements OnInit {
 
   bookingId?: number;
 
+  // ----- ENTRAR PARA RESERVAR --------------------
+  //
+  // Hace falta cuenta para reservar, y se pide en su propio paso DESPUÉS de
+  // elegir la hora, con el formulario de `/acceder` tal cual: `app-login-form`.
+  // Se decide una vez al cargar, cuando la sesión ya está resuelta, y se apaga
+  // en cuanto entra.
+
+  /** No había sesión al entrar: hará falta pasar por el paso de entrada. */
+  needsAuth = false;
+
   // ----- TARJETA --------------------
   //
   // Un negocio puede exigir tarjeta guardada para aceptar reservas. Si no la
@@ -115,11 +144,10 @@ export class BookingFlowComponent implements OnInit {
     const status = await firstValueFrom(
       this.session.status$.pipe(filter(value => value !== 'unknown'), take(1)),
     );
-    if (status !== 'authenticated') {
-      this.session.requireAuth(this.router.url);
-      this.router.navigate(['/acceder'], { queryParams: { returnTo: this.router.url } });
-      return;
-    }
+    // Sin sesión NO se echa al login, que era el muro que dejaba el enlace
+    // público de un negocio sin servir para lo único que importa. Se deja mirar
+    // y elegir, y entrar se pide en su paso, con la hora ya elegida.
+    this.needsAuth = status !== 'authenticated';
 
     try {
       const [business, services] = await Promise.all([
@@ -209,9 +237,39 @@ export class BookingFlowComponent implements OnInit {
       return;
     }
     this.startTime = slot.start;
-    this.step = 'confirm';
+    // Entrar va DESPUÉS de elegir la hora, no antes: pedírselo a quien todavía
+    // no sabe si hay hueco es perder gente por nada, y es el mismo criterio con
+    // el que la app pide la tarjeta al final.
+    this.step = this.needsAuth ? 'auth' : 'confirm';
     // Se mira al entrar en el resumen y no antes: solo hace falta aquí, y
     // preguntarlo en cada paso serían tres llamadas para nada.
+    if (!this.needsAuth) {
+      void this.checkCard();
+    }
+  }
+
+  // ----- ENTRAR PARA RESERVAR --------------------
+
+  /**
+   * A dónde volver si acaba creando cuenta: a esta misma reserva.
+   *
+   * Es lo que `app-login-form` pone en el enlace del alta. La URL lleva el
+   * negocio y el servicio elegido, así que al volver el flujo se rearma.
+   */
+  get returnToHere(): string {
+    return this.router.url;
+  }
+
+  /**
+   * Ya hay sesión, venga del correo, de Google o de Apple.
+   *
+   * Entrar no recarga la página —el popup del proveedor tampoco—, así que el
+   * servicio y la hora elegidos siguen ahí y se sigue en el resumen.
+   */
+  onSignedIn(): void {
+    this.needsAuth = false;
+    this.step = 'confirm';
+    // Se mira al entrar en el resumen y no antes: solo hace falta aquí.
     void this.checkCard();
   }
 
@@ -372,6 +430,9 @@ export class BookingFlowComponent implements OnInit {
       case 'worker': this.step = 'service'; break;
       case 'date': this.step = this.showWorkerStep ? 'worker' : 'service'; break;
       case 'time': this.step = 'date'; break;
+      case 'auth': this.step = 'time'; break;
+      // Al volver desde el resumen no se pasa por el paso de entrar: ya hay
+      // sesión, así que enseñarlo otra vez sería un paso que no lleva a nada.
       case 'confirm': this.step = 'time'; break;
       default:
         // ⚠️ VOLVER, no navegar a la ficha.
@@ -431,6 +492,8 @@ export class BookingFlowComponent implements OnInit {
     this.router.navigate(['/citas']);
   }
 
+
+
   /**
    * Los días que se pueden elegir, desde hoy hasta el horizonte del negocio.
    * Un horizonte de 0 no significa "ninguno": significa que no lo ha
@@ -451,8 +514,21 @@ export class BookingFlowComponent implements OnInit {
 /** El fallo al reservar dicho en cristiano, no con el código HTTP. */
 function bookingErrorMessage(error: ApiError): string {
   if (error.networkError) return 'Sin conexión. Comprueba tu red.';
+  // El 401 es el único donde el texto del servidor no ayuda: dice que falta un
+  // token, y lo que el cliente necesita saber es que vuelva a entrar.
+  if (error.isUnauthorized) return 'Tu sesión ha caducado. Inicia sesión de nuevo.';
+
+  // ⚠️ El mensaje del SERVIDOR manda cuando lo hay.
+  //
+  // Esta función se escribió para `POST /bookings`, donde el único conflicto
+  // posible era el hueco ocupado, así que traducía cualquier 409 a «Ese horario
+  // ya no está disponible». En cuanto hubo otro 409 posible —lo destapó el
+  // camino sin cuenta, con «ese correo ya tiene cuenta»— eso mandaba a mirar
+  // donde no era y no dejaba arreglarlo. El servidor sabe qué ha pasado; esta
+  // función solo pone palabras donde no las hay.
+  if (error.message?.trim()) return error.message;
+
   if (error.isPaymentRequired) return 'Este negocio pide una tarjeta guardada para reservar.';
   if (error.isConflict) return 'Ese horario ya no está disponible. Elige otro.';
-  if (error.isUnauthorized) return 'Tu sesión ha caducado. Inicia sesión de nuevo.';
-  return error.message || 'No se ha podido crear la reserva.';
+  return 'No se ha podido crear la reserva.';
 }

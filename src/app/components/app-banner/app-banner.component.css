@@ -3,6 +3,12 @@
 /* La tira de la tienda: fila corta, alta densidad y sin adornos. Es lo que
    hacen X o Reddit, y se reconoce justo por eso. */
 .appbanner {
+  /* Pegada arriba: el aviso tiene que seguir ahí al bajar por la ficha de un
+     negocio o por el flujo de reserva, que es donde se pasa el rato. Sin esto
+     solo lo ve quien llega, durante dos segundos. */
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -10,22 +16,6 @@
   background: var(--clr-surface);
   box-shadow: inset 0 -0.5px 0 var(--clr-border);
 }
-
-.appbanner__close {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 50%;
-  background: none;
-  color: var(--clr-text-3);
-  cursor: pointer;
-}
-
-.appbanner__close .material-symbols-rounded { font-size: 18px; }
 
 .appbanner__icon {
   flex: 0 0 auto;
@@ -81,4 +71,12 @@
 .appbanner__go {
   background: var(--clr-mint);
   color: var(--clr-mint-text);
+}
+
+/* Mientras no haya ficha en la tienda. Apagado y sin pinta de botón: invita
+   igual, pero no promete un toque que no lleva a ninguna parte. */
+.appbanner__go--soon {
+  background: var(--clr-field);
+  color: var(--clr-text-3);
+  font-weight: 600;
 }

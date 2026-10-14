@@ -1,37 +1,31 @@
 import { Component } from '@angular/core';
+import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY } from '../../data/app-links';
 
-/** A dónde manda el botón según el teléfono. `null` = todavía no publicada. */
+/** A dónde manda el botón según el teléfono. */
 interface StoreTarget {
   label: string;
-  url: string | null;
+  url: string;
 }
-
-/**
- * Enlaces de tienda.
- *
- * ⚠️ **Los dos a null a propósito**: las fichas no existen todavía. Mientras lo
- * estén, el botón sale como «Próximamente» y no lleva a ningún sitio, que es
- * mejor que un botón de App Store que da un 404 —o que apunta a la búsqueda y
- * saca la app de otro—.
- *
- * Al publicar, poner aquí la URL y el botón se enciende solo:
- *   iOS      https://apps.apple.com/es/app/bipsy/id<APP_ID>
- *   Android  https://play.google.com/store/apps/details?id=<PACKAGE>
- */
-const STORE_LINKS: Record<'ios' | 'android', string | null> = {
-  ios: null,
-  android: null,
-};
 
 /**
  * Tira de descarga de la app, como la que ponen X o Reddit.
  *
+ * **Se pinta siempre y no se puede cerrar.** Es el único sitio donde alguien que
+ * ha entrado por el enlace de un negocio —y que puede reservar ahí mismo, sin
+ * instalarse nada— se encuentra la invitación a tener la app. Antes se podía
+ * descartar y se guardaba en `localStorage`; ahora el aviso se queda, porque
+ * quien reserva en la web es justamente a quien hay que decírselo.
+ *
  * Solo en móvil y tablet: en un ordenador no hay app que instalar, y la tira
- * sería un anuncio de algo que no se puede usar.
+ * sería un anuncio de algo que no se puede usar. Lo decide `app.component.html`
+ * con `.only-touch`.
  *
  * Detecta el sistema para enseñar la tienda que toca. Se apoya en el user
  * agent y no en el ancho: un iPad es tablet a 1024 px y a 1366, y lo que
  * decide a qué tienda mandar es el sistema, no el tamaño.
+ *
+ * ⚠️ Mientras las fichas no existan (`STORE_LINKS_READY`), el botón dice
+ * «Próximamente» y no navega. Ver `data/app-links.ts`.
  */
 @Component({
   selector: 'app-app-banner',
@@ -40,42 +34,10 @@ const STORE_LINKS: Record<'ios' | 'android', string | null> = {
   styleUrl: './app-banner.component.css',
 })
 export class AppBannerComponent {
-  /** Documentado en la política de cookies como preferencia de interfaz. */
-  private static readonly STORAGE_KEY = 'bipsy_app_banner';
-
-  dismissed = this.readDismissed();
-
   readonly store = this.detectStore();
 
-  /**
-   * Si se pinta la tira.
-   *
-   * **Sin ficha en la tienda no se pinta nada.** Un «Próximamente» ocupa el
-   * sitio y no ofrece nada: es un anuncio de algo que no se puede descargar.
-   * En cuanto `STORE_LINKS` tenga la URL, la tira aparece sola y funcionando,
-   * sin tocar una línea más.
-   */
-  get available(): boolean {
-    return this.store.url !== null;
-  }
-
-  dismiss(): void {
-    this.dismissed = true;
-    try {
-      localStorage.setItem(AppBannerComponent.STORAGE_KEY, 'hidden');
-    } catch {
-      // Navegación privada o almacenamiento bloqueado: se cierra en esta
-      // sesión y reaparece en la siguiente. No es motivo para romper.
-    }
-  }
-
-  private readDismissed(): boolean {
-    try {
-      return localStorage.getItem(AppBannerComponent.STORAGE_KEY) === 'hidden';
-    } catch {
-      return false;
-    }
-  }
+  /** Si el botón lleva de verdad a una tienda. Ver `data/app-links.ts`. */
+  readonly linkReady = STORE_LINKS_READY;
 
   /**
    * Qué tienda toca.
@@ -91,8 +53,8 @@ export class AppBannerComponent {
       && 'ontouchend' in document;
 
     if (/iPhone|iPad|iPod/.test(ua) || isIpad) {
-      return { label: 'App Store', url: STORE_LINKS.ios };
+      return { label: 'App Store', url: APP_STORE_URL };
     }
-    return { label: 'Google Play', url: STORE_LINKS.android };
+    return { label: 'Google Play', url: PLAY_STORE_URL };
   }
 }
