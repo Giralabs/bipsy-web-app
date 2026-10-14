@@ -17,17 +17,8 @@ import {
 import { ButtonComponent } from '../../components/button/button.component';
 import { AddCardSheetComponent } from '../../components/add-card-sheet/add-card-sheet.component';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
-import { SocialButtonsComponent } from '../../components/social-buttons/social-buttons.component';
+import { LoginFormComponent } from '../../components/login-form/login-form.component';
 import { PaymentRepository } from '../../repositories/payment.repository';
-import { GuestBookingRepository } from '../../repositories/guest-booking.repository';
-import {
-  SocialAuthService,
-  SocialIdentity,
-  SocialProvider,
-  SocialSignInCancelled,
-  socialMessageFor,
-} from '../../core/social-auth.service';
-import { isValidEmail, isValidPhone } from '../../shared/validation';
 import { euros, isoDate, isoLocalDateTime, longDate, duration, relativeDate } from '../../shared/dates';
 import { businessIdFromParam, businessPath } from '../../shared/slug';
 
@@ -40,20 +31,16 @@ type Step = 'service' | 'worker' | 'date' | 'time' | 'auth' | 'confirm' | 'done'
  * autónomo, o un servicio con un solo profesional—, pero el `workerId` se
  * rellena igualmente: sin él el `POST /bookings` falla.
  *
- * **Sirve con sesión y sin ella**, y es el mismo flujo: los cuatro pasos de
- * elegir son idénticos porque el catálogo y la disponibilidad son públicos. Sin
- * sesión se añade un paso de datos —nombre, correo y teléfono— y el `POST` va a
- * `/public/bookings`. Esto antes era un muro: se echaba al login antes de cargar
- * nada, y quien entraba desde el enlace de un negocio tenía que crearse una
- * cuenta para pedir hora.
+ * **Elegir es público y entrar va al final.** Los cuatro pasos de elegir no
+ * piden nada —el catálogo y la disponibilidad son públicos—, y la cuenta se pide
+ * en un quinto paso, ya con la hora elegida. Antes esto era un muro: se echaba
+ * al login antes de cargar nada, así que el enlace de un negocio no servía para
+ * lo único que importa. Pedirlo al final cuesta lo mismo a quien ya tiene cuenta
+ * y no espanta a quien todavía no sabe si hay hueco.
  *
- * Lo que de verdad cambia sin cuenta son dos cosas, y las dos se ven abajo:
- *
- *  - **La tarjeta no está guardada en ninguna parte.** Si el negocio la exige,
- *    hay que pedirla en el momento y antes de crear la cita, con el token que
- *    devuelve `prepareCard`.
- *  - **La cita no va a «Mis citas»**, porque no hay cuenta a la que colgarla. Su
- *    sitio es `/cita/:token`, y ese enlace llega por correo.
+ * Ese paso no tiene formulario propio: monta `app-login-form`, el mismo de
+ * `/acceder`. Y se queda DENTRO del flujo —en vez de navegar al acceso y
+ * volver— porque así la hora elegida no se pierde.
  */
 @Component({
   selector: 'app-booking-flow',
@@ -64,7 +51,7 @@ type Step = 'service' | 'worker' | 'date' | 'time' | 'auth' | 'confirm' | 'done'
     ButtonComponent,
     AddCardSheetComponent,
     AvatarComponent,
-    SocialButtonsComponent,
+    LoginFormComponent,
   ],
   templateUrl: './booking-flow.component.html',
   styleUrl: './booking-flow.component.css',
@@ -74,8 +61,6 @@ export class BookingFlowComponent implements OnInit {
   private readonly session = inject(SessionService);
   private readonly waitlist = inject(WaitlistRepository);
   private readonly payments = inject(PaymentRepository);
-  private readonly guest = inject(GuestBookingRepository);
-  private readonly social = inject(SocialAuthService);
 
   @ViewChild(AddCardSheetComponent) cardSheet?: AddCardSheetComponent;
   private readonly route = inject(ActivatedRoute);
@@ -115,42 +100,12 @@ export class BookingFlowComponent implements OnInit {
   // ----- ENTRAR PARA RESERVAR --------------------
   //
   // Hace falta cuenta para reservar, y se pide en su propio paso DESPUÉS de
-  // elegir la hora. Se decide una vez al cargar, cuando la sesión ya está
-  // resuelta, y se apaga en cuanto entra.
+  // elegir la hora, con el formulario de `/acceder` tal cual: `app-login-form`.
+  // Se decide una vez al cargar, cuando la sesión ya está resuelta, y se apaga
+  // en cuanto entra.
 
   /** No había sesión al entrar: hará falta pasar por el paso de entrada. */
   needsAuth = false;
-
-  /** El camino de siempre: correo y contraseña. */
-  authEmail = '';
-  authPassword = '';
-  authBusy = false;
-
-  /** El teléfono, que ni Google ni Apple dan y el servidor exige para el alta. */
-  socialPhone = '';
-
-  // ----- ENTRAR CON GOOGLE O APPLE --------------------
-  //
-  // Va en el paso de datos, arriba: es más rápido que escribir tres campos y
-  // además deja cuenta, así que la próxima vez no hay que escribir nada. Y el
-  // correo lo verifica el proveedor, así que esa cita NO hay que confirmarla.
-
-  /** El proveedor con el que se está entrando, o null. Bloquea los dos botones. */
-  socialBusy: SocialProvider | null = null;
-
-  /** La identidad obtenida, mientras falta el teléfono (o el correo). */
-  private socialIdentity: SocialIdentity | null = null;
-
-  /** El backend pide teléfono para crear la cuenta. */
-  socialNeedsPhone = false;
-
-  /**
-   * Y además el correo, porque Apple no lo ha dado.
-   *
-   * Apple entrega el correo una única vez, la primera que se autoriza la app.
-   * Si esa vez fue en otro sitio, el token llega sin él.
-   */
-  socialNeedsEmail = false;
 
   // ----- TARJETA --------------------
   //
@@ -295,136 +250,27 @@ export class BookingFlowComponent implements OnInit {
 
   // ----- ENTRAR PARA RESERVAR --------------------
 
-  get googleAvailable(): boolean {
-    return this.social.googleAvailable;
-  }
-
-  get appleAvailable(): boolean {
-    return this.social.appleAvailable;
-  }
-
-  get socialAvailable(): boolean {
-    return this.googleAvailable || this.appleAvailable;
+  /**
+   * A dónde volver si acaba creando cuenta: a esta misma reserva.
+   *
+   * Es lo que `app-login-form` pone en el enlace del alta. La URL lleva el
+   * negocio y el servicio elegido, así que al volver el flujo se rearma.
+   */
+  get returnToHere(): string {
+    return this.router.url;
   }
 
   /**
-   * Entrar con Google o con Apple sin salir de la reserva.
+   * Ya hay sesión, venga del correo, de Google o de Apple.
    *
-   * El popup no recarga la página, así que el servicio y la hora elegidos siguen
-   * ahí. Al tener sesión, el flujo se pasa al camino con cuenta: ni paso de
-   * datos, ni confirmar la cita por correo.
+   * Entrar no recarga la página —el popup del proveedor tampoco—, así que el
+   * servicio y la hora elegidos siguen ahí y se sigue en el resumen.
    */
-  async continueWith(provider: SocialProvider): Promise<void> {
-    if (this.socialBusy) return;
-    this.socialBusy = provider;
-    this.error = null;
-    try {
-      this.socialIdentity = await this.social.obtainIdentity(provider);
-      await this.exchangeSocial();
-    } catch (raw) {
-      // Cancelar no es un error: cerró el popup y sigue donde estaba.
-      if (raw instanceof SocialSignInCancelled) return;
-      this.error = socialMessageFor(raw, provider);
-    } finally {
-      this.socialBusy = null;
-    }
-  }
-
-  /**
-   * Canjea la identidad por la sesión, pidiendo lo que falte.
-   *
-   * El teléfono es obligatorio para reservar y ninguno de los dos proveedores lo
-   * da. El correo solo falta con Apple, y entonces la cuenta nace sin verificar
-   * — lo que la verifica después es que le llegue algo a esa dirección.
-   */
-  private async exchangeSocial(): Promise<void> {
-    if (!this.socialIdentity) return;
-    const res = await this.social.signIn(
-      this.socialIdentity,
-      this.socialPhone.trim() || undefined,
-      this.authEmail.trim() || undefined,
-    );
-
-    if (res.needsProfile) {
-      // El correo lo da el proveedor salvo con Apple, que solo lo entrega la
-      // primera vez; entonces hay que pedirlo también.
-      if (res.email) this.authEmail = res.email;
-      this.socialNeedsPhone = true;
-      // Apple sin correo: hay que pedirlo también.
-      this.socialNeedsEmail = !res.email;
-      return;
-    }
-
-    await this.session.onRegistered();
-    this.onSignedIn();
-  }
-
-  /** Reintenta el canje con el teléfono (y el correo) ya escritos. */
-  async submitSocialProfile(): Promise<void> {
-    const problema = this.socialNeedsEmail && !isValidEmail(this.authEmail.trim())
-      ? 'Ese correo no parece válido.'
-      : !isValidPhone(this.socialPhone) ? 'Ese teléfono no parece válido.' : null;
-    if (problema) {
-      this.error = problema;
-      return;
-    }
-    this.socialBusy = this.socialIdentity?.provider ?? 'google';
-    this.error = null;
-    try {
-      await this.exchangeSocial();
-    } catch (raw) {
-      this.error = ApiError.from(raw).message;
-    } finally {
-      this.socialBusy = null;
-    }
-  }
-
-  /** Si el formulario de correo y contraseña está completo. */
-  get authFormComplete(): boolean {
-    return isValidEmail(this.authEmail.trim()) && this.authPassword.length > 0;
-  }
-
-  /**
-   * Entrar con correo y contraseña, sin salir de la reserva.
-   *
-   * Vive aquí y no en `/acceder` por lo que pasa después: al terminar se sigue
-   * en el resumen con la hora que ya estaba elegida. Mandarlo al login obligaría
-   * a volver y a reconstruir el flujo desde la URL.
-   */
-  async signIn(): Promise<void> {
-    if (!this.authFormComplete || this.authBusy) return;
-    this.authBusy = true;
-    this.error = null;
-    try {
-      await this.session.login({
-        username: this.authEmail.trim(),
-        password: this.authPassword,
-      });
-      this.onSignedIn();
-    } catch (raw) {
-      this.error = ApiError.from(raw).message;
-    } finally {
-      this.authBusy = false;
-    }
-  }
-
-  /** Lo que pasa en cuanto hay sesión, venga del correo o de un proveedor. */
-  private onSignedIn(): void {
+  onSignedIn(): void {
     this.needsAuth = false;
-    this.socialNeedsPhone = false;
-    this.socialNeedsEmail = false;
-    this.socialIdentity = null;
-    // No se queda en memoria más de lo que hace falta.
-    this.authPassword = '';
     this.step = 'confirm';
+    // Se mira al entrar en el resumen y no antes: solo hace falta aquí.
     void this.checkCard();
-  }
-
-  /** Crear cuenta, con el correo ya escrito y vuelta a esta misma reserva. */
-  goToSignup(): void {
-    this.router.navigate(['/crear-cuenta'], {
-      queryParams: { email: this.authEmail.trim(), returnTo: this.router.url },
-    });
   }
 
   /**

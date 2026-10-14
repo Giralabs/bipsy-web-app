@@ -1,0 +1,159 @@
+@if (needsPhone) {
+
+  <!-- Cuenta nueva con Google o Apple: falta lo que ningún proveedor da, y se
+       pide aquí en vez de mandar a otra pantalla. -->
+  <h1 class="flow__title">Solo un dato más</h1>
+  <p class="flow__subtitle">
+    @if (needsEmail) {
+      Apple no nos ha dado tu correo —solo lo da la primera vez—, así que
+      escríbelo junto a tu teléfono: es por donde te avisamos de tus citas.
+    } @else {
+      Necesitamos tu teléfono para que los negocios puedan avisarte de tus citas.
+    }
+  </p>
+
+  <form (submit)="submitProfile(); $event.preventDefault()" novalidate>
+    <div class="form-group">
+      <div class="form-group__box">
+        @if (needsEmail) {
+          <div class="form-row">
+            <label class="form-row__label" for="social-email">Correo</label>
+            <input
+              id="social-email"
+              class="form-row__input"
+              type="email"
+              name="email"
+              autocomplete="email"
+              inputmode="email"
+              placeholder="tu@correo.com"
+              maxlength="120"
+              [disabled]="socialLoading !== null"
+              [(ngModel)]="username"
+            />
+          </div>
+        }
+
+        <div class="form-row">
+          <label class="form-row__label" for="social-phone">Teléfono</label>
+          <input
+            id="social-phone"
+            class="form-row__input"
+            type="tel"
+            name="phone"
+            autocomplete="tel"
+            inputmode="tel"
+            placeholder="612 345 678"
+            maxlength="20"
+            [disabled]="socialLoading !== null"
+            [(ngModel)]="phone"
+          />
+        </div>
+      </div>
+    </div>
+
+    @if (error) {
+      <p class="flow__error" role="alert">
+        <span class="material-symbols-rounded fill">error</span>{{ error }}
+      </p>
+    }
+
+    <div class="flow__actions">
+      <app-button type="submit" variant="primary" size="large" [fullWidth]="true"
+                  [loading]="socialLoading !== null">
+        Continuar
+      </app-button>
+    </div>
+  </form>
+
+} @else {
+
+  @if (title) {
+    <h1 class="flow__title">{{ title }}</h1>
+  }
+  @if (subtitle) {
+    <p class="flow__subtitle">{{ subtitle }}</p>
+  }
+
+  <form (submit)="submit(); $event.preventDefault()" novalidate>
+    <div class="form-group">
+      <div class="form-group__box">
+        <div class="form-row">
+          <label class="form-row__label" for="login-user">Correo</label>
+          <input
+            id="login-user"
+            class="form-row__input"
+            type="email"
+            name="username"
+            autocomplete="username"
+            placeholder="tu@correo.com"
+            maxlength="120"
+            [disabled]="busy"
+            [(ngModel)]="username"
+          />
+        </div>
+
+        <div class="form-row form-row--with-eye">
+          <label class="form-row__label" for="login-pass">Contraseña</label>
+          <input
+            id="login-pass"
+            class="form-row__input"
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            autocomplete="current-password"
+            placeholder="tu contraseña"
+            maxlength="100"
+            [disabled]="busy"
+            [(ngModel)]="password"
+          />
+          <button
+            type="button"
+            class="form-row__eye"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
+            (click)="showPassword = !showPassword"
+          >
+            <span class="material-symbols-rounded">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    @if (notice) {
+      <p class="flow__notice">
+        <span class="material-symbols-rounded fill">check_circle</span>{{ notice }}
+      </p>
+    }
+
+    @if (error) {
+      <p class="flow__error" role="alert">
+        <span class="material-symbols-rounded fill">error</span>{{ error }}
+      </p>
+    }
+
+    <div class="flow__actions">
+      <app-button type="submit" variant="primary" size="large" [fullWidth]="true" [loading]="loading">
+        {{ submitLabel }}
+      </app-button>
+
+      <!-- Debajo del botón de entrar, que es donde se busca justo después
+           de que la contraseña no funcione. -->
+      <a class="flow__link" [routerLink]="['/recuperar']" [queryParams]="recoverQuery">
+        He olvidado mi contraseña
+      </a>
+    </div>
+
+    @if (socialAvailable) {
+      <div class="or-divider">o</div>
+
+      <app-social-buttons
+        [busy]="socialLoading"
+        [disabled]="busy"
+        (chosen)="signInWith($event)"
+      ></app-social-buttons>
+    }
+
+    <p class="flow__foot">
+      ¿Aún no tienes cuenta?
+      <a class="flow__link" [routerLink]="['/crear-cuenta']" [queryParams]="signupQuery">Crear cuenta</a>
+    </p>
+  </form>
+}
