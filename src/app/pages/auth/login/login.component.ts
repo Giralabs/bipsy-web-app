@@ -12,6 +12,7 @@ import {
   socialMessageFor,
 } from '../../../core/social-auth.service';
 import { ButtonComponent } from '../../../components/button/button.component';
+import { SocialButtonsComponent } from '../../../components/social-buttons/social-buttons.component';
 
 /**
  * Pantalla de acceso. Port de `LoginScreen`.
@@ -22,7 +23,7 @@ import { ButtonComponent } from '../../../components/button/button.component';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, SocialButtonsComponent],
   templateUrl: './login.component.html',
 })
 export class LoginComponent implements OnInit {

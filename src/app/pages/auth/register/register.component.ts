@@ -14,6 +14,7 @@ import {
 import { AuthRepository } from '../../../repositories/auth.repository';
 import { ButtonComponent } from '../../../components/button/button.component';
 import { isValidEmail } from '../../../shared/validation';
+import { SocialButtonsComponent } from '../../../components/social-buttons/social-buttons.component';
 
 type Step = 'email' | 'code' | 'profile';
 
@@ -28,7 +29,7 @@ type Step = 'email' | 'code' | 'profile';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, SocialButtonsComponent],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent implements OnInit, OnDestroy {

@@ -17,6 +17,7 @@ import {
 import { ButtonComponent } from '../../components/button/button.component';
 import { AddCardSheetComponent } from '../../components/add-card-sheet/add-card-sheet.component';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { SocialButtonsComponent } from '../../components/social-buttons/social-buttons.component';
 import { PaymentRepository } from '../../repositories/payment.repository';
 import { GuestBookingRepository } from '../../repositories/guest-booking.repository';
 import {
@@ -57,7 +58,14 @@ type Step = 'service' | 'worker' | 'date' | 'time' | 'auth' | 'confirm' | 'done'
 @Component({
   selector: 'app-booking-flow',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonComponent, AddCardSheetComponent, AvatarComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonComponent,
+    AddCardSheetComponent,
+    AvatarComponent,
+    SocialButtonsComponent,
+  ],
   templateUrl: './booking-flow.component.html',
   styleUrl: './booking-flow.component.css',
 })

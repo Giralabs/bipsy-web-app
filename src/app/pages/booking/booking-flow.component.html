@@ -225,37 +225,17 @@
             Tu cita queda en la app y no tendrás que escribir tus datos otra vez.
           </p>
 
-          <!-- Arriba porque es el camino de un toque. Con un proveedor no hay
-               contraseña que recordar ni correo que verificar. -->
+          <!-- Arriba porque es el camino de un toque. Y con los botones de
+               verdad: los que monté con `app-button` se veían bien y no los
+               reconocía nadie. -->
           @if (socialAvailable) {
-            <div class="bf__social">
-              @if (googleAvailable) {
-                <app-button
-                  variant="secondary"
-                  size="large"
-                  [fullWidth]="true"
-                  [loading]="socialBusy === 'google'"
-                  [disabled]="socialBusy !== null"
-                  (onClick)="continueWith('google')"
-                >
-                  Continuar con Google
-                </app-button>
-              }
-              @if (appleAvailable) {
-                <app-button
-                  variant="secondary"
-                  size="large"
-                  [fullWidth]="true"
-                  [loading]="socialBusy === 'apple'"
-                  [disabled]="socialBusy !== null"
-                  (onClick)="continueWith('apple')"
-                >
-                  Continuar con Apple
-                </app-button>
-              }
-            </div>
+            <app-social-buttons
+              [busy]="socialBusy"
+              [disabled]="authBusy"
+              (chosen)="continueWith($event)"
+            ></app-social-buttons>
 
-            <div class="bf__or"><span>o con tu correo</span></div>
+            <div class="or-divider">o con tu correo</div>
           }
 
           <div class="form-group">
