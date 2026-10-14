@@ -68,7 +68,8 @@
               "buildTarget": "bipsy-web-app:build:production"
             },
             "development": {
-              "buildTarget": "bipsy-web-app:build:development"
+              "buildTarget": "bipsy-web-app:build:development",
+              "host": "0.0.0.0"
             }
           },
           "defaultConfiguration": "development"
