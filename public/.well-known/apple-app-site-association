@@ -1,0 +1,19 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["WV5V68ZMSZ.com.gipsi.gipsi"],
+        "components": [
+          {
+            "/": "/negocio/*",
+            "comment": "Public business page: opens the customer app on that business."
+          },
+          {
+            "/": "/business/*",
+            "comment": "Old shape of the same page. The web redirects it to /negocio/*."
+          }
+        ]
+      }
+    ]
+  }
+}
