@@ -522,10 +522,10 @@ function bookingErrorMessage(error: ApiError): string {
   //
   // Esta función se escribió para `POST /bookings`, donde el único conflicto
   // posible era el hueco ocupado, así que traducía cualquier 409 a «Ese horario
-  // ya no está disponible». Con el camino sin cuenta eso pasó a ser falso: ahí
-  // un 409 es «ese correo ya tiene cuenta» o «tienes 3 citas sin confirmar», y
-  // las dos se enseñaban como un problema de horario — que manda a mirar donde
-  // no es y no deja arreglarlo.
+  // ya no está disponible». En cuanto hubo otro 409 posible —lo destapó el
+  // camino sin cuenta, con «ese correo ya tiene cuenta»— eso mandaba a mirar
+  // donde no era y no dejaba arreglarlo. El servidor sabe qué ha pasado; esta
+  // función solo pone palabras donde no las hay.
   if (error.message?.trim()) return error.message;
 
   if (error.isPaymentRequired) return 'Este negocio pide una tarjeta guardada para reservar.';

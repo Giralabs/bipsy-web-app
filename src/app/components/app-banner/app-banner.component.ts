@@ -11,7 +11,7 @@ interface StoreTarget {
  * Tira de descarga de la app, como la que ponen X o Reddit.
  *
  * **Se pinta siempre y no se puede cerrar.** Es el único sitio donde alguien que
- * ha entrado por el enlace de un negocio —y que puede reservar sin cuenta, sin
+ * ha entrado por el enlace de un negocio —y que puede reservar ahí mismo, sin
  * instalarse nada— se encuentra la invitación a tener la app. Antes se podía
  * descartar y se guardaba en `localStorage`; ahora el aviso se queda, porque
  * quien reserva en la web es justamente a quien hay que decírselo.
