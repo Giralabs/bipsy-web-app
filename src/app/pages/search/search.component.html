@@ -69,7 +69,7 @@
           [class.tile--on]="selectedCategoryId === c.id"
           (click)="toggleCategoryFilter(c)"
         >
-          <span class="material-symbols-rounded">{{ getCategoryIcon(c.code) }}</span>
+          <span class="material-symbols-rounded" [class.fill]="selectedCategoryId === c.id">{{ getCategoryIcon(c.code) }}</span>
           <span class="tile__label">{{ c.name }}</span>
         </button>
       }
