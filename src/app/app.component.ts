@@ -10,9 +10,26 @@ import { AppBannerComponent } from './components/app-banner/app-banner.component
 import { TabBarComponent } from './components/tab-bar/tab-bar.component';
 import { MaintenanceIndicatorComponent } from './components/maintenance-indicator/maintenance-indicator.component';
 import { MaintenanceComponent } from './pages/maintenance/maintenance.component';
+import { LEGAL_INDEX } from './pages/legal/legal.index';
 
-/** La puerta del equipo: la única dirección que se sigue sirviendo en mantenimiento. */
+/** La puerta del equipo: sigue sirviéndose en mantenimiento. */
 const ADMIN_PATH = '/admin';
+
+/**
+ * Lo otro que se sirve en mantenimiento: los documentos que exige la ley, y
+ * solo esos. Las apps enlazan a los términos y a la privacidad, y Apple revisa
+ * que esos enlaces lleven al texto y no a un cartel de «volvemos pronto».
+ *
+ * Direcciones exactas sacadas de la lista de documentos, nunca un prefijo:
+ * con `startsWith('/legal')` entraría cualquier cosa que alguien escriba
+ * detrás. Contacto, Quiénes somos y Seguridad (`HELP_INDEX`) siguen cerradas.
+ * La página no pide nada a la API, así que abrirla no deja pasar ninguna
+ * petición.
+ */
+const OPEN_DURING_MAINTENANCE: ReadonlySet<string> = new Set([
+  ADMIN_PATH,
+  ...LEGAL_INDEX.map(entry => `/legal/${entry.slug}`),
+]);
 
 /**
  * La raíz. Además del armazón de siempre, decide entre tres cosas según
@@ -23,8 +40,8 @@ const ADMIN_PATH = '/admin';
  *  - **La pantalla de mantenimiento**, sola, en cualquier dirección. No se
  *    monta ni el `router-outlet`: la página pedida no llega a crearse, así que
  *    tampoco hace ninguna petición.
- *  - **`/admin` en mantenimiento**: la ruta, sin nada alrededor. La barra y el
- *    pie son enlaces a una web que está cerrada.
+ *  - **`/admin` o un documento legal en mantenimiento**: la ruta, sin nada
+ *    alrededor. La barra y el pie son enlaces a una web que está cerrada.
  */
 @Component({
   selector: 'app-root',
@@ -59,9 +76,9 @@ export class AppComponent {
    */
   private readonly path = signal(pathOf(typeof location === 'undefined' ? '/' : location.pathname));
 
-  /** Web cerrada para esta persona, que además no está en la puerta del equipo. */
+  /** Web cerrada para esta persona, que además no está en una de las direcciones abiertas. */
   readonly showMaintenance = computed(
-    () => this.maintenance.blocked() && this.path() !== ADMIN_PATH,
+    () => this.maintenance.blocked() && !OPEN_DURING_MAINTENANCE.has(this.path()),
   );
 
   /** Si se pinta lo de alrededor: barra, buscador, pie y pestañas. */
