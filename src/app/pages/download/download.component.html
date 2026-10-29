@@ -1,0 +1,25 @@
+@if (published) {
+  <app-status-page
+    mascot="hello"
+    [heading]="heading"
+    lead="Elige tu tienda para descargar la app."
+  >
+    @if (appStore) {
+      <app-button statusActions variant="primary" icon="phone_iphone" [href]="appStore">App Store</app-button>
+    }
+    @if (googlePlay) {
+      <app-button statusActions variant="secondary" icon="android" [href]="googlePlay">Google Play</app-button>
+    }
+  </app-status-page>
+} @else {
+  <app-status-page
+    mascot="hello"
+    eyebrow="Muy pronto"
+    [heading]="heading"
+    lead="La app llega muy pronto a la App Store y a Google Play. Mientras tanto, puedes buscar un negocio y reservar desde aquí."
+  >
+    <app-button statusActions variant="primary" icon="search" [routerLink]="['/buscar']">
+      Buscar un negocio
+    </app-button>
+  </app-status-page>
+}

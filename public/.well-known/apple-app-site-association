@@ -11,6 +11,19 @@
           {
             "/": "/business/*",
             "comment": "Old shape of the same page. The web redirects it to /negocio/*."
+          },
+          {
+            "/": "/invitacion/*",
+            "comment": "A business invites its customers: opens sign-up with the code filled in."
+          }
+        ]
+      },
+      {
+        "appIDs": ["WV5V68ZMSZ.com.gipsi.gipsiBusiness"],
+        "components": [
+          {
+            "/": "/equipo/*",
+            "comment": "A business invites a worker: opens the business app on the invitation."
           }
         ]
       }

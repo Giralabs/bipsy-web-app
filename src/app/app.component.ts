@@ -29,7 +29,22 @@ const ADMIN_PATH = '/admin';
 const OPEN_DURING_MAINTENANCE: ReadonlySet<string> = new Set([
   ADMIN_PATH,
   ...LEGAL_INDEX.map(entry => `/legal/${entry.slug}`),
+  '/descargar',
+  '/descargar/negocio',
 ]);
+
+/**
+ * Las invitaciones también se sirven en mantenimiento: llegan desde un mensaje
+ * de WhatsApp de alguien que espera que funcione, y la página no pide nada a
+ * la API. Llevan el código en la dirección, así que no caben en la lista de
+ * arriba; el patrón admite un solo segmento detrás y nada más, por lo mismo
+ * que allí se evitan los prefijos.
+ */
+const INVITE_PATH = /^\/(equipo|invitacion)\/[A-Za-z0-9_-]{1,64}$/;
+
+function isOpenDuringMaintenance(path: string): boolean {
+  return OPEN_DURING_MAINTENANCE.has(path) || INVITE_PATH.test(path);
+}
 
 /**
  * La raíz. Además del armazón de siempre, decide entre tres cosas según
@@ -78,7 +93,7 @@ export class AppComponent {
 
   /** Web cerrada para esta persona, que además no está en una de las direcciones abiertas. */
   readonly showMaintenance = computed(
-    () => this.maintenance.blocked() && !OPEN_DURING_MAINTENANCE.has(this.path()),
+    () => this.maintenance.blocked() && !isOpenDuringMaintenance(this.path()),
   );
 
   /** Si se pinta lo de alrededor: barra, buscador, pie y pestañas. */

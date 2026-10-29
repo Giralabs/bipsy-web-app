@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY } from '../../data/app-links';
+import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY, mobilePlatformOf } from '../../data/app-links';
 
 /** A dónde manda el botón según el teléfono. */
 interface StoreTarget {
@@ -49,10 +49,9 @@ export class AppBannerComponent {
    */
   private detectStore(): StoreTarget {
     const ua = typeof navigator === 'undefined' ? '' : navigator.userAgent;
-    const isIpad = /Macintosh/.test(ua) && typeof document !== 'undefined'
-      && 'ontouchend' in document;
+    const hasTouch = typeof document !== 'undefined' && 'ontouchend' in document;
 
-    if (/iPhone|iPad|iPod/.test(ua) || isIpad) {
+    if (mobilePlatformOf(ua, hasTouch) === 'ios') {
       return { label: 'App Store', url: APP_STORE_URL };
     }
     return { label: 'Google Play', url: PLAY_STORE_URL };

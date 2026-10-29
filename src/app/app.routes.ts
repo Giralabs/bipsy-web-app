@@ -110,6 +110,31 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
   },
 
+  // Invitaciones y descarga. Las abren quienes NO tienen la app: con ella, el
+  // enlace abre la app y esta página no llega a cargarse (ver
+  // `.well-known/apple-app-site-association`). `/equipo` es de la app de
+  // negocio y `/invitacion`, de la de cliente.
+  {
+    path: 'equipo/:codigo',
+    data: { kind: 'team' },
+    loadComponent: () => import('./pages/invite/invite.component').then(m => m.InviteComponent),
+  },
+  {
+    path: 'invitacion/:codigo',
+    data: { kind: 'customer' },
+    loadComponent: () => import('./pages/invite/invite.component').then(m => m.InviteComponent),
+  },
+  {
+    path: 'descargar',
+    data: { app: 'customer' },
+    loadComponent: () => import('./pages/download/download.component').then(m => m.DownloadComponent),
+  },
+  {
+    path: 'descargar/negocio',
+    data: { app: 'business' },
+    loadComponent: () => import('./pages/download/download.component').then(m => m.DownloadComponent),
+  },
+
   // La puerta del equipo durante un mantenimiento. Sin mantenimiento pinta la
   // página no encontrada: es una dirección que, para el público, no existe.
   {
