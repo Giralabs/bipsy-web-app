@@ -1,0 +1,20 @@
+<app-status-page mascot="hello" eyebrow="Invitación" [heading]="heading" [lead]="lead">
+  <div class="invite-code">
+    <span class="invite-code__label" id="invite-code-label">Tu código</span>
+    <output class="invite-code__value" aria-labelledby="invite-code-label">{{ code }}</output>
+    <app-button
+      variant="secondary"
+      size="small"
+      [icon]="copied() ? 'check' : 'content_copy'"
+      (onClick)="copy()"
+    >
+      {{ copied() ? 'Copiado' : 'Copiar' }}
+    </app-button>
+  </div>
+
+  <app-button statusActions variant="primary" icon="download" [routerLink]="downloadLink">
+    Descargar la app
+  </app-button>
+
+  <span statusNote>¿Ya tienes la app? Ábrela y escribe el código.</span>
+</app-status-page>
