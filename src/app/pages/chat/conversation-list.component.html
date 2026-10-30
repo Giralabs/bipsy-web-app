@@ -1,0 +1,48 @@
+@if (loading) {
+  <!-- El esqueleto con la forma de la fila: círculo de 52 y dos renglones.
+       Un bloque gris del alto de la fila no anticipaba nada. -->
+  <div class="cl" aria-hidden="true">
+    @for (i of skeletonRows; track i) {
+      <div class="cl__skel">
+        <span class="skeleton cl__skel-avatar"></span>
+        <span class="cl__skel-lines">
+          <span class="skeleton cl__skel-line cl__skel-line--name"></span>
+          <span class="skeleton cl__skel-line cl__skel-line--preview"></span>
+        </span>
+      </div>
+    }
+  </div>
+} @else {
+  <ul class="cl" role="list">
+    @for (c of conversations; track c.id) {
+      <li>
+        <a
+          class="conv"
+          [class.conv--unread]="c.unread > 0"
+          [class.conv--active]="c.id === activeId"
+          [routerLink]="['/mensajes', c.id]"
+          [attr.aria-current]="c.id === activeId ? 'page' : null"
+          [attr.aria-label]="label(c)"
+        >
+          <app-avatar class="conv__avatar" [name]="avatarName(c)" [photoUrl]="avatarUrl(c)" [size]="52" />
+          <span class="conv__main">
+            <span class="conv__row">
+              <span class="conv__name">{{ c.otherPartyName }}</span>
+              @if (c.lastMessageAt) {
+                <span class="conv__when">{{ when(c.lastMessageAt) }}</span>
+              }
+            </span>
+            <span class="conv__row">
+              <span class="conv__preview">{{ preview(c) }}</span>
+              @if (c.unread > 0) {
+                <!-- El globo dice cuántos; el texto para el lector va en la
+                     etiqueta de la fila. -->
+                <span class="conv__badge" aria-hidden="true">{{ c.unread > 99 ? '99+' : c.unread }}</span>
+              }
+            </span>
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+}

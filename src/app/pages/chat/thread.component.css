@@ -1,230 +1,368 @@
-/* El hilo ocupa el alto de la ventana menos la barra: el compositor se queda
-   abajo y solo hacen scroll los mensajes, como en cualquier chat. */
+/* La burbuja propia es menta de marca con texto pizarra EN LOS DOS TEMAS
+   (`GipsiColors.primary` + `GipsiColors.base`). No vale `--clr-mint`: en
+   claro ese token pasa a pizarra para los botones, y la burbuja propia se
+   volvía un bloque oscuro. El azul de «leído» es `GipsiColors.chatRead`:
+   saturado para que se distinga sobre la menta sin buscarlo. El rojo de
+   «Reintentar» va oscurecido porque solo se pinta sobre la menta, y el rojo
+   de texto del tema oscuro no llegaba a contraste sobre ella. */
+:host {
+  display: block;
+  --own-bg: #C0EED3;
+  --own-fg: #2E343B;
+  --own-subtle: rgba(46, 52, 59, .65);
+  --chat-read: #0B8FE8;
+  --own-danger: #B3261E;
+}
+
+/* ══ Distribución ══ */
+
+/* Escritorio: dos columnas que ocupan lo que queda de ventana bajo la
+   cabecera (`--th-top` lo mide el componente). Solo hacen scroll la bandeja y
+   los mensajes; el compositor se queda abajo, como en cualquier chat. */
+.th-layout--split {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  max-width: 1200px;
+  height: calc(100dvh - var(--th-top, 112px));
+  min-height: 480px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.th-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-right: 16px;
+  box-shadow: inset -0.5px 0 0 var(--clr-border);
+}
+
+.th-side__title {
+  padding: 24px 8px 12px;
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.th-side__list { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 16px; scrollbar-width: thin; }
+
 .th {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 84px);
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0 20px;
+  min-height: 0;
+  min-width: 0;
+  background: var(--clr-base);
 }
 
+/* Una sola columna (escritorio sin división no existe, pero por si acaso el
+   punto de corte cambia): el hilo centrado y a lo ancho de lectura. */
+.th-layout:not(.th-layout--split) .th { max-width: 760px; margin: 0 auto; }
+
+/* ══ Cabecera ══ */
 .th__head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 0;
+  gap: 4px;
+  min-height: 60px;
+  padding: 8px 12px 8px 4px;
+  /* El pelo de 0,5 con el que iOS separa una barra de lo que pasa por
+     debajo: sin él, un mensaje que se va por arriba se corta contra la nada. */
   box-shadow: inset 0 -0.5px 0 var(--clr-border);
+  flex-shrink: 0;
 }
 
 .th__back {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
-  background: var(--clr-surface);
+  background: none;
   color: var(--clr-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-.th__back:hover { background: var(--clr-surface-hover); }
+.th__back .material-symbols-rounded { font-size: 20px; }
+.th__back:hover { background: var(--clr-surface); }
+/* Con la bandeja al lado no hay «atrás»: se cambia de hilo en la lista. */
+.th-layout--split .th__back { display: none; }
+.th-layout--split .th__head { padding-left: 16px; }
 
 .th__who {
   flex: 1;
   min-width: 0;
-  text-align: left;
-  border: none;
-  background: none;
-  cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-family: var(--ff);
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 4px 4px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
   color: var(--clr-text);
+  font-family: var(--ff);
+  text-align: left;
+  cursor: pointer;
 }
 
-.th__who strong { font-size: 1rem; font-weight: 700; letter-spacing: -0.1px; }
-.th__who small { font-size: 0.75rem; font-weight: 600; color: var(--clr-mint); }
+.th__who:disabled { cursor: default; }
+.th__who:not(:disabled):hover { background: var(--clr-surface); }
 
+.th__back:focus-visible,
+.th__who:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* El cambio de cara es un fundido, como el AnimatedSwitcher de la app. */
+.th__avatar { flex-shrink: 0; animation: th-face .25s ease both; }
+@keyframes th-face { from { opacity: 0; } to { opacity: 1; } }
+
+.th__names { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+.th__names strong {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.th__handler {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ══ Lista de mensajes ══ */
 .th__scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 16px 4px 16px 0;
+  padding: 12px 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  /* El ancla del navegador y la restauración manual del scroll al cargar la
+     página vieja se pisaban: el contenido saltaba dos veces. Se hace a mano. */
+  overflow-anchor: none;
+  outline: none;
 
-  /* Barra fina y sin pista: la del sistema partía el hilo en dos con una
-     franja gris del ancho de un dedo. Solo se ve cuando hace falta. */
+  /* Barra fina y sin pista: solo se ve cuando hace falta. */
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
-  transition: scrollbar-color .2s ease;
 }
 
 .th__scroll:hover { scrollbar-color: var(--clr-subtle) transparent; }
+.th__scroll:focus-visible { box-shadow: inset var(--focus-ring); }
 
-.th__scroll::-webkit-scrollbar { width: 6px; }
-.th__scroll::-webkit-scrollbar-track { background: transparent; }
+/* El primer mensaje se apoya abajo, junto al compositor, aunque sean pocos:
+   un hilo corto colgado arriba deja un vacío entre lo hablado y el campo. */
+.th__scroll > :first-child { margin-top: auto; }
 
-.th__scroll::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 3px;
+.th__scroll--skeleton { overflow: hidden; gap: 8px; }
+
+.skel-bubble { display: block; height: 44px; border-radius: var(--r-lg); max-width: 78%; }
+
+.th__state { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* El spinner pequeño de la página vieja, arriba del todo. */
+.th__more { display: flex; justify-content: center; padding: 8px 0 12px; }
+
+.th__more-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--clr-border);
+  border-top-color: var(--clr-text-2);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
 }
 
-.th__scroll:hover::-webkit-scrollbar-thumb { background: var(--clr-subtle); }
-
-.th__empty,
-.th__system,
-.th__day {
-  align-self: center;
-  max-width: 90%;
+/* ── Separador de día: GipsiChatDaySeparator ── */
+.day,
+.system {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
   text-align: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--clr-text-2);
-  padding: 6px 12px;
-  margin: 8px 0;
 }
 
-.th__day {
-  background: var(--clr-subtle);
+.day span {
+  padding: 4px 12px;
   border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--clr-border) 45%, transparent);
+  color: var(--clr-text-2);
+  font-size: 0.6875rem;
+  font-weight: 700;
 }
 
-/* ── Burbujas ── */
-.bubble-row { display: flex; }
-.bubble-row--mine { justify-content: flex-end; }
+/* Aviso de la plataforma: centrado, sin autor y acotado como las burbujas,
+   para que se lea como nota al margen y no como un banner. */
+.system { padding: 8px 0; }
 
-.bubble {
+.system span {
   max-width: 78%;
-  padding: 10px 14px;
+  padding: 4px 12px;
   border-radius: var(--r-md);
   background: var(--clr-subtle);
-  color: var(--clr-text);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  color: var(--clr-text-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
-/* La propia en menta, como en la app. */
-.bubble--mine { background: var(--clr-mint); color: var(--clr-mint-text); }
-.bubble--failed { opacity: .6; }
+/* ── Burbujas: GipsiChatBubble ── */
+.bubble-row { display: flex; padding: 4px 0; }
+.bubble-row--mine { justify-content: flex-end; }
+
+/* Muy redonda y SIN pico: el pico es de WhatsApp y las esquinas con ángulo
+   rompen la identidad de la marca. Se orienta por el color y el lado. */
+.bubble {
+  max-width: 78%;
+  min-width: 0;
+  border-radius: var(--r-lg);
+  background: var(--clr-subtle);
+  /* La recibida lleva borde: sobre el suelo, el relleno sutil solo no
+     dibujaba la burbuja. */
+  border: 1px solid var(--clr-border);
+  color: var(--clr-text);
+  overflow: hidden;
+}
+
+.bubble--mine { background: var(--own-bg); border-color: transparent; color: var(--own-fg); }
+
+/* La provisional se ve más apagada hasta que el servidor confirma. */
+.bubble--pending { opacity: .75; }
+
+/* Con foto la burbuja no necesita el 78 % de un texto largo. */
+.bubble--media { width: min(320px, 78%); }
+
+.bubble__body { position: relative; padding: 8px 12px; }
 
 .bubble__text {
   font-size: 0.9375rem;
   font-weight: 500;
-  line-height: 1.45;
+  line-height: 1.4;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.bubble__meta {
-  align-self: flex-end;
+/* El hueco que deja sitio al pie al final de la última línea. */
+.bubble__spacer { display: inline-block; width: 44px; height: 1px; }
+.bubble__spacer--mine { width: 64px; }
+.bubble__spacer--failed { width: 96px; }
+
+/* ── Pie: hora y estado ── */
+.meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.meta--inline { position: absolute; right: 12px; bottom: 9px; }
+
+.meta__time { opacity: .65; }
+.meta__tick { font-size: 15px; opacity: .65; }
+.meta__tick--read { color: var(--chat-read); opacity: 1; }
+
+.bubble--mine .meta__time,
+.bubble--mine .meta__tick:not(.meta__tick--read) { color: var(--own-fg); }
+
+.meta__retry {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.625rem;
-  font-weight: 600;
+  margin: -6px -6px -6px 0;
+  padding: 6px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--own-danger);
+  font-family: var(--ff);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-/* La opacidad va en la hora y en los tics grises, no en toda la fila: si no,
-   el azul de "leído" también salía apagado y no se distinguía. */
-.bubble__time { opacity: .7; }
-.bubble__tick { font-size: 15px; opacity: .7; }
-.bubble__tick--bad { color: var(--clr-danger-text); opacity: 1; }
-/* `GipsiColors.chatRead`: azul saturado para que se lea sobre la burbuja menta. */
-.bubble__tick--read { color: #0B8FE8; opacity: 1; }
+.meta__retry:hover { text-decoration: underline; }
+.meta__retry:focus-visible { outline: 2px solid var(--own-danger); outline-offset: 1px; }
+.meta__retry .material-symbols-rounded { font-size: 15px; }
 
-.bubble__booking {
+/* ── Cita citada ── */
+.booking {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border-radius: var(--r-xs);
-  background: rgba(0, 0, 0, .12);
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, currentColor 10%, transparent);
   font-size: 0.75rem;
-  font-weight: 700;
 }
 
-.bubble__booking-icon { font-size: 14px; }
+.booking .material-symbols-rounded { font-size: 16px; opacity: .8; }
+.booking__text { display: flex; flex-direction: column; min-width: 0; }
+.booking__text strong { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.booking__text small { font-size: 0.6875rem; opacity: .75; }
 
-/* La foto se ve, no se impone: a tamaño natural una imagen de móvil ocupaba
-   dos pantallas de hilo y había que hacer scroll para leer el mensaje
-   siguiente. Se pulsa para verla entera. */
-.bubble__img {
-  max-width: 100%;
-  max-height: 260px;
-  width: auto;
-  border-radius: var(--r-xs);
+/* ── Adjuntos: GipsiChatAttachment ──
+   Alto FIJO y no un máximo: el hueco mientras carga y la foto ya cargada
+   miden lo mismo, así que la lista no salta al llegar la imagen. */
+.media {
   display: block;
+  width: 100%;
+  height: 220px;
+  padding: 0;
+  border: none;
+  background: none;
   cursor: zoom-in;
-  object-fit: cover;
 }
 
-/* La burbuja con foto no necesita los 78 % de una de texto largo. */
-.bubble:has(.bubble__img) { max-width: min(340px, 78%); padding: 6px; }
-.bubble:has(.bubble__img) .bubble__meta { padding: 0 6px 2px; }
+.media__img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-/* Mientras baja la foto: un hueco con su forma, no un nombre de archivo que
-   luego salta a imagen. */
-.bubble__img-skeleton {
+.media--placeholder {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 240px;
-  max-width: 100%;
-  height: 180px;
-  border-radius: var(--r-xs);
-  background: rgba(127, 142, 137, .18);
-  color: var(--clr-text-3);
-  animation: skeleton-pulse 1.4s ease-in-out infinite alternate;
+  gap: 4px;
+  background: var(--clr-surface-hover);
+  color: var(--clr-text-2);
+  font-family: var(--ff);
+  cursor: pointer;
 }
 
-.bubble:has(.bubble__img-skeleton) { padding: 6px; }
+.media--placeholder small { font-size: 0.6875rem; font-weight: 600; }
+.media--loading { cursor: default; animation: skeleton-pulse 1.4s ease-in-out infinite alternate; }
 
-/* ── Documento ── */
+.media:focus-visible,
+.doc:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--clr-text-2); }
+
+/* El documento es una banda a sangre con el 10 % del color del texto. */
 .doc {
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 260px;
-  max-width: 100%;
-  padding: 8px 10px 8px 8px;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
   border: none;
-  border-radius: var(--r-sm);
-  background: rgba(0, 0, 0, .12);
+  background: color-mix(in srgb, currentColor 10%, transparent);
   color: inherit;
   font-family: var(--ff);
   text-align: left;
   cursor: pointer;
-  transition: background-color .2s ease;
 }
 
-.doc:hover:not(:disabled) { background: rgba(0, 0, 0, .2); }
+.doc:hover:not(:disabled) { background: color-mix(in srgb, currentColor 16%, transparent); }
 .doc:disabled { cursor: default; }
-
-.doc__icon {
-  flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #7F8E89;
-  color: #fff;
-}
-
-.doc__icon .material-symbols-rounded { font-size: 22px; }
-.doc__icon[data-kind='pdf'] { background: #E5484D; }
-.doc__icon[data-kind='doc'] { background: #3E7BFA; }
-.doc__icon[data-kind='sheet'] { background: #2F9E62; }
-.doc__icon[data-kind='zip'] { background: #B7852F; }
-.doc__icon--bad { background: var(--clr-danger); }
+.doc__icon { font-size: 22px; flex-shrink: 0; }
 
 .doc__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 
@@ -236,162 +374,173 @@
   text-overflow: ellipsis;
 }
 
-.doc__text small { font-size: 0.6875rem; font-weight: 600; opacity: .75; }
-
-.doc__action {
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, .16);
-}
-
-.doc__action .material-symbols-rounded { font-size: 18px; }
+.doc__text small { font-size: 0.6875rem; font-weight: 500; opacity: .7; }
 
 .doc__spinner {
   width: 16px;
   height: 16px;
+  flex-shrink: 0;
   border: 2px solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
   animation: spin .8s linear infinite;
 }
 
-.bubble:has(.doc) { padding: 6px; }
-.bubble:has(.doc) .bubble__meta { padding: 0 6px 2px; }
-
-.bubble__file-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  background: none;
-  padding: 0;
-  color: inherit;
-  font-family: var(--ff);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.bubble__file-btn .material-symbols-rounded { font-size: 16px; }
-
-/* ── Compositor ── */
+/* ── Compositor: GipsiChatComposer ── */
 .composer {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
-  padding: 12px 0 20px;
-}
-
-.composer__attach,
-.composer__send {
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  padding: 8px 16px 8px 8px;
   flex-shrink: 0;
 }
 
-.composer__attach { background: var(--clr-surface); color: var(--clr-text); }
-.composer__attach:hover { background: var(--clr-surface-hover); }
+.composer__attach-wrap { position: relative; flex-shrink: 0; }
 
-.composer__input {
-  flex: 1;
-  min-width: 0;
-  height: 44px;
-  padding: 0 18px;
-  border: none;
-  border-radius: var(--r-pill);
-  background: var(--clr-surface);
-  color: var(--clr-text);
-  font-family: var(--ff);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  outline: none;
-}
-
-.composer__input::placeholder { color: var(--clr-text-3); }
-
-.composer__send { background: var(--clr-mint); color: var(--clr-mint-text); }
-.composer__send:disabled { opacity: .45; cursor: not-allowed; }
-.composer__send .material-symbols-rounded { font-size: 20px; }
-
-.composer__closed {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 16px 0 24px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--clr-text-2);
-}
-
-.composer__closed .material-symbols-rounded { font-size: 16px; }
-
-.th__send-error { margin-bottom: 16px; }
-
-@media (max-width: 640px) {
-  .th { height: calc(100vh - 64px); padding: 0 16px; }
-}
-
-/* ── Foto a tamaño completo ── */
-.lightbox { z-index: 950; }
-
-.lightbox__img {
-  max-width: min(92vw, 1100px);
-  max-height: 88vh;
-  border-radius: var(--r-sm);
-  display: block;
-  object-fit: contain;
-}
-
-.lightbox__close {
-  position: fixed;
-  top: 20px;
-  right: 20px;
+/* 44×44 exactos: el mínimo táctil accesible, y además iguala el alto del
+   campo de una línea, que es lo que evita el escalón entre ellos. */
+.composer__btn {
   width: 44px;
   height: 44px;
   border: none;
   border-radius: 50%;
-  background: rgba(46, 52, 59, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color .15s ease, opacity .15s ease;
+}
+
+.composer__btn .material-symbols-rounded { font-size: 22px; }
+.composer__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+.composer__attach { background: transparent; color: var(--clr-text-2); }
+.composer__attach:hover,
+.composer__attach[aria-expanded='true'] { background: var(--clr-surface); color: var(--clr-text); }
+
+/* El relleno de TARJETA y no el de campo: se apoya sobre el suelo del hilo,
+   y el gris de campo contra él desaparecía. 16 px de letra: con menos, Safari
+   en iPhone amplía la página al enfocar. */
+.composer__field {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  max-height: 136px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: var(--r-xl);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 22px;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.composer__field::placeholder { color: var(--clr-text-2); }
+.composer__field:focus-visible { box-shadow: 0 0 0 2px var(--clr-border-hover); }
+
+/* Apagado hasta que hay texto; encendido, el acento del tema. */
+.composer__send { background: var(--clr-border); color: var(--clr-text-2); opacity: .4; }
+.composer__send:disabled { cursor: not-allowed; }
+.composer__send--on { background: var(--clr-mint); color: var(--clr-mint-text); opacity: 1; }
+.composer__send--on:hover { background: var(--clr-mint-hover); }
+
+/* ── Menú de adjuntar ── */
+.attach-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: var(--r-md);
+  background: var(--clr-surface);
+  box-shadow: var(--shadow-float);
+  animation: menu-in .14s ease both;
+}
+
+@keyframes menu-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.attach-menu__title {
+  padding: 8px 12px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--clr-text-2);
+}
+
+.attach-menu__item {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--r-xs);
+  background: none;
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: left;
   cursor: pointer;
 }
 
-/* ── Móvil: el hilo es una pantalla completa, no una sección de una página ──
-   En la app el hilo va FUERA del ShellRoute, textualmente «para que el teclado
-   y el compositor tengan todo el alto». Aquí igual: se sale del flujo y ocupa
-   la ventana entera, con lo que desaparece el cálculo de altos —era
-   `100vh - 84`, restando un header que en móvil ni se pinta— y el compositor
-   deja de quedarse por debajo del pliegue. */
+.attach-menu__item .material-symbols-rounded { font-size: 20px; color: var(--clr-text-2); }
+.attach-menu__item:hover,
+.attach-menu__item:focus-visible { background: var(--clr-surface-hover); outline: none; }
+
+/* ── Hilo cerrado: GipsiChatClosedNotice ── */
+.closed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--clr-surface);
+  box-shadow: inset 0 0.5px 0 var(--clr-border);
+  color: var(--clr-text-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  flex-shrink: 0;
+}
+
+.closed .material-symbols-rounded { font-size: 18px; flex-shrink: 0; }
+
+/* En escritorio el aviso no llega de borde a borde de la ventana: se queda
+   en su columna con las esquinas de abajo. */
+.th-layout--split .closed { margin-bottom: 16px; border-radius: var(--r-md); box-shadow: none; }
+.th-layout--split .composer { padding-bottom: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .th__avatar, .attach-menu, .media--loading, .th__more-spinner, .doc__spinner { animation: none; }
+}
+
+/* ══ Móvil: el hilo es una pantalla completa, no una sección de página ══
+   En la app el hilo va FUERA del ShellRoute, «para que el teclado y el
+   compositor tengan todo el alto». Aquí igual: se sale del flujo y ocupa la
+   ventana entera, sin barra de pestañas ni cabecera de la web. */
 @media (max-width: 1024px) {
   .th {
     position: fixed;
     inset: 0;
     z-index: 95;
-    /* dvh y no vh: en el móvil la barra del navegador se recoge al bajar y
-       con vh el compositor se quedaba tapado por ella. */
+    /* dvh y no vh: la barra del navegador se recoge al bajar y con vh el
+       compositor se quedaba tapado por ella. */
     height: 100dvh;
-    background: var(--clr-base);
+    max-width: none;
+    margin: 0;
   }
 
+  .th__head { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+  .th__scroll { padding: 8px 16px; }
+
   /* El gesto de inicio del iPhone no puede comerse el campo de escribir. */
-  .composer {
-    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  }
+  .composer { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .closed { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
 }

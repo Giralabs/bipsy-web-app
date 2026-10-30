@@ -1,0 +1,46 @@
+<div
+  #dialog
+  class="viewer"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="filename"
+  (click)="onBackdrop($event)"
+>
+  <header class="viewer__bar">
+    <button #closeBtn type="button" class="viewer__btn" (click)="closed.emit()" aria-label="Cerrar">
+      <span class="material-symbols-rounded" aria-hidden="true">close</span>
+    </button>
+    <span class="viewer__name">{{ filename }}</span>
+  </header>
+
+  <!-- Toda la pantalla recibe el gesto, no solo la foto: así se cierra
+       deslizando aunque se empiece fuera de ella, como en la app. -->
+  <div
+    class="viewer__stage"
+    [class.viewer__stage--zoomed]="zoomed"
+    (wheel)="onWheel($event)"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+    (click)="onBackdrop($event)"
+  >
+    <img
+      class="viewer__img"
+      [class.viewer__img--free]="gesturing"
+      [src]="url"
+      [alt]="filename"
+      draggable="false"
+      [style.transform]="transform"
+      [style.opacity]="opacity"
+      (click)="$event.stopPropagation()"
+    />
+  </div>
+
+  <!-- «Guardar o compartir» en la app; en el navegador, una descarga con el
+       nombre original del archivo. -->
+  <a class="viewer__download" [href]="url" [attr.download]="filename">
+    <span class="material-symbols-rounded" aria-hidden="true">download</span>
+    Descargar
+  </a>
+</div>
