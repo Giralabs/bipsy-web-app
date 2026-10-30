@@ -1,10 +1,9 @@
 @if (visible) {
   <section class="row">
     <header class="row__head">
+      <!-- El titular a secas, como `_RowShell`: con un icono en su disco
+           delante de cada fila, la portada se leía como una plantilla. -->
       <div class="row__heading">
-        @if (icon) {
-          <span class="material-symbols-rounded fill row__icon" aria-hidden="true">{{ icon }}</span>
-        }
         <div class="row__titles">
           <h2 class="row__title">{{ title }}</h2>
           @if (subtitle) {
@@ -55,7 +54,7 @@
         }
       </div>
     } @else {
-      <div class="row__scroll" #scroller appDragScroll (scroll)="onScroll()">
+      <div class="row__scroll fade-row" #scroller appDragScroll (scroll)="onScroll()">
         @for (biz of businesses; track biz.id) {
           <div class="row__item">
             <app-business-card

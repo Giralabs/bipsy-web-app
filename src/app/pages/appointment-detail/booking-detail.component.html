@@ -1,52 +1,202 @@
 <div class="page bd anim-fade-up">
   <div class="page__inner">
 
-    <button type="button" class="flow__back" (click)="goBack()">
-      <span class="material-symbols-rounded">arrow_back</span>
-      Volver
-    </button>
+    @if (desktop()) {
+      <button type="button" class="flow__back" (click)="goBack()">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        Volver
+      </button>
+    } @else {
+      <!-- La AppBar de la app: atrás y «Detalle de la cita» centrado. -->
+      <header class="mbar">
+        <button type="button" class="mbar__back" aria-label="Volver" (click)="goBack()">
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        </button>
+        <h1 class="mbar__title">Detalle de la cita</h1>
+        <span class="mbar__spacer" aria-hidden="true"></span>
+      </header>
+    }
 
     @if (isLoading) {
-      <div class="skeleton bd__skeleton-cover"></div>
+      <div class="skeleton bd__skeleton-head"></div>
       <div class="bd__layout">
         <div class="skeleton bd__skeleton-block"></div>
         <div class="skeleton bd__skeleton-block"></div>
       </div>
     } @else if (loadError || !booking) {
       <div class="empty-state">
-        <span class="material-symbols-rounded">{{ loadError?.networkError ? 'wifi_off' : 'event_busy' }}</span>
+        <span class="material-symbols-rounded" aria-hidden="true">{{ loadError?.networkError ? 'wifi_off' : 'event_busy' }}</span>
         <h3>{{ loadError?.networkError ? 'Sin conexión' : 'No hemos encontrado esta cita' }}</h3>
         <p>{{ loadError?.message }}</p>
         <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
       </div>
-    } @else {
-
-      <!-- ══════════ PORTADA ══════════ -->
-      <header class="cover">
-        <img class="cover__img" [src]="coverUrl" alt="" />
-        <span class="cover__veil" aria-hidden="true"></span>
-
-        <div class="cover__content">
-          <div class="cover__pills">
-            <app-booking-status-pill [status]="booking.status" />
-            @if (countdown) {
-              <span class="badge badge--photo">
-                <span class="material-symbols-rounded cover__pill-icon">timer</span>{{ countdown }}
+    } @else if (!desktop()) {
+      <!-- ══════════ MÓVIL: `BookingDetailScreen` tal cual ══════════ -->
+      <div class="m">
+        <button type="button" class="head" (click)="openBusiness()">
+          <span class="head__text">
+            <span class="head__row">
+              <strong class="head__name">{{ business?.name || booking.businessName || 'Cargando…' }}</strong>
+              <app-booking-status-pill [status]="booking.status" />
+            </span>
+            @if (headerAddress) {
+              <span class="head__addr">
+                <span class="material-symbols-rounded" aria-hidden="true">location_on</span>{{ headerAddress }}
               </span>
             }
-          </div>
-          <h1 class="cover__title">{{ booking.serviceName }}</h1>
-          <button type="button" class="cover__biz" (click)="openBusiness()">
-            <span class="material-symbols-rounded">storefront</span>
-            {{ business?.name || booking.businessName || 'Negocio' }}
-            <span class="material-symbols-rounded cover__biz-go">chevron_right</span>
-          </button>
+          </span>
+          <span class="material-symbols-rounded head__go" aria-hidden="true">chevron_right</span>
+        </button>
+
+        <h2 class="m__sec">Cuándo</h2>
+        <div class="m__card">
+          <p class="m__row"><span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>{{ dateLabel }}</p>
+          <p class="m__row"><span class="material-symbols-rounded" aria-hidden="true">schedule</span>{{ timeRange }}</p>
         </div>
 
-        @if (serviceImage) {
-          <img class="cover__service" [src]="serviceImage" [alt]="booking.serviceName" />
+        <!-- Solo a domicilio: en el local la dirección ya va en la tarjeta de
+             arriba, y repetirla sería decir dos veces lo mismo. -->
+        @if (atCustomer) {
+          <h2 class="m__sec">Dónde</h2>
+          <div class="m__card">
+            @if (homeAddressLine) {
+              <p class="m__row"><span class="material-symbols-rounded" aria-hidden="true">directions_car</span>{{ homeAddressLine }}</p>
+              @if (homeMapsUrl) {
+                <a class="pill-btn pill-btn--soft m__maps" [href]="homeMapsUrl" target="_blank" rel="noopener">
+                  <span class="material-symbols-rounded" aria-hidden="true">map</span>Abrir en Maps
+                </a>
+              }
+            } @else {
+              <p class="m__row"><span class="material-symbols-rounded" aria-hidden="true">directions_car</span>A domicilio</p>
+              <p class="m__muted">No tenemos guardada la dirección de esta cita. Habla con el negocio para dársela antes de la hora.</p>
+            }
+          </div>
         }
-      </header>
+
+        <h2 class="m__sec">Servicio</h2>
+        <div class="m__card">
+          <p class="m__row"><span class="material-symbols-rounded" aria-hidden="true">content_cut</span>{{ booking.serviceName }}</p>
+          @if (booking.workerName) {
+            <p class="m__row"><span class="material-symbols-rounded" aria-hidden="true">person</span>{{ booking.workerName }}</p>
+          }
+          @if (attendeeLabel) {
+            <p class="m__row"><span class="material-symbols-rounded" aria-hidden="true">group</span>{{ attendeeLabel }}</p>
+          }
+        </div>
+
+        @if (booking.notes) {
+          <h2 class="m__sec">Tus notas</h2>
+          <div class="m__card"><p class="m__text">{{ booking.notes }}</p></div>
+        }
+
+        @if (booking.status === 'CANCELED' && booking.cancelReason) {
+          <h2 class="m__sec">Motivo de cancelación</h2>
+          <p class="m__notice m__notice--warn">
+            <span class="material-symbols-rounded fill" aria-hidden="true">info</span>{{ booking.cancelReason }}
+          </p>
+        }
+
+        <!-- ══ Acciones, en el orden de `_Actions` ══ -->
+        <div class="m__actions">
+          @if (actionError) {
+            <p class="flow__error" role="alert">
+              <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ actionError }}
+            </p>
+          }
+          @if (awaiting) {
+            <app-button variant="primary" size="large" [fullWidth]="true" icon="event_available" (onClick)="goConfirm()">
+              Confirmar o rechazar
+            </app-button>
+          }
+          @if (heldNote) {
+            <p class="m__muted m__center">{{ heldNote }}</p>
+          }
+          @if (canPay) {
+            <app-button variant="primary" size="large" [fullWidth]="true" icon="credit_card" (onClick)="openPay()">
+              {{ payLabel }}
+            </app-button>
+            @if (payRequired) {
+              <p class="m__muted m__center">Esta cita necesita estar pagada para mantenerse.</p>
+            }
+          }
+          @if (myReview) {
+            <section class="m__card m__review">
+              <div class="block__head">
+                <h2 class="block__title">Tu reseña</h2>
+                <button type="button" class="block__link" [disabled]="busy" (click)="deleteReview()">Eliminar reseña</button>
+              </div>
+              <span class="bd__stars">
+                @for (filled of stars(myReview.rating); track $index) {
+                  <span class="material-symbols-rounded bd__star" aria-hidden="true" [class.fill]="filled">star</span>
+                }
+              </span>
+              @if (myReview.comment) {
+                <p class="bd__review-text">“{{ myReview.comment }}”</p>
+              }
+              @if (myReview.reply) {
+                <div class="bd__review-reply">
+                  <strong><span class="material-symbols-rounded" aria-hidden="true">storefront</span>Respuesta del negocio</strong>
+                  <p>{{ myReview.reply }}</p>
+                </div>
+              }
+            </section>
+          } @else if (canReview) {
+            <app-button variant="primary" size="large" [fullWidth]="true" icon="star" (onClick)="openReview()">
+              Dejar reseña
+            </app-button>
+          }
+          @if (chatEnabled) {
+            <app-button variant="secondary" size="large" [fullWidth]="true" icon="forum" [disabled]="busy" (onClick)="openChat()">
+              Escribir al negocio
+            </app-button>
+          }
+          @if (canCancel) {
+            <app-button variant="secondary" size="large" [fullWidth]="true" icon="edit_calendar" (onClick)="reschedule()">
+              Cambiar día u hora
+            </app-button>
+            <app-button variant="destructive" size="large" [fullWidth]="true" [icon]="willCharge ? 'credit_card' : 'cancel'" [disabled]="busy" (onClick)="cancel()">
+              {{ cancelLabel }}
+            </app-button>
+            @if (fee && willCharge) {
+              <p class="m__notice m__notice--warn">
+                <span class="material-symbols-rounded fill" aria-hidden="true">warning</span>
+                Quedan menos de {{ fee.windowHours }} h: cancelar o cambiar esta cita ahora cuesta {{ feeAmount }}.
+              </p>
+            } @else if (fee && hasPolicy && freeUntilLabel) {
+              <p class="m__notice m__notice--ok">
+                <span class="material-symbols-rounded fill" aria-hidden="true">event_available</span>
+                Cancela gratis hasta {{ freeUntilLabel }}. Después, cancelar o cambiar cuesta {{ policyAmount }} (el {{ fee.policyFeePercent }} % del servicio).
+              </p>
+            }
+          }
+        </div>
+      </div>
+    } @else {
+
+      <!-- ══════════ CABECERA ══════════
+           Sin portada, como la app: la foto ocupaba media pantalla para decir
+           de qué negocio es la cita, que el cliente ya sabe, y empujaba la hora
+           y las acciones bajo el pliegue. Toda la tarjeta lleva a la ficha. -->
+      <h1 class="bd__title">{{ booking.serviceName }}</h1>
+      <button type="button" class="head" (click)="openBusiness()">
+        <span class="head__text">
+          <span class="head__row">
+            <strong class="head__name">{{ business?.name || booking.businessName || 'Cargando…' }}</strong>
+            <app-booking-status-pill [status]="booking.status" />
+          </span>
+          @if (headerAddress) {
+            <span class="head__addr">
+              <span class="material-symbols-rounded" aria-hidden="true">location_on</span>{{ headerAddress }}
+            </span>
+          }
+          @if (countdown) {
+            <span class="head__addr">
+              <span class="material-symbols-rounded" aria-hidden="true">timer</span>{{ countdown }}
+            </span>
+          }
+        </span>
+        <span class="material-symbols-rounded head__go" aria-hidden="true">chevron_right</span>
+      </button>
 
       <div class="bd__layout">
         <div class="bd__main">
@@ -54,20 +204,20 @@
           <!-- ══════════ CUÁNDO, CUÁNTO, CON QUIÉN ══════════ -->
           <div class="tiles">
             <div class="tile-info">
-              <span class="tile-info__icon"><span class="material-symbols-rounded">calendar_today</span></span>
+              <span class="tile-info__icon"><span class="material-symbols-rounded" aria-hidden="true">calendar_today</span></span>
               <span class="tile-info__label">Día</span>
               <strong class="tile-info__value">{{ weekdayLabel }}</strong>
               <span class="tile-info__sub">{{ dayMonthLabel }}</span>
             </div>
             <div class="tile-info">
-              <span class="tile-info__icon"><span class="material-symbols-rounded">schedule</span></span>
+              <span class="tile-info__icon"><span class="material-symbols-rounded" aria-hidden="true">schedule</span></span>
               <span class="tile-info__label">Hora</span>
               <strong class="tile-info__value">{{ timeRange }}</strong>
               <span class="tile-info__sub">{{ durationLabel }}</span>
             </div>
             @if (priceLabel) {
               <div class="tile-info">
-                <span class="tile-info__icon"><span class="material-symbols-rounded">payments</span></span>
+                <span class="tile-info__icon"><span class="material-symbols-rounded" aria-hidden="true">payments</span></span>
                 <span class="tile-info__label">Precio</span>
                 <strong class="tile-info__value">{{ priceLabel }}</strong>
                 <span class="tile-info__sub">Del servicio</span>
@@ -75,51 +225,100 @@
             }
             @if (booking.workerName) {
               <div class="tile-info">
-                <span class="tile-info__icon"><span class="material-symbols-rounded">person</span></span>
+                <span class="tile-info__icon"><span class="material-symbols-rounded" aria-hidden="true">person</span></span>
                 <span class="tile-info__label">Con</span>
                 <strong class="tile-info__value">{{ booking.workerName }}</strong>
                 <span class="tile-info__sub">Profesional</span>
               </div>
             }
+            <!-- Para quién es, cuando no es para uno mismo. Junto al servicio y
+                 al profesional: es un dato de lo que se pidió. La cita sigue
+                 siendo de esta cuenta, así que no hay aviso que dar. -->
+            @if (attendeeLabel) {
+              <div class="tile-info">
+                <span class="tile-info__icon"><span class="material-symbols-rounded" aria-hidden="true">group</span></span>
+                <span class="tile-info__label">Quién va</span>
+                <strong class="tile-info__value">{{ attendeeLabel }}</strong>
+                <span class="tile-info__sub">La cita es tuya</span>
+              </div>
+            }
           </div>
 
-          <!-- ══════════ DÓNDE ══════════ -->
-          <section class="block">
-            <h2 class="block__title">Dónde</h2>
-            <div class="where">
-              <img class="where__img" [src]="coverUrl" alt="" />
-              <div class="where__text">
-                <strong>{{ business?.name || booking.businessName }}</strong>
-                @if (locationDisplay) {
-                  <span><span class="material-symbols-rounded">location_on</span>{{ locationDisplay }}</span>
+          <!-- ══════════ DÓNDE ══════════
+               A domicilio: la dirección de casa con su mapa o, si la cita no
+               la tiene guardada (las de antes de la V94), decirlo en vez de
+               dejar un hueco. En el local la dirección ya está en la cabecera:
+               aquí solo quedan las salidas. -->
+          @if (atCustomer) {
+            <section class="block">
+              <h2 class="block__title">Dónde</h2>
+              @if (homeAddressLine) {
+                <p class="where__line">
+                  <span class="material-symbols-rounded" aria-hidden="true">directions_car</span>{{ homeAddressLine }}
+                </p>
+                @if (homeMapsUrl) {
+                  <div class="where__actions">
+                    <a class="pill-btn pill-btn--soft" [href]="homeMapsUrl" target="_blank" rel="noopener">
+                      <span class="material-symbols-rounded" aria-hidden="true">map</span>Abrir en Maps
+                    </a>
+                  </div>
+                }
+              } @else {
+                <p class="where__line">
+                  <span class="material-symbols-rounded" aria-hidden="true">directions_car</span>A domicilio
+                </p>
+                <p class="where__missing">
+                  No tenemos guardada la dirección de esta cita. Habla con el negocio para dársela antes de la hora.
+                </p>
+              }
+            </section>
+          } @else if (headerAddress || directionsUrl || business?.phone) {
+            <!-- En escritorio sobra sitio: el sitio al que ir, con sus salidas,
+                 en su propio bloque en vez de dos botones sueltos. -->
+            <section class="block">
+              <h2 class="block__title">Dónde</h2>
+              @if (headerAddress) {
+                <p class="where__line">
+                  <span class="material-symbols-rounded" aria-hidden="true">storefront</span>{{ headerAddress }}
+                </p>
+              }
+              <div class="where__actions">
+                @if (directionsUrl) {
+                  <a class="pill-btn pill-btn--soft" [href]="directionsUrl" target="_blank" rel="noopener">
+                    <span class="material-symbols-rounded" aria-hidden="true">directions</span>Cómo llegar
+                  </a>
                 }
                 @if (business?.phone) {
-                  <span><span class="material-symbols-rounded">call</span>{{ business?.phone }}</span>
+                  <a class="pill-btn pill-btn--soft" [href]="'tel:' + business?.phone">
+                    <span class="material-symbols-rounded" aria-hidden="true">call</span>Llamar
+                  </a>
                 }
               </div>
-            </div>
-            <div class="where__actions">
-              @if (directionsUrl) {
-                <a class="pill-btn pill-btn--soft" [href]="directionsUrl" target="_blank" rel="noopener">
-                  <span class="material-symbols-rounded">directions</span>Cómo llegar
-                </a>
+            </section>
+          }
+
+          <!-- Lo que se pidió, en una lista: el servicio, quién lo hace y para
+               quién. Las fichas de arriba dicen cuándo y cuánto. -->
+          <section class="block">
+            <h2 class="block__title">Tu reserva</h2>
+            <dl class="facts">
+              <div class="facts__row"><dt>Servicio</dt><dd>{{ booking.serviceName }}</dd></div>
+              <div class="facts__row"><dt>Duración</dt><dd>{{ durationLabel }}</dd></div>
+              @if (booking.workerName) {
+                <div class="facts__row"><dt>Profesional</dt><dd>{{ booking.workerName }}</dd></div>
               }
-              @if (business?.phone) {
-                <a class="pill-btn pill-btn--soft" [href]="'tel:' + business?.phone">
-                  <span class="material-symbols-rounded">call</span>Llamar
-                </a>
+              @if (attendeeLabel) {
+                <div class="facts__row"><dt>Quién va</dt><dd>{{ attendeeLabel }}</dd></div>
               }
-              <button type="button" class="pill-btn pill-btn--soft" (click)="openBusiness()">
-                <span class="material-symbols-rounded">storefront</span>Ver negocio
-              </button>
-            </div>
+              <div class="facts__row"><dt>Estado</dt><dd><app-booking-status-pill [status]="booking.status" /></dd></div>
+            </dl>
           </section>
 
           @if (booking.notes) {
             <section class="block">
               <h2 class="block__title">Tus notas</h2>
               <p class="block__note">
-                <span class="material-symbols-rounded">sticky_note_2</span>{{ booking.notes }}
+                <span class="material-symbols-rounded" aria-hidden="true">sticky_note_2</span>{{ booking.notes }}
               </p>
             </section>
           }
@@ -140,7 +339,7 @@
               </div>
               <span class="bd__stars">
                 @for (filled of stars(myReview.rating); track $index) {
-                  <span class="material-symbols-rounded bd__star" [class.fill]="filled">star</span>
+                  <span class="material-symbols-rounded bd__star" aria-hidden="true" [class.fill]="filled">star</span>
                 }
               </span>
               @if (myReview.comment) {
@@ -148,7 +347,7 @@
               }
               @if (myReview.reply) {
                 <div class="bd__review-reply">
-                  <strong><span class="material-symbols-rounded">storefront</span>Respuesta del negocio</strong>
+                  <strong><span class="material-symbols-rounded" aria-hidden="true">storefront</span>Respuesta del negocio</strong>
                   <p>{{ myReview.reply }}</p>
                 </div>
               }
@@ -157,14 +356,14 @@
             <button type="button" class="ask" (click)="openReview()">
               <span class="ask__stars" aria-hidden="true">
                 @for (i of [1, 2, 3, 4, 5]; track i) {
-                  <span class="material-symbols-rounded fill">star</span>
+                  <span class="material-symbols-rounded fill" aria-hidden="true">star</span>
                 }
               </span>
               <span class="ask__text">
                 <strong>¿Qué tal te fue?</strong>
                 <span>Tu reseña ayuda a {{ business?.name || 'este negocio' }} y a quien busca dónde ir.</span>
               </span>
-              <span class="ask__go">Valorar <span class="material-symbols-rounded">arrow_forward</span></span>
+              <span class="ask__go">Valorar <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></span>
             </button>
           }
         </div>
@@ -176,59 +375,86 @@
 
             @if (actionError) {
               <p class="flow__error" role="alert">
-                <span class="material-symbols-rounded fill">error</span>{{ actionError }}
+                <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ actionError }}
               </p>
+            }
+
+            <!-- El importe ya reservado en la tarjeta: no hay nada que hacer,
+                 pero callárselo le deja buscando un cargo que no existe. -->
+            @if (heldNote) {
+              <p class="bd__pay-note">{{ heldNote }}</p>
+            }
+
+            <!-- Arriba del todo: si hay algo que pagar, es lo único urgente de
+                 esta pantalla. Debajo del resto se leería como un trámite más. -->
+            @if (canPay) {
+              <div class="bd__pay">
+                <app-button variant="primary" size="large" [fullWidth]="true" icon="credit_card" (onClick)="openPay()">
+                  {{ payLabel }}
+                </app-button>
+                @if (payRequired) {
+                  <p class="bd__pay-note">Esta cita necesita estar pagada para mantenerse.</p>
+                }
+              </div>
             }
 
             <div class="acts">
               @if (canRebook) {
                 <button type="button" class="act act--primary" (click)="rebook()">
-                  <span class="material-symbols-rounded">event_repeat</span>
+                  <span class="material-symbols-rounded" aria-hidden="true">event_repeat</span>
                   <span>Volver a reservar<small>El mismo servicio{{ booking.workerName ? ' con ' + booking.workerName : '' }}</small></span>
                 </button>
               }
 
-              <button type="button" class="act" [disabled]="busy" (click)="openChat()">
-                <span class="material-symbols-rounded">forum</span>
-                <span>Escribir al negocio<small>Pregunta lo que necesites</small></span>
-              </button>
+              @if (chatEnabled) {
+                <button type="button" class="act" [disabled]="busy" (click)="openChat()">
+                  <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+                  <span>Escribir al negocio<small>Pregunta lo que necesites</small></span>
+                </button>
+              }
 
               @if (calendarUrl) {
                 <a class="act" [href]="calendarUrl" target="_blank" rel="noopener">
-                  <span class="material-symbols-rounded">calendar_add_on</span>
+                  <span class="material-symbols-rounded" aria-hidden="true">calendar_add_on</span>
                   <span>Añadir al calendario<small>Google Calendar</small></span>
                 </a>
               }
 
               @if (canCancel) {
                 <button type="button" class="act" (click)="reschedule()">
-                  <span class="material-symbols-rounded">edit_calendar</span>
+                  <span class="material-symbols-rounded" aria-hidden="true">edit_calendar</span>
                   <span>Cambiar día u hora<small>Elige otro hueco libre</small></span>
                 </button>
 
                 <button type="button" class="act act--danger" [disabled]="busy" (click)="cancel()">
-                  <span class="material-symbols-rounded">{{ willCharge ? 'credit_card' : 'event_busy' }}</span>
+                  <span class="material-symbols-rounded" aria-hidden="true">{{ willCharge ? 'credit_card' : 'event_busy' }}</span>
                   <span>{{ cancelLabel }}<small>{{ willCharge ? 'Se cargará en tu tarjeta' : 'No se puede deshacer' }}</small></span>
                 </button>
               }
             </div>
 
             <!-- La letra pequeña de las dos acciones, no el pie de una sola. -->
+            <!-- Dos estados de lo mismo, como `_FeeNotice`: dentro de la
+                 ventana, el importe; fuera, hasta cuándo es gratis. Sin
+                 política del negocio no se dice nada: avisar de un cargo que
+                 no existe es ruido. -->
             @if (canCancel && fee) {
-              <p class="bd__fee" [class.bd__fee--warn]="willCharge">
-                <span class="material-symbols-rounded">{{ willCharge ? 'warning' : 'info' }}</span>
-                <span>
-                  @if (willCharge) {
-                    Quedan menos de {{ fee.windowHours }} h: cancelar o cambiar la cita ahora cuesta
-                    {{ feeAmount }} ({{ fee.feePercent }} % del servicio).
-                  } @else if (fee.feePercent > 0) {
-                    Cancelar es gratis hasta {{ fee.windowHours }} h antes de la cita. A partir de ahí
-                    cuesta el {{ fee.feePercent }} % del servicio.
-                  } @else {
-                    Cancelar es gratis. No se cobra nada.
-                  }
-                </span>
-              </p>
+              @if (willCharge) {
+                <p class="bd__fee bd__fee--warn">
+                  <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+                  <span>
+                    Quedan menos de {{ fee.windowHours }} h: cancelar o cambiar esta cita ahora cuesta {{ feeAmount }}.
+                  </span>
+                </p>
+              } @else if (hasPolicy && freeUntilLabel) {
+                <p class="bd__fee">
+                  <span class="material-symbols-rounded" aria-hidden="true">event_available</span>
+                  <span>
+                    Cancela gratis hasta {{ freeUntilLabel }}. Después, cancelar o cambiar cuesta
+                    {{ policyAmount }} (el {{ fee.policyFeePercent }} % del servicio).
+                  </span>
+                </p>
+              }
             }
           </div>
         </aside>
@@ -236,44 +462,81 @@
     }
   </div>
 
+  <!-- ══════════ HOJAS DE PAGO ══════════ -->
+  @if (paySheetOpen && quote && booking) {
+    <app-pay-booking-sheet
+      [quote]="quote"
+      [concept]="booking.serviceName"
+      (closed)="onPayClosed($event)"
+    ></app-pay-booking-sheet>
+  }
+
+  @if (chargeSheetOpen && fee && booking) {
+    <app-booking-charge-sheet
+      title="Cancelar cita"
+      confirmLabel="Cancelar y pagar"
+      [concept]="chargeConcept"
+      [fee]="fee"
+      [bookingId]="booking.id"
+      [onConfirm]="cancelForCharge"
+      (closed)="onChargeClosed($event)"
+    ></app-booking-charge-sheet>
+  }
+
   <!-- ══════════ HOJA DE RESEÑA ══════════ -->
   @if (reviewOpen) {
     <div class="sheet-backdrop" (click)="reviewOpen = false">
-      <div class="sheet" (click)="$event.stopPropagation()">
-        <h2 class="sheet__title">¿Qué tal fue?</h2>
-        <p class="sheet__sub">{{ booking?.serviceName }} · {{ business?.name }}</p>
+      <div
+        class="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bd-review-title"
+        (click)="$event.stopPropagation()"
+      >
+        <!-- El NEGOCIO y no el servicio en el subtítulo: la reseña es suya,
+             una por cliente y negocio. -->
+        <h2 class="sheet__title" id="bd-review-title">Deja tu reseña</h2>
+        @if (business?.name || booking?.businessName; as name) {
+          <p class="sheet__sub">{{ name }}</p>
+        }
 
-        <div class="bd__rating-picker">
+        <div class="bd__rating-picker" role="radiogroup" aria-label="Puntuación">
           @for (n of [1, 2, 3, 4, 5]; track n) {
             <button
               type="button"
+              role="radio"
               class="bd__rating-star"
               [class.bd__rating-star--on]="n <= reviewRating"
-              [attr.aria-label]="n + ' de 5'"
-              (click)="reviewRating = n"
+              [attr.aria-label]="n + (n === 1 ? ' estrella' : ' estrellas')"
+              [attr.aria-checked]="n === reviewRating"
+              (click)="setReviewRating(n)"
             >
-              <span class="material-symbols-rounded fill">star</span>
+              <span class="material-symbols-rounded fill" aria-hidden="true">star</span>
             </button>
           }
         </div>
+        <p class="bd__rating-word" [class.bd__rating-word--hint]="reviewRating === 0" aria-live="polite">
+          {{ starLabel(reviewRating) }}
+        </p>
 
         <textarea
           class="bd__review-input"
           rows="4"
-          maxlength="1000"
-          placeholder="Cuenta cómo fue (opcional)"
+          [maxlength]="commentMax"
+          aria-label="Cuéntanos más (opcional)"
+          placeholder="Qué tal fue, con el detalle que quieras."
           [(ngModel)]="reviewComment"
         ></textarea>
 
         @if (actionError) {
           <p class="flow__error" role="alert">
-            <span class="material-symbols-rounded fill">error</span>{{ actionError }}
+            <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ actionError }}
           </p>
         }
 
         <div class="sheet__actions">
           <app-button variant="primary" [fullWidth]="true" [loading]="busy" (onClick)="submitReview()">
-            Publicar reseña
+            Enviar reseña
           </app-button>
           <app-button variant="ghost" [fullWidth]="true" (onClick)="reviewOpen = false">
             Cancelar

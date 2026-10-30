@@ -1,89 +1,189 @@
-<div class="rs anim-fade-up">
-  <div class="rs__inner">
+<div class="rs">
+  <div class="rs__inner" [class.rs__inner--split]="!isLoading && !!booking && !loadError && !done">
 
     @if (isLoading) {
-      <div class="loading-state"><div class="spinner"></div><span>Cargando…</span></div>
+      <div class="rs__skel" aria-busy="true" aria-label="Cargando">
+        <div class="skeleton rs__skel-title"></div>
+        <div class="skeleton rs__skel-bar"></div>
+        <div class="skeleton rs__skel-cal"></div>
+      </div>
     } @else if (loadError || !booking) {
       <div class="empty-state">
-        <span class="material-symbols-rounded">event_busy</span>
+        <span class="material-symbols-rounded" aria-hidden="true">event_busy</span>
         <h3>No hemos encontrado esta cita</h3>
         <p>{{ loadError?.message }}</p>
       </div>
     } @else if (done) {
-      <div class="rs__done">
-        <span class="material-symbols-rounded fill rs__done-icon">check_circle</span>
-        <h1 class="flow__title">Cita cambiada</h1>
-        <p class="flow__subtitle">{{ currentWhen }}</p>
+      <section class="rs__done anim-fade-up" aria-labelledby="rs-done-title">
+        <span class="material-symbols-rounded rs__done-icon" aria-hidden="true">check_circle</span>
+        <h1 class="flow__title" id="rs-done-title">Cita cambiada</h1>
+        <p class="flow__subtitle">
+          {{ booking.serviceName }}: {{ currentWhen }}.
+          <!-- Con cargo, cómo quedó lo ha contado ya la hoja de cobro con el
+               estado real del pago; repetir aquí «se ha cobrado» sería
+               afirmar algo que puede no haber pasado. -->
+          @if (willCharge && !chargedViaSheet) {
+            Se ha cobrado {{ feeAmount }} en tu tarjeta guardada.
+          }
+        </p>
         <div class="flow__actions">
           <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToDetail()">
             Ver la cita
           </app-button>
         </div>
-      </div>
+      </section>
     } @else {
 
-      <button type="button" class="flow__back" (click)="goBack()">
-        <span class="material-symbols-rounded">arrow_back</span>
-        Volver
-      </button>
+      <div class="rs__main">
+      <app-flow-header
+        [title]="stepTitle"
+        [progress]="progress"
+        [atStart]="step === 'date'"
+        [stepNumber]="step === 'date' ? 1 : step === 'time' ? 2 : 3"
+        [stepCount]="3"
+        (back)="back()"
+      ></app-flow-header>
 
-      <h1 class="flow__title">Cambiar día u hora</h1>
-      <p class="flow__subtitle">
-        {{ booking.serviceName }}<br />
-        Ahora: {{ currentWhen }}
-      </p>
+      <div class="rs__body">
 
-      <!-- Cambiar dentro de la ventana cuesta lo mismo que cancelar. Se dice
-           antes de elegir hueco, no después. -->
-      @if (willCharge) {
-        <p class="rs__fee">
-          <span class="material-symbols-rounded fill">credit_card</span>
-          Quedan menos de {{ fee!.windowHours }} h: cambiar la cita ahora tiene un coste de
-          {{ feeAmount }} ({{ fee!.feePercent }} % del servicio).
-        </p>
-      }
+        <!-- ══════════ DÍA ══════════ -->
+        @if (step === 'date') {
+          <p class="rs__intro">
+            {{ booking.serviceName }} · Ahora: {{ currentWhen }}
+          </p>
+          <app-month-calendar
+            [first]="firstDay"
+            [last]="lastDay"
+            [selected]="day"
+            (selectedChange)="chooseDay($event)"
+          ></app-month-calendar>
+          <div class="flow__actions">
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              trailingIcon="arrow_forward"
+              [disabled]="!day"
+              (onClick)="toTime()"
+            >Siguiente</app-button>
+          </div>
+        }
 
-      <p class="rs__label">Elige un día</p>
-      <div class="rs__days">
-        @for (d of days; track d.getTime()) {
-          <button
-            type="button"
-            class="rs__day"
-            [class.rs__day--on]="day && d.getTime() === day.getTime()"
-            (click)="chooseDay(d)"
-          >
-            <span class="rs__day-label">{{ dayShort(d) }}</span>
-            <span class="rs__day-num">{{ d.getDate() }}</span>
-          </button>
+        <!-- ══════════ HORA ══════════
+             Sin lista de espera: quien cambia la hora ya tiene su cita. -->
+        @if (step === 'time') {
+          <p class="rs__intro">{{ dayLabel }}</p>
+          <app-slot-grid
+            [slots]="slots"
+            [selected]="startTime"
+            [loading]="slotsLoading"
+            [error]="slotsError"
+            [allowWaitlist]="false"
+            [hasWorkerFilter]="!!booking.workerId"
+            (pick)="chooseSlot($event)"
+            (changeDay)="step = 'date'"
+            (retry)="loadSlots()"
+          ></app-slot-grid>
+          @if (!slotsLoading && !slotsError && hasFreeSlots) {
+            <div class="flow__actions">
+              <app-button
+                variant="primary"
+                size="large"
+                [fullWidth]="true"
+                trailingIcon="arrow_forward"
+                [disabled]="!startTime"
+                (onClick)="toConfirm()"
+              >Siguiente</app-button>
+            </div>
+          }
+        }
+
+        <!-- ══════════ CONFIRMAR ══════════
+             Lo de antes tachado y lo nuevo debajo: el cambio se lee de un
+             vistazo, sin comparar dos fechas sueltas. -->
+        @if (step === 'confirm') {
+          <dl class="rs__when">
+            <div class="rs__when-row">
+              <dt>Ahora</dt>
+              <dd class="rs__when-old">{{ currentWhen }}</dd>
+            </div>
+            <span class="material-symbols-rounded rs__arrow" aria-hidden="true">south</span>
+            <div class="rs__when-row">
+              <dt>Nueva hora</dt>
+              <dd class="rs__when-new">{{ newWhen }}</dd>
+            </div>
+          </dl>
+
+          @if (feeLoading) {
+            <div class="skeleton rs__fee-skel"></div>
+          } @else {
+            <!-- Cambiar dentro de la ventana cuesta lo mismo que cancelar. -->
+            <p class="rs__fee" [class.rs__fee--charge]="willCharge" role="status">
+              @if (willCharge) {
+                Cambiar la cita ahora cuesta <strong>{{ feeAmount }}</strong>: quedan menos de
+                {{ fee!.windowHours }} h y el negocio cobra el {{ fee!.feePercent }} % del servicio.
+                Se cargará en tu tarjeta guardada.
+              } @else {
+                Cambiar la cita ahora no tiene ningún coste.
+              }
+            </p>
+          }
+
+          @if (error) {
+            <p class="flow__error" role="alert">
+              <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+            </p>
+          }
+
+          <div class="flow__actions">
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              icon="event_repeat"
+              [loading]="saving || feeLoading"
+              (onClick)="confirmOrCharge()"
+            >{{ confirmLabel }}</app-button>
+          </div>
+
+          @if (chargeSheetOpen && fee) {
+            <app-booking-charge-sheet
+              title="Cambiar la cita"
+              confirmLabel="Cambiar y pagar"
+              action="reschedule"
+              [concept]="chargeConcept"
+              [fee]="fee"
+              [bookingId]="booking.id"
+              [onConfirm]="rescheduleForCharge"
+              (closed)="onChargeClosed($event)"
+            ></app-booking-charge-sheet>
+          }
+        }
+
+        @if (error && step !== 'confirm') {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+          </p>
         }
       </div>
+      </div>
 
-      @if (day) {
-        <p class="rs__label">Elige una hora</p>
-        @if (slotsLoading) {
-          <div class="loading-state"><div class="spinner"></div><span>Buscando huecos…</span></div>
-        } @else if (availableSlots.length === 0) {
-          <div class="empty-state">
-            <span class="material-symbols-rounded">event_busy</span>
-            <h3>Sin huecos ese día</h3>
-            <p>Prueba con otra fecha.</p>
+      <!-- Escritorio: la cita que se está cambiando, siempre a la vista. En el
+           móvil no hace falta: el paso de confirmar ya enseña antes y después. -->
+      <aside class="rs__aside" aria-label="Tu cita">
+        <p class="rs__aside-label">Tu cita</p>
+        <p class="rs__aside-service">{{ booking.serviceName }}</p>
+        <p class="rs__aside-biz">{{ booking.businessName }}</p>
+        <dl class="rs__aside-list">
+          <div class="rs__aside-row">
+            <dt>Ahora</dt><dd>{{ currentWhen }}</dd>
           </div>
-        } @else {
-          <div class="rs__slots">
-            @for (slot of availableSlots; track slot.start) {
-              <button type="button" class="rs__slot" [disabled]="saving" (click)="confirm(slot)">
-                {{ slot.start }}
-              </button>
-            }
+          <div class="rs__aside-row">
+            <dt>Nueva</dt>
+            <dd [class.rs__aside-todo]="!newWhen">{{ newWhen || 'Elige día y hora' }}</dd>
           </div>
-        }
-      }
-
-      @if (error) {
-        <p class="flow__error" role="alert">
-          <span class="material-symbols-rounded fill">error</span>{{ error }}
-        </p>
-      }
+        </dl>
+      </aside>
     }
   </div>
 </div>

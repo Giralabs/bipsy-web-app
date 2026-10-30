@@ -15,9 +15,23 @@ const TIME = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digi
  * El backend manda la fecha de una cita **sin zona** (`2026-09-03T10:30:00`).
  * `new Date(...)` la interpreta como local, que es justo lo que queremos: la
  * cita es a las 10:30 en el reloj del negocio, no en UTC.
+ *
+ * Se trocea a mano en vez de pasarla a `new Date(...)` tal cual por dos
+ * trampas del parser del navegador: una fecha SOLA (`2026-09-03`, un
+ * `LocalDate`) la lee como medianoche UTC —el día anterior al oeste de
+ * Greenwich—, y Safari da `Invalid Date` con más de tres decimales en los
+ * segundos, que es lo que manda Jackson con microsegundos. Lo que lleva zona
+ * (`…Z`, un `Instant`) sí va al navegador: ahí la UTC es lo correcto.
  */
+const LOCAL_ISO = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?$/;
+
 export function parseLocal(value: string): Date {
-  return new Date(value);
+  const m = LOCAL_ISO.exec(value);
+  if (!m) {
+    return new Date(value);
+  }
+  const ms = m[7] ? Number(m[7].slice(0, 3).padEnd(3, '0')) : 0;
+  return new Date(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0), ms);
 }
 
 /** Formato relativo amable: "Hoy", "Mañana", "Mar 28 abr". */

@@ -1,0 +1,137 @@
+@if (loading && items.length === 0) {
+  <div class="list-skel" aria-busy="true" aria-label="Cargando tus direcciones">
+    <span class="skeleton"></span><span class="skeleton"></span>
+  </div>
+} @else if (loadError) {
+  <section class="card list-error">
+    <p class="card__text">No se han podido cargar tus direcciones.</p>
+    <button type="button" class="pill-btn pill-btn--soft" (click)="load()">Reintentar</button>
+  </section>
+} @else {
+  @if (items.length === 0) {
+    <!-- El vacío explica para qué sirve: nadie busca «direcciones» en su perfil
+         hasta que sabe que le ahorran teclear al reservar a domicilio. -->
+    <section class="card empty-state list-empty">
+      <span class="material-symbols-rounded" aria-hidden="true">home_work</span>
+      <h3>Aún no tienes direcciones</h3>
+      <p>Guarda las tuyas y al reservar un servicio a domicilio solo tendrás que elegirla.</p>
+    </section>
+  } @else {
+    <section class="card card--list" aria-label="Tus direcciones">
+      @for (a of items; track a.id) {
+        <button type="button" class="linkrow" (click)="openSheet(a)"
+                [attr.aria-label]="'Editar ' + title(a) + (a.isDefault ? ', por defecto' : '')">
+          <span class="card__icon" [class.card__icon--accent]="a.isDefault" aria-hidden="true">
+            <span class="material-symbols-rounded">{{ a.isDefault ? 'home' : 'location_on' }}</span>
+          </span>
+          <span class="toggle__text toggle__text--clip">
+            <strong>{{ title(a) }}</strong>
+            @if (subtitle(a)) {
+              <small>{{ subtitle(a) }}</small>
+            }
+          </span>
+          <!-- La marcada lleva el tick en el sitio del galón: aquí importa cuál
+               está elegida, y las dos señales juntas se estorban. -->
+          @if (a.isDefault) {
+            <span class="material-symbols-rounded card__icon--accent" aria-hidden="true">check</span>
+          } @else {
+            <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+          }
+        </button>
+      }
+    </section>
+    <p class="pane__foot">
+      {{ full ? 'Has llegado al máximo de 5. Borra una para añadir otra.' : 'La marcada sale ya elegida al reservar a domicilio.' }}
+    </p>
+  }
+
+  <!-- Apagado en el tope, y el pie dice por qué: un botón que responde con un
+       error es peor que uno apagado que se explica. -->
+  <div class="list-add">
+    <button type="button" class="pill-btn" [disabled]="full" (click)="openNew()">
+      <span class="material-symbols-rounded" aria-hidden="true">add</span>Añadir dirección
+    </button>
+  </div>
+}
+
+@if (sheetOpen) {
+  <div class="sheet-backdrop" (click)="closeSheet()">
+    <div class="sheet sheet--form" role="dialog" aria-modal="true" aria-labelledby="addr-sheet-title"
+         (click)="$event.stopPropagation()">
+      <header class="sheet__head">
+        <h2 class="sheet__title" id="addr-sheet-title">{{ editing ? 'Editar dirección' : 'Nueva dirección' }}</h2>
+        <button type="button" class="sheet__close" aria-label="Cerrar sin guardar" [disabled]="busy" (click)="closeSheet()">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </header>
+
+      <form (ngSubmit)="save()">
+        <div class="form-group">
+          <div class="form-group__box">
+            <label class="form-row form-row--stack">
+              <span class="form-row__label">Nombre (opcional)</span>
+              <input class="form-row__input" type="text" name="label" maxlength="60" placeholder="Ej. Casa, Trabajo"
+                     [(ngModel)]="formLabel" [disabled]="busy" />
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group__box">
+            <!-- El mismo buscador que al reservar: elegir de la lista trae la
+                 ciudad, el código postal y el punto del mapa, que es lo que
+                 luego deja avisar de si un negocio llega hasta allí. -->
+            <app-address-street-field
+              inputId="addr-street"
+              [stacked]="true"
+              [value]="formStreet"
+              [disabled]="busy"
+              (valueChange)="formStreet = $event"
+              (resolved)="onResolved($event)"
+            />
+            <label class="form-row form-row--stack">
+              <span class="form-row__label">Piso, puerta, timbre</span>
+              <input class="form-row__input" type="text" name="details" maxlength="120"
+                     autocomplete="address-line2" placeholder="Ej. 3º B"
+                     [(ngModel)]="formDetails" [disabled]="busy" />
+            </label>
+            <label class="form-row form-row--stack">
+              <span class="form-row__label">Código postal</span>
+              <input class="form-row__input" type="text" name="postal" maxlength="10" inputmode="numeric"
+                     autocomplete="postal-code" [(ngModel)]="formPostalCode" [disabled]="busy" />
+            </label>
+            <label class="form-row form-row--stack">
+              <span class="form-row__label">Ciudad</span>
+              <input class="form-row__input" type="text" name="city" maxlength="100" required
+                     autocomplete="address-level2" [(ngModel)]="formCity" [disabled]="busy" />
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-group__box">
+            <label class="form-row form-row__switch">
+              <span class="form-row__label">Usar esta por defecto</span>
+              <input type="checkbox" class="switch" role="switch" name="default"
+                     [(ngModel)]="formDefault" [disabled]="busy || defaultLocked" />
+            </label>
+          </div>
+          @if (defaultLocked) {
+            <p class="form-group__footer">Para cambiarla, marca otra como la de por defecto.</p>
+          }
+        </div>
+
+        @if (sheetError) {
+          <p class="sheet__error" role="alert">{{ sheetError }}</p>
+        }
+
+        <div class="sheet__buttons">
+          <button type="submit" class="pill-btn" [disabled]="!canSave">{{ busy ? 'Guardando…' : 'Guardar' }}</button>
+          @if (editing) {
+            <button type="button" class="pill-btn pill-btn--danger" [disabled]="busy" (click)="remove()">Borrar dirección</button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,171 +1,273 @@
-<div class="th">
-  <!-- La cabecera abre el negocio: es lo que se busca al mirar con quién se
-       está hablando. -->
-  <header class="th__head">
-    <button type="button" class="th__back" (click)="goBack()" aria-label="Volver">
-      <span class="material-symbols-rounded">arrow_back</span>
-    </button>
-    <button type="button" class="th__who" (click)="openBusiness()">
-      <strong>{{ conversation?.otherPartyName || 'Conversación' }}</strong>
-      <small>Ver negocio</small>
-    </button>
-  </header>
+<div class="th-layout" [class.th-layout--split]="desktop()">
 
-  @if (isLoading) {
-    <div class="loading-state"><div class="spinner"></div><span>Cargando…</span></div>
-  } @else if (loadError) {
-    <div class="empty-state">
-      <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
-      <h3>No hemos podido abrir la conversación</h3>
-      <p>{{ loadError.message }}</p>
-      <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
-    </div>
-  } @else {
-    <div class="th__scroll" #scroller>
-      @if (messages.length === 0) {
-        <p class="th__empty">Escríbele al negocio: te contestará por aquí.</p>
-      }
+  <!-- Escritorio: la bandeja a la izquierda, como cualquier cliente de
+       mensajería con pantalla grande. Saltar de un hilo a otro no obliga a
+       volver atrás. En el móvil ni se crea. -->
+  @if (desktop()) {
+    <nav class="th-side" aria-label="Conversaciones">
+      <h2 class="th-side__title">Mensajes</h2>
+      <div class="th-side__list">
+        <app-chat-conversation-list
+          [conversations]="inbox"
+          [loading]="inboxLoading"
+          [activeId]="conversationId"
+        />
+      </div>
+    </nav>
+  }
 
-      @for (m of messages; track m.id; let i = $index) {
-        @if (daySeparator(i); as day) {
-          <p class="th__day">{{ day }}</p>
-        }
-
-        @if (m.kind === 'SYSTEM') {
-          <p class="th__system">{{ m.body }}</p>
+  <section class="th" aria-labelledby="th-title">
+    <!-- La cabecera abre el negocio: es lo que se busca al mirar con quién se
+         está hablando. -->
+    <header class="th__head">
+      <button type="button" class="th__back" (click)="goBack()" aria-label="Volver">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back_ios_new</span>
+      </button>
+      <!-- La cara de quien atiende: si contesta un trabajador, su foto y «Te
+           atiende Marta» debajo del negocio —sin esa línea, una cara nueva sin
+           explicar parece otro chat—. Si contesta el dueño, la del negocio. -->
+      <button
+        type="button"
+        class="th__who"
+        (click)="openBusiness()"
+        [disabled]="!conversation"
+        [attr.aria-label]="conversation ? 'Ver ' + conversation.otherPartyName : null"
+      >
+        @if (handler; as h) {
+          <app-avatar class="th__avatar" [name]="h.name" [photoUrl]="h.imageUrl" [size]="36" />
         } @else {
-          <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
-            <div class="bubble" [class.bubble--mine]="isMine(m)" [class.bubble--failed]="m.failed">
-              @if (m.booking) {
-                <p class="bubble__booking">
-                  <span class="material-symbols-rounded bubble__booking-icon">event</span>
-                  {{ m.booking.serviceName }}
-                </p>
-              }
+          <app-avatar class="th__avatar" [name]="conversation?.otherPartyName ?? null"
+                      [photoUrl]="conversation?.otherPartyImageUrl" [size]="36" />
+        }
+        <span class="th__names">
+          <strong id="th-title">{{ conversation?.otherPartyName || 'Conversación' }}</strong>
+          @if (handler; as h) {
+            <span class="th__handler">Te atiende {{ firstName(h.name) }}</span>
+          }
+        </span>
+      </button>
+    </header>
 
-              @if (m.attachment) {
-                <!-- Una foto se pinta como foto; cualquier otra cosa, como
-                     documento. Antes todo adjunto bajado acababa en un <img>
-                     y un PDF se quedaba en icono de imagen rota. -->
-                @if (isImage(m)) {
-                  @if (attachmentUrls.get(m.id); as url) {
-                    <img
-                      class="bubble__img"
-                      [src]="url"
-                      [alt]="m.attachment.filename"
-                      (click)="openImage(m)"
-                    />
-                  } @else if (failedAttachments.has(m.id)) {
-                    <button type="button" class="doc" (click)="retryAttachment(m)">
-                      <span class="doc__icon doc__icon--bad"><span class="material-symbols-rounded">broken_image</span></span>
-                      <span class="doc__text">
-                        <strong>{{ m.attachment.filename }}</strong>
-                        <small>No se ha podido cargar · Reintentar</small>
-                      </span>
-                    </button>
-                  } @else {
-                    <span class="bubble__img-skeleton" aria-label="Cargando imagen">
-                      <span class="material-symbols-rounded">image</span>
-                    </span>
-                  }
-                } @else {
-                  <button type="button" class="doc" [disabled]="m.pending || downloading.has(m.id)" (click)="openDocument(m)">
-                    <span class="doc__icon" [attr.data-kind]="docKind(m)">
-                      <span class="material-symbols-rounded">{{ docIcon(m) }}</span>
-                    </span>
-                    <span class="doc__text">
-                      <strong>{{ m.attachment.filename }}</strong>
-                      <small>{{ docMeta(m) }}</small>
-                    </span>
-                    <span class="doc__action">
-                      @if (m.pending || downloading.has(m.id)) {
-                        <span class="doc__spinner"></span>
-                      } @else {
-                        <span class="material-symbols-rounded">download</span>
-                      }
-                    </span>
-                  </button>
-                }
-              }
-
-              @if (m.body) {
-                <p class="bubble__text">{{ m.body }}</p>
-              }
-
-              <span class="bubble__meta">
-                <span class="bubble__time">{{ stamp(m) }}</span>
-                <!-- Los tics, solo en los míos y como en la app: reloj
-                     mientras sale, uno al llegar al servidor, dos al llegar
-                     al negocio y dos en azul cuando lo ha leído. -->
-                @if (isMine(m)) {
-                  @switch (delivery(m)) {
-                    @case ('pending') {
-                      <span class="material-symbols-rounded bubble__tick" title="Enviando">schedule</span>
-                    }
-                    @case ('failed') {
-                      <span class="material-symbols-rounded bubble__tick bubble__tick--bad" title="No se ha enviado">error</span>
-                    }
-                    @case ('sent') {
-                      <span class="material-symbols-rounded bubble__tick" title="Enviado">check</span>
-                    }
-                    @case ('delivered') {
-                      <span class="material-symbols-rounded bubble__tick" title="Entregado">done_all</span>
-                    }
-                    @case ('read') {
-                      <span class="material-symbols-rounded bubble__tick bubble__tick--read" title="Leído">done_all</span>
-                    }
-                  }
-                }
-              </span>
-            </div>
+    @if (isLoading) {
+      <!-- Esqueleto con forma de hilo: burbujas a un lado y a otro. Un spinner
+           en mitad de la pantalla no anticipaba nada. -->
+      <div class="th__scroll th__scroll--skeleton" aria-busy="true" aria-label="Cargando la conversación">
+        @for (b of skeletonBubbles; track $index) {
+          <div class="bubble-row" [class.bubble-row--mine]="b.mine">
+            <span class="skeleton skel-bubble" [style.width.%]="b.w"></span>
           </div>
         }
-      }
-    </div>
-
-    <!-- El derecho a escribir caduca: sin cita viva el hilo queda de solo
-         lectura, y lo decide el servidor. -->
-    @if (canWrite) {
-      <form class="composer" (submit)="send(); $event.preventDefault()">
-        <label class="composer__attach" [attr.aria-disabled]="sending">
-          <span class="material-symbols-rounded">add</span>
-          <input type="file" hidden (change)="sendFile($event)" [disabled]="sending" />
-        </label>
-        <input
-          class="composer__input"
-          type="text"
-          maxlength="2000"
-          placeholder="Escribe un mensaje…"
-          [(ngModel)]="draft"
-          name="draft"
-          [disabled]="sending"
-        />
-        <button type="submit" class="composer__send" [disabled]="sending || !draft.trim()" aria-label="Enviar">
-          <span class="material-symbols-rounded fill">send</span>
-        </button>
-      </form>
+      </div>
+    } @else if (loadError) {
+      <div class="th__state empty-state">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+        <h3>No hemos podido abrir la conversación.</h3>
+        <p>{{ loadError.message }}</p>
+        <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+      </div>
+    } @else if (messages.length === 0) {
+      <div class="th__state empty-state">
+        <span class="material-symbols-rounded" aria-hidden="true">chat_bubble</span>
+        <h3>Escribe el primer mensaje</h3>
+        <p>Aquí verás la conversación con este negocio.</p>
+      </div>
     } @else {
-      <p class="composer__closed">
-        <span class="material-symbols-rounded">lock</span>
-        Esta conversación está cerrada. Reserva de nuevo para volver a escribir.
-      </p>
+      <div class="th__scroll" #scroller (scroll)="onScroll()" tabindex="0" aria-label="Mensajes">
+        @if (loadingMore) {
+          <div class="th__more" role="status" aria-label="Cargando mensajes anteriores">
+            <span class="th__more-spinner"></span>
+          </div>
+        }
+
+        @for (m of messages; track trackKey(m); let i = $index) {
+          @if (daySeparator(i); as day) {
+            <p class="day"><span>{{ day }}</span></p>
+          }
+
+          @if (m.kind === 'SYSTEM') {
+            <p class="system"><span>{{ m.body }}</span></p>
+          } @else {
+            <div class="bubble-row" [class.bubble-row--mine]="isMine(m)">
+              <div
+                class="bubble"
+                [class.bubble--mine]="isMine(m)"
+                [class.bubble--pending]="m.pending"
+                [class.bubble--media]="m.attachment"
+              >
+                @if (m.attachment) {
+                  <!-- El adjunto va A SANGRE: sin margen, pegado a los bordes,
+                       y es la burbuja la que lo recorta con sus esquinas. -->
+                  @if (isImage(m)) {
+                    @if (attachmentUrls.get(m.id); as url) {
+                      <button type="button" class="media" (click)="openImage(m)"
+                              [attr.aria-label]="'Ver ' + m.attachment.filename">
+                        <img class="media__img" [src]="url" alt="" />
+                      </button>
+                    } @else if (failedAttachments.has(m.id)) {
+                      <button type="button" class="media media--placeholder" (click)="retryAttachment(m)">
+                        <span class="material-symbols-rounded" aria-hidden="true">broken_image</span>
+                        <small>No se pudo cargar · Reintentar</small>
+                      </button>
+                    } @else {
+                      <span class="media media--placeholder media--loading" role="img" aria-label="Cargando imagen">
+                        <span class="material-symbols-rounded" aria-hidden="true">image</span>
+                      </span>
+                    }
+                  } @else {
+                    <button type="button" class="doc" [disabled]="m.id <= 0 || downloading.has(m.id)"
+                            (click)="openDocument(m)" [attr.aria-label]="'Abrir ' + m.attachment.filename">
+                      <span class="material-symbols-rounded doc__icon" aria-hidden="true">{{ docIcon(m) }}</span>
+                      <span class="doc__text">
+                        <strong>{{ m.attachment.filename }}</strong>
+                        <small>{{ docMeta(m) }}</small>
+                      </span>
+                      @if (downloading.has(m.id)) {
+                        <span class="doc__spinner" aria-hidden="true"></span>
+                      }
+                    </button>
+                  }
+                }
+
+                <div class="bubble__body">
+                  @if (m.booking) {
+                    <p class="booking">
+                      <span class="material-symbols-rounded" aria-hidden="true">event</span>
+                      <span class="booking__text">
+                        <strong>{{ m.booking.serviceName }}</strong>
+                        <small>{{ bookingWhen(m.booking.startDateTime) }}</small>
+                      </span>
+                    </p>
+                  }
+
+                  <!-- El pie va DENTRO del párrafo: un hueco del ancho del pie al
+                       final del texto y el pie posicionado encima. Así cae a la
+                       derecha de la última línea si cabe y baja solo si no,
+                       como en WhatsApp. -->
+                  @if (m.body) {
+                    <p class="bubble__text">{{ m.body }}<span
+                      class="bubble__spacer"
+                      [class.bubble__spacer--mine]="isMine(m)"
+                      [class.bubble__spacer--failed]="m.failed"
+                      aria-hidden="true"></span></p>
+                  }
+
+                  <span class="meta" [class.meta--inline]="!!m.body">
+                    @if (m.failed) {
+                      <button type="button" class="meta__retry" (click)="retry(m)" aria-label="No se ha enviado. Reintentar">
+                        <span class="material-symbols-rounded" aria-hidden="true">error</span>
+                        Reintentar
+                      </button>
+                    } @else {
+                      <span class="meta__time">{{ stamp(m) }}</span>
+                      <!-- Los tics, solo en los míos: reloj mientras sale, uno
+                           al llegar al servidor, dos al llegar al negocio y dos
+                           en azul cuando lo ha leído. -->
+                      @if (isMine(m)) {
+                        @switch (delivery(m)) {
+                          @case ('pending') {
+                            <span class="material-symbols-rounded meta__tick" role="img" aria-label="Enviando">schedule</span>
+                          }
+                          @case ('sent') {
+                            <span class="material-symbols-rounded meta__tick" role="img" aria-label="Enviado">check</span>
+                          }
+                          @case ('delivered') {
+                            <span class="material-symbols-rounded meta__tick" role="img" aria-label="Entregado">done_all</span>
+                          }
+                          @case ('read') {
+                            <span class="material-symbols-rounded meta__tick meta__tick--read" role="img" aria-label="Leído">done_all</span>
+                          }
+                        }
+                      }
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
     }
 
-    @if (sendError) {
-      <p class="flow__error th__send-error" role="alert">
-        <span class="material-symbols-rounded fill">error</span>{{ sendError }}
-      </p>
+    <!-- Lo que entra mientras se mira, para el lector de pantalla. Va aparte y
+         no en la lista: una región viva sobre la lista leería también cada
+         página vieja que se carga al subir. -->
+    <p class="sr-only" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
+
+    @if (!isLoading && !loadError) {
+      <!-- El derecho a escribir caduca: sin cita viva el hilo queda de solo
+           lectura, y lo decide el servidor. En vez de dejar escribir y devolver
+           un 403, el campo se sustituye por la explicación. -->
+      @if (canWrite) {
+        <form class="composer" (submit)="send(); $event.preventDefault()">
+          <div class="composer__attach-wrap">
+            <button
+              #attachBtn
+              type="button"
+              class="composer__btn composer__attach"
+              (click)="toggleAttach()"
+              aria-label="Adjuntar"
+              title="Adjuntar"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="attachOpen"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">add</span>
+            </button>
+            @if (attachOpen) {
+              <div class="attach-menu" role="menu" aria-label="Adjuntar" (keydown)="onMenuKey($event)">
+                <p class="attach-menu__title" aria-hidden="true">Adjuntar</p>
+                <!-- Las tres de la app en el móvil: cámara, galería y documento.
+                     En el ordenador no hay cámara a mano y queda «Elegir foto». -->
+                @if (canUseCamera) {
+                  <button type="button" role="menuitem" class="attach-menu__item" (click)="pick('camera')">
+                    <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                    Hacer una foto
+                  </button>
+                }
+                <button type="button" role="menuitem" class="attach-menu__item" (click)="pick('photo')">
+                  <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
+                  {{ canUseCamera ? 'Elegir de la galería' : 'Elegir foto' }}
+                </button>
+                <button type="button" role="menuitem" class="attach-menu__item" (click)="pick('document')">
+                  <span class="material-symbols-rounded" aria-hidden="true">description</span>
+                  Documento
+                </button>
+              </div>
+            }
+            <input #photoInput type="file" accept="image/*" hidden (change)="sendFile($event)" />
+            <input #cameraInput type="file" accept="image/*" capture="environment" hidden (change)="sendFile($event)" />
+            <input #docInput type="file" [accept]="documentAccept" hidden (change)="sendFile($event)" />
+          </div>
+
+          <label class="sr-only" for="chat-field">Mensaje</label>
+          <textarea
+            #field
+            id="chat-field"
+            class="composer__field"
+            rows="1"
+            maxlength="4000"
+            placeholder="Escribe un mensaje"
+            autocomplete="off"
+            [(ngModel)]="draft"
+            name="draft"
+            (input)="autoGrow()"
+            (keydown)="onFieldKey($event)"
+          ></textarea>
+
+          <button type="submit" class="composer__btn composer__send" [class.composer__send--on]="canSend"
+                  [disabled]="!canSend" aria-label="Enviar">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span>
+          </button>
+        </form>
+      } @else {
+        <p class="closed">
+          <span class="material-symbols-rounded" aria-hidden="true">lock</span>
+          <span>Esta conversación está cerrada. Reserva otra vez para volver a escribir al negocio.</span>
+        </p>
+      }
     }
-  }
+  </section>
 </div>
 
-<!-- La foto a tamaño completo. Se cierra tocando fuera, que es lo que se
-     intenta primero. -->
-@if (lightbox) {
-  <div class="sheet-backdrop lightbox" (click)="lightbox = null">
-    <img class="lightbox__img" [src]="lightbox" alt="" />
-    <button type="button" class="lightbox__close" aria-label="Cerrar">
-      <span class="material-symbols-rounded">close</span>
-    </button>
-  </div>
+@if (viewer; as v) {
+  <app-chat-viewer [url]="v.url" [filename]="v.filename" (closed)="viewer = null" />
 }

@@ -1,78 +1,57 @@
-<header class="navbar">
+<!-- La única cabecera de escritorio. Antes eran dos —esta y otra fija con el
+     buscador que la tapaba al bajar—, y al hacer scroll la página cambiaba de
+     cabecera sin avisar. -->
+<header class="navbar" [class.navbar--scrolled]="scrolled">
   <div class="navbar-inner">
-    <!-- Logo -->
-    <a routerLink="/" class="navbar-logo">
-      <img
-        src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
-        alt="Bipsy"
-        class="navbar-logo-img logo-mint"
-      />
-      <img
-        src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
-        alt="Bipsy"
-        class="navbar-logo-img logo-carbon"
-      />
+    <a routerLink="/" class="navbar-logo" aria-label="Bipsy · inicio">
+      <picture>
+        <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-horizontal-carbon.webp" />
+        <img src="assets_web/bipsy-horizontal-mint.webp" alt="" class="navbar-logo-img" width="115" height="32" />
+      </picture>
     </a>
 
-    <!-- Nav links — pill container (matches Flutter bottom nav style on web) -->
-    @if (currentUser) {
-      <nav class="nav-links" aria-label="Navegación principal">
-        <a
-          routerLink="/"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }"
-          class="nav-link"
-        >
-          <span class="material-symbols-rounded nav-icon">explore</span>
-          <span>Explorar</span>
-        </a>
-        <a routerLink="/citas" routerLinkActive="active" class="nav-link">
-          <span class="material-symbols-rounded nav-icon">schedule</span>
-          <span>Mis citas</span>
-        </a>
-        <a routerLink="/mensajes" routerLinkActive="active" class="nav-link">
-          <span class="material-symbols-rounded nav-icon">chat_bubble</span>
-          <span>Chat</span>
-          @if (unread > 0) {
-            <span class="nav-badge">{{ unread }}</span>
-          }
-        </a>
-      </nav>
-    }
+    <!-- El buscador: siempre, salvo en lo alto de la portada, donde ya está
+         el grande del héroe y dos buscadores a la vez sobraban. -->
+    <div class="navbar-search" [class.navbar-search--on]="showSearch" [attr.aria-hidden]="!showSearch"
+         [attr.inert]="showSearch ? null : ''">
+      <app-search-bar />
+    </div>
 
-    <!-- User zone -->
     <div class="navbar-user">
       @if (currentUser) {
-        <a routerLink="/ajustes" class="user-badge" title="Ajustes">
+        <!-- Las tres pestañas de la app. -->
+        <nav class="nav-links" aria-label="Navegación principal">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">
+            <span class="material-symbols-rounded nav-icon">explore</span>
+            <span class="nav-label">Explorar</span>
+          </a>
+          <a routerLink="/citas" routerLinkActive="active" class="nav-link">
+            <span class="material-symbols-rounded nav-icon">schedule</span>
+            <span class="nav-label">Mis citas</span>
+          </a>
+          <a routerLink="/mensajes" routerLinkActive="active" class="nav-link">
+            <span class="material-symbols-rounded nav-icon">chat_bubble</span>
+            <span class="nav-label">Chat</span>
+            @if (unread > 0) {
+              <span class="nav-badge" [attr.aria-label]="unread + ' sin leer'">{{ unread }}</span>
+            }
+          </a>
+        </nav>
+
+        <a routerLink="/ajustes" class="user-badge" routerLinkActive="user-badge--active"
+           [attr.aria-label]="'Ajustes de ' + (currentUser.name || 'tu cuenta')">
           @if (currentUser.profileImageUrl) {
             <img class="user-avatar-img" [src]="currentUser.profileImageUrl" alt="" />
           } @else {
             <span class="user-avatar">{{ currentUser.initials || "U" }}</span>
           }
-          <span class="user-name-label">{{ currentUser.name?.split(" ")?.at(0) ?? "" }}</span>
         </a>
       } @else {
-        <app-button
-          variant="secondary"
-          [fullWidth]="true"
-          style="width: 138px"
-          (onClick)="goToLogin()"
-        >
-          Iniciar sesión
-        </app-button>
-        <app-button
-          variant="primary"
-          [fullWidth]="true"
-          style="width: 138px"
-          (onClick)="goToRegister()"
-        >
-          Registrarse
-        </app-button>
-        <span class="nav-divider"></span>
-        <a class="biz-promo-link" (click)="onBizPromoClick()">
-          <span class="material-symbols-rounded" style="font-size: 18px; color: var(--clr-mint); margin-right: 6px;">storefront</span>
+        <button type="button" class="biz-promo-link" (click)="onBizPromoClick()">
           ¿Tienes un negocio?
-        </a>
+        </button>
+        <button type="button" class="nav-btn" (click)="goToLogin()">Iniciar sesión</button>
+        <button type="button" class="nav-btn nav-btn--primary" (click)="goToRegister()">Crear cuenta</button>
       }
     </div>
   </div>

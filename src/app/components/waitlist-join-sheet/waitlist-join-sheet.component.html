@@ -1,0 +1,141 @@
+<div class="sheet-backdrop" (click)="close()">
+  <div
+    #panel
+    class="sheet wj"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="wj-title"
+    aria-describedby="wj-sub"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="sheet__head wj__head">
+      <div class="wj__titles">
+        <h2 class="sheet__title" id="wj-title">Lista de espera</h2>
+        <p class="wj__sub" id="wj-sub">{{ service.name }}</p>
+      </div>
+      <button type="button" class="wj__close" aria-label="Cerrar" [disabled]="sending" (click)="close()">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <!-- Lo que se rellena corre por dentro; el botón de apuntarse se queda fijo
+         abajo. Con la hoja larga, el botón caía bajo el pliegue y parecía que
+         no había forma de apuntarse. -->
+    <div class="wj__body">
+      <!-- ══════════ CUÁNDO ══════════ -->
+      <section class="wj__section" aria-labelledby="wj-when">
+        <h3 class="wj__header" id="wj-when">Cuándo te viene bien</h3>
+        <div class="wj__box">
+          <button
+            type="button"
+            class="wj__row"
+            aria-controls="wj-cal-from"
+            [attr.aria-expanded]="picking === 'from'"
+            (click)="togglePicker('from')"
+          >
+            <span class="wj__row-title">Desde</span>
+            <span class="wj__row-value">{{ fromLabel }}</span>
+            <span class="material-symbols-rounded wj__chev" [class.wj__chev--open]="picking === 'from'" aria-hidden="true">chevron_right</span>
+          </button>
+          @if (picking === 'from') {
+            <div class="wj__cal" id="wj-cal-from">
+              <app-month-calendar [first]="today" [last]="maxDate" [selected]="from" (selectedChange)="pickFrom($event)" />
+            </div>
+          }
+          <button
+            type="button"
+            class="wj__row"
+            aria-controls="wj-cal-to"
+            [attr.aria-expanded]="picking === 'to'"
+            (click)="togglePicker('to')"
+          >
+            <span class="wj__row-title">Hasta</span>
+            <span class="wj__row-value">{{ toLabel }}</span>
+            <span class="material-symbols-rounded wj__chev" [class.wj__chev--open]="picking === 'to'" aria-hidden="true">chevron_right</span>
+          </button>
+          @if (picking === 'to') {
+            <div class="wj__cal" id="wj-cal-to">
+              <app-month-calendar [first]="from" [last]="maxDate" [selected]="to" (selectedChange)="pickTo($event)" />
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- ══════════ A QUÉ HORAS ══════════ -->
+      <section class="wj__section" aria-labelledby="wj-bands">
+        <h3 class="wj__header" id="wj-bands">A qué horas</h3>
+        <div class="wj__box">
+          @for (b of bands; track b.band) {
+            <button
+              type="button"
+              class="wj__row"
+              role="checkbox"
+              [attr.aria-checked]="isBandOn(b.band)"
+              (click)="toggleBand(b.band)"
+            >
+              <span class="wj__row-main">
+                <span class="wj__row-title">{{ b.label }}</span>
+                <span class="wj__row-sub">{{ b.range }}</span>
+              </span>
+              <span class="material-symbols-rounded wj__tick" aria-hidden="true">{{ isBandOn(b.band) ? 'check' : '' }}</span>
+            </button>
+          }
+        </div>
+        @if (selectedBands.size === 0) {
+          <p class="form-group__footer">Sin marcar nada te avisamos de cualquier hueco.</p>
+        }
+      </section>
+
+      <!-- ══════════ CON QUIÉN ══════════ -->
+      @if (workers.length > 1) {
+        <section class="wj__section" aria-labelledby="wj-who">
+          <h3 class="wj__header" id="wj-who">Con quién</h3>
+          <div class="wj__box" role="group" aria-labelledby="wj-who">
+            <button type="button" class="wj__row" [attr.aria-pressed]="workerId === undefined" (click)="chooseWorker(undefined)">
+              <span class="wj__row-title wj__row-grow">Cualquiera</span>
+              <span class="material-symbols-rounded wj__tick" aria-hidden="true">{{ workerId === undefined ? 'check' : '' }}</span>
+            </button>
+            @for (w of workers; track w.id) {
+              <button type="button" class="wj__row" [attr.aria-pressed]="workerId === w.id" (click)="chooseWorker(w.id)">
+                <span class="wj__row-title wj__row-grow">{{ w.name }}</span>
+                <span class="material-symbols-rounded wj__tick" aria-hidden="true">{{ workerId === w.id ? 'check' : '' }}</span>
+              </button>
+            }
+          </div>
+          <p class="form-group__footer">Con «cualquiera» te avisamos de más huecos.</p>
+        </section>
+      }
+
+      <!-- ══════════ NOTA ══════════ -->
+      <section class="wj__section">
+        <h3 class="wj__header"><label for="wj-notes">Nota para el negocio</label></h3>
+        <div class="wj__box">
+          <textarea
+            id="wj-notes"
+            class="wj__notes"
+            rows="3"
+            placeholder="Algo que deban saber"
+            aria-describedby="wj-notes-help"
+            [maxlength]="notesMax"
+            [disabled]="sending"
+            [(ngModel)]="notes"
+          ></textarea>
+        </div>
+        <p class="form-group__footer" id="wj-notes-help">Opcional. Lo verá al mirar su lista.</p>
+      </section>
+    </div>
+
+    <div class="wj__foot">
+      @if (error) {
+        <p class="flow__error" role="alert">
+          <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+        </p>
+      }
+      <app-button variant="primary" size="large" [fullWidth]="true" [loading]="sending" (onClick)="submit()">
+        Apuntarme a la lista
+      </app-button>
+      <p class="wj__fine">Te avisaremos si se libera un hueco que te encaje. Puedes salirte cuando quieras.</p>
+    </div>
+  </div>
+</div>

@@ -1,16 +1,24 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../core/api-error';
 import { SessionService } from '../../core/session.service';
 import { BipsyService } from '../../services/bipsy.service';
 import { BookingResponse, bookingPrice, isBookingActive } from '../../models/bipsy.models';
+import { isAwaitingCustomer } from '../../models/confirm.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { SegmentedComponent } from '../../components/segmented/segmented.component';
 import { BookingCardComponent } from '../../components/booking-card/booking-card.component';
 import { WaitlistSummaryComponent } from '../../components/waitlist/waitlist-summary.component';
 import { capitalize, euros, parseLocal, relativeDate, time } from '../../shared/dates';
+import { bookingCountdown } from '../../shared/booking-countdown';
 import { businessBookingPath } from '../../shared/slug';
+import { PaymentRequestGateService } from '../../components/payment-request-gate/payment-request-gate.service';
+import { DeadlineCountdownComponent } from '../../components/deadline-countdown/deadline-countdown.component';
+import { PendingPaymentRequest } from '../../models/payments-extras.models';
+import { BreakpointService } from '../../core/breakpoint.service';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
 
 const MONTH_YEAR = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' });
 const MONTH_SHORT = new Intl.DateTimeFormat('es-ES', { month: 'short' });
@@ -23,14 +31,15 @@ interface MonthGroup {
 /**
  * "Mis citas". Port de `MyBookingsScreen`.
  *
- * La próxima cita, destacada arriba: es lo que se viene a mirar. Debajo, las
- * dos listas —próximas y pasadas— agrupadas por mes, y a un lado tus números y
- * lo que tienes pendiente de valorar.
+ * En el móvil, la pantalla de la app tal cual: título con tu foto, subtítulo,
+ * el segmentado y la lista. En escritorio, con sitio, la próxima cita
+ * destacada arriba, las listas agrupadas por mes y a un lado tus números y lo
+ * que tienes pendiente de valorar.
  */
 @Component({
   selector: 'app-appointments',
   standalone: true,
-  imports: [CommonModule, RouterLink, ButtonComponent, SegmentedComponent, BookingCardComponent, WaitlistSummaryComponent],
+  imports: [CommonModule, RouterLink, ButtonComponent, SegmentedComponent, BookingCardComponent, WaitlistSummaryComponent, DeadlineCountdownComponent, AvatarComponent],
   templateUrl: './appointments.component.html',
   styleUrl: './appointments.component.css',
 })
@@ -38,14 +47,46 @@ export class AppointmentsComponent implements OnInit {
   private readonly bipsy = inject(BipsyService);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly gate = inject(PaymentRequestGateService);
+
+  /** El cobro que un negocio te está pidiendo, si lo hay. */
+  readonly paymentRequest = this.gate.live;
+
+  /** Escritorio o app: cada uno pinta su versión de la pantalla. */
+  readonly desktop = inject(BreakpointService).desktop;
 
   tabs = ['Próximas', 'Pasadas'];
+  /** Las de la app, sin contadores: el número no está en `MyBookingsScreen`. */
+  readonly plainTabs = ['Próximas', 'Pasadas'];
   selectedTab = 0;
+
+  get avatarPhoto(): string | null {
+    return this.session.currentUser?.profileImageUrl ?? null;
+  }
+
+  get avatarName(): string | null {
+    return this.session.currentUser?.name ?? null;
+  }
 
   isAuthenticated = false;
   isLoading = true;
   loadError: ApiError | null = null;
 
+  /** Citas que puso el negocio y esperan que las aceptes. */
+  awaiting: BookingResponse[] = [];
+
+  /**
+   * «Tienes 2 citas por delante y 1 por confirmar.» Las por confirmar van
+   * aparte: contaban como nada y el subtítulo decía «2» con tres en pantalla.
+   */
+  get aheadLabel(): string {
+    const n = this.upcoming.length;
+    const p = this.awaiting.length;
+    const pending = p === 0 ? '' : ` y ${p} por confirmar`;
+    if (n === 0) return p === 0 ? 'No tienes nada por delante.' : `Tienes ${p === 1 ? '1 cita' : p + ' citas'} por confirmar.`;
+    return `Tienes ${n === 1 ? '1 cita' : n + ' citas'} por delante${pending}.`;
+  }
   upcoming: BookingResponse[] = [];
   past: BookingResponse[] = [];
   upcomingGroups: MonthGroup[] = [];
@@ -56,8 +97,23 @@ export class AppointmentsComponent implements OnInit {
   places = 0;
   pendingReviews = 0;
 
+  /** Abre la ventana de pagar aunque ya saltara antes: esto lo ha pedido él. */
+  payNow(req: PendingPaymentRequest): void {
+    this.gate.reopen(req);
+  }
+
+  payAmount(req: PendingPaymentRequest): string {
+    return euros(req.amountCents / 100);
+  }
+
   ngOnInit(): void {
-    this.session.status$.subscribe(status => {
+    // Al entrar se vuelve a mirar si hay cobro pendiente: la tarjeta no puede
+    // depender de que el sondeo de la raíz haya pasado justo antes.
+    void this.gate.check();
+    // Atada a la vida de la pantalla: `status$` vive lo que la web, y sin
+    // cortarla cada visita a Mis citas dejaba una escucha más que volvía a
+    // cargar citas en pantallas ya cerradas al entrar o salir de la cuenta.
+    this.session.status$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status === 'unknown') {
         return;
       }
@@ -66,6 +122,7 @@ export class AppointmentsComponent implements OnInit {
         void this.load();
       } else {
         this.isLoading = false;
+        this.awaiting = [];
         this.upcoming = [];
         this.past = [];
       }
@@ -89,9 +146,16 @@ export class AppointmentsComponent implements OnInit {
       const upcoming: BookingResponse[] = [];
       const past: BookingResponse[] = [];
 
+      const awaiting: BookingResponse[] = [];
+
       for (const booking of all) {
         const start = parseLocal(booking.startDateTime).getTime();
-        if (start > now && isBookingActive(booking)) {
+        // Las que puso el negocio y esperan tu sí van aparte y arriba: tienen
+        // un plazo de minutos. `isBookingActive` no las cuenta como vivas, así
+        // que sin esto caían en «Pasadas».
+        if (start > now && isAwaitingCustomer(booking)) {
+          awaiting.push(booking);
+        } else if (start > now && isBookingActive(booking)) {
           upcoming.push(booking);
         } else {
           past.push(booking);
@@ -102,6 +166,8 @@ export class AppointmentsComponent implements OnInit {
       upcoming.sort((a, b) => a.startDateTime.localeCompare(b.startDateTime));
       past.sort((a, b) => b.startDateTime.localeCompare(a.startDateTime));
 
+      awaiting.sort((a, b) => a.startDateTime.localeCompare(b.startDateTime));
+      this.awaiting = awaiting;
       this.upcoming = upcoming;
       this.past = past;
       // La destacada no se repite en la lista de debajo.
@@ -142,16 +208,9 @@ export class AppointmentsComponent implements OnInit {
     return `${relativeDate(start)} · ${time(start)} – ${time(parseLocal(this.next.endDateTime))}`;
   }
 
-  /** "Faltan 3 días", "Faltan 5 h", "En 20 min". */
+  /** "Faltan 3 días", "Faltan 5 h", "Empieza en 20 min". */
   get countdown(): string {
-    if (!this.next) return '';
-    const ms = parseLocal(this.next.startDateTime).getTime() - Date.now();
-    const minutes = Math.max(0, Math.round(ms / 60_000));
-    if (minutes < 60) return `En ${minutes} min`;
-    const hours = Math.round(minutes / 60);
-    if (hours < 24) return `Faltan ${hours} h`;
-    const days = Math.round(hours / 24);
-    return days === 1 ? 'Falta 1 día' : `Faltan ${days} días`;
+    return this.next ? bookingCountdown(parseLocal(this.next.startDateTime)) : '';
   }
 
   get nextPrice(): string | null {
@@ -162,7 +221,10 @@ export class AppointmentsComponent implements OnInit {
   // ----- ACCIONES --------------------
 
   openBooking(booking: BookingResponse): void {
-    this.router.navigate(['/citas', booking.id]);
+    // La que espera respuesta, a confirmarla: el detalle no tiene esos botones.
+    this.router.navigate(
+      isAwaitingCustomer(booking) ? ['/citas', booking.id, 'confirmar'] : ['/citas', booking.id],
+    );
   }
 
   /**

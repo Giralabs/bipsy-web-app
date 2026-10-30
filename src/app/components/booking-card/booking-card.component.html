@@ -3,42 +3,52 @@
   [class.bk-card--off]="isOff"
   role="button"
   tabindex="0"
-  (click)="open.emit(booking)"
-  (keydown.enter)="open.emit(booking)"
+  (click)="onOpen()"
+  (keydown.enter)="onKeyOpen($event)"
+  (keydown.space)="onKeyOpen($event)"
 >
-  <!-- La fecha como hoja de calendario: es lo primero que se busca en una
-       lista de citas, antes que la foto. -->
-  <div class="bk-card__leaf">
-    <span class="bk-card__weekday">{{ weekday }}</span>
-    <span class="bk-card__day">{{ day }}</span>
-    <span class="bk-card__month">{{ month }}</span>
-  </div>
-
-  @if (imageUrl) {
-    <img class="bk-card__thumb" [src]="imageUrl" [alt]="booking.serviceName" loading="lazy" />
+  <!-- La foto del servicio, cuadrada y a sangre por la izquierda, como la
+       tarjeta de la app. Sin foto, el hueco de marca y no una de relleno. -->
+  @if (imageUrl && !imageFailed) {
+    <img class="bk-card__photo" [src]="imageUrl" alt="" loading="lazy" (error)="imageFailed = true" />
+  } @else {
+    <div class="bk-card__photo img-placeholder" aria-hidden="true">
+      <span class="material-symbols-rounded">storefront</span>
+    </div>
   }
 
   <div class="bk-card__info">
     <h3 class="bk-card__service">{{ booking.serviceName }}</h3>
-    <p class="bk-card__business">
-      <span class="material-symbols-rounded">storefront</span>
-      {{ businessName || booking.businessName || 'Negocio' }}
-    </p>
-    <div class="bk-card__when">
-      <span class="bk-card__chip">
-        <span class="material-symbols-rounded">schedule</span>{{ timeRange }}
-      </span>
+    <p class="bk-card__business">{{ businessName || booking.businessName || 'Negocio' }}</p>
+    <!-- Cuándo, en una línea y sin iconos delante, como la app: «Mañana ·
+         13:00». En escritorio, con sitio, la franja entera y quién atiende. -->
+    <p class="bk-card__when">
+      <span class="bk-card__date">{{ relative }}</span>
+      <span class="bk-card__dot" aria-hidden="true">·</span>
+      <span class="bk-card__time bk-card__time--short">{{ startTime }}</span>
+      <span class="bk-card__time bk-card__time--long">{{ timeRange }}</span>
       @if (booking.workerName) {
-        <span class="bk-card__chip">
-          <span class="material-symbols-rounded">person</span>{{ booking.workerName }}
+        <span class="bk-card__worker">· con {{ booking.workerName }}</span>
+      }
+      <!-- Para otra persona: solo el icono, como la app. Al lector de pantalla
+           va el nombre entero, que ahí no estorba. -->
+      @if (attendeeLabel) {
+        <span class="bk-card__for" role="img" [attr.aria-label]="attendeeLabel" [title]="attendeeLabel">
+          <span class="material-symbols-rounded" aria-hidden="true">person</span>
         </span>
       }
-      <span class="bk-card__rel">{{ relative }}</span>
-    </div>
+    </p>
+    <!-- Dicho con palabras y no solo con el color: hay que hacer algo, y pronto. -->
+    @if (awaiting) {
+      <p class="bk-card__awaiting">Te la ha dado el negocio: confírmala antes de que acabe el plazo.</p>
+    }
   </div>
 
+  <!-- El estado arriba y, si la cita ya pasó, repetirla abajo: así el estado
+       no compite con el nombre del servicio. -->
   <div class="bk-card__aside">
-    <app-booking-status-pill [status]="booking.status" />
+    <app-booking-status-pill class="bk-card__status bk-card__status--icon" [status]="booking.status" [compact]="true" />
+    <app-booking-status-pill class="bk-card__status bk-card__status--full" [status]="booking.status" />
     @if (priceLabel) {
       <span class="bk-card__price">{{ priceLabel }}</span>
     }
@@ -46,14 +56,13 @@
       <button
         type="button"
         class="bk-card__rebook"
+        aria-label="Volver a reservar"
         title="Volver a reservar"
         (click)="onRebookClick($event)"
       >
-        <span class="material-symbols-rounded">event_repeat</span>
+        <span class="material-symbols-rounded" aria-hidden="true">event_repeat</span>
         <span class="bk-card__rebook-label">Repetir</span>
       </button>
-    } @else {
-      <span class="material-symbols-rounded bk-card__chevron" aria-hidden="true">chevron_right</span>
     }
   </div>
 </div>

@@ -1,0 +1,111 @@
+@if (loading) {
+  <!-- La forma de lo que viene, no un spinner: el ojo ya está en la rejilla
+       cuando aparecen las horas. -->
+  <div class="sg" aria-busy="true" aria-label="Buscando horas libres">
+    <div class="skeleton sg__skel-head"></div>
+    <div class="sg__grid">
+      @for (i of skeletons; track i) {
+        <div class="skeleton sg__skel"></div>
+      }
+    </div>
+  </div>
+} @else if (error) {
+  <div class="empty-state">
+    <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
+    <h3>No se ha podido cargar la disponibilidad</h3>
+    <p>{{ error }}</p>
+    <app-button variant="secondary" icon="refresh" (onClick)="retry.emit()">Reintentar</app-button>
+  </div>
+} @else if (visible.length === 0) {
+  <div class="empty-state">
+    <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+    <h3>Sin horarios disponibles</h3>
+    <p>Este día no hay disponibilidad. Prueba con otra fecha.</p>
+    <ng-container *ngTemplateOutlet="exits"></ng-container>
+  </div>
+} @else if (allTimeOff) {
+  <div class="empty-state">
+    <span class="material-symbols-rounded" aria-hidden="true">event_busy</span>
+    <h3>{{ hasWorkerFilter ? 'Profesional no disponible' : 'Sin disponibilidad este día' }}</h3>
+    <p>
+      @if (hasWorkerFilter) {
+        Este profesional tiene vacaciones o un día de descanso en esta fecha. Elige otro día u otro profesional.
+      } @else {
+        Ningún profesional está disponible en esta fecha. Prueba con otro día.
+      }
+    </p>
+    <ng-container *ngTemplateOutlet="exits"></ng-container>
+  </div>
+} @else if (allTaken && allowWaitlist) {
+  <!-- Todo cogido: una rejilla de horas que no se pueden coger no aporta nada,
+       y lo único accionable —apuntarse— quedaría escondido debajo. -->
+  <div class="empty-state">
+    <span class="material-symbols-rounded" aria-hidden="true">event_busy</span>
+    <h3>Todo cogido este día</h3>
+    <p>No queda ningún hueco. Apúntate a la lista de espera y te avisamos si alguien cancela.</p>
+    <ng-container *ngTemplateOutlet="exits"></ng-container>
+  </div>
+} @else {
+  <div class="sg">
+    <!-- Antes de las horas, no después: quien ya ha mirado la rejilla y no le
+         cuadra nada es justo quien no baja hasta el final. -->
+    @if (allowWaitlist) {
+      <div class="sg__wait" role="status">
+        @if (waitlistDone) {
+          <span class="sg__wait-text">Estás en la lista de espera. Te avisamos si se libera un hueco.</span>
+        } @else {
+          <span class="material-symbols-rounded fill sg__wait-icon" aria-hidden="true">notifications_active</span>
+          <span class="sg__wait-text">¿No te encaja ninguna hora?</span>
+          <app-button
+            variant="secondary"
+            size="small"
+            [overCard]="true"
+            [loading]="waitlistBusy"
+            (onClick)="waitlist.emit()"
+          >Avisadme</app-button>
+        }
+      </div>
+    }
+
+    @for (group of groups; track group.label) {
+      <section class="sg__group" [attr.aria-label]="group.label">
+        <h2 class="sg__head">{{ group.label }}</h2>
+        <div class="sg__grid">
+          @for (slot of group.slots; track slot.start) {
+            <button
+              type="button"
+              class="sg__slot"
+              [class.sg__slot--on]="selected === slot.start"
+              [disabled]="!slot.available"
+              [attr.aria-pressed]="selected === slot.start"
+              [attr.aria-label]="ariaLabel(slot)"
+              [attr.title]="reason(slot)"
+              (click)="choose(slot)"
+            >{{ slot.start }}</button>
+          }
+        </div>
+      </section>
+    }
+  </div>
+}
+
+<!-- Las dos salidas de un día sin hora: otro día, o esperar a que se libere. -->
+<ng-template #exits>
+  <div class="sg__exits">
+    <app-button variant="secondary" icon="calendar_month" (onClick)="changeDay.emit()">
+      Cambiar de día
+    </app-button>
+    @if (allowWaitlist) {
+      @if (waitlistDone) {
+        <p class="sg__done" role="status">Estás en la lista de espera. Te avisamos si se libera un hueco.</p>
+      } @else {
+        <app-button
+          variant="primary"
+          icon="notifications_active"
+          [loading]="waitlistBusy"
+          (onClick)="waitlist.emit()"
+        >Apuntarme a la lista de espera</app-button>
+      }
+    }
+  </div>
+</ng-template>

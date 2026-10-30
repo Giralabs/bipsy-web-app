@@ -1,86 +1,73 @@
-.inbox { min-height: 100vh; }
-.inbox__inner { max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+/* El ancho de lectura de una lista de mensajes: más ancha, la hora se iba
+   lejísimos del nombre y la fila costaba de seguir. */
+.inbox {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 64px;
+}
 
+.inbox__top { display: flex; align-items: center; gap: 16px; padding: 0 8px 12px; }
+
+/* displaySmall de la app, como Explorar y Mis citas. */
 .inbox__heading {
+  flex: 1;
+  min-width: 0;
   font-family: var(--ff-display);
   font-size: 2rem;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -1.2px;
 }
 
+.inbox__avatar { flex: 0 0 auto; display: inline-flex; border-radius: 50%; text-decoration: none; }
+.inbox__avatar:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 3px; }
+
 .inbox__sub {
-  margin-top: 8px;
-  margin-bottom: 24px;
-  font-size: 0.875rem;
+  margin-top: -4px;
+  padding: 0 8px;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: var(--clr-text-2);
 }
 
-.inbox__list { display: flex; flex-direction: column; gap: 8px; }
-.inbox__skeleton { height: 76px; border-radius: var(--r-sm); }
+/* Centrado en lo que se ve, con aire arriba: es la única salida de una
+   pantalla que no tiene nada más. */
+.inbox__state { padding-top: 72px; }
 
-.conv {
+/* ══ Escritorio: las dos columnas del hilo ══
+   Las mismas medidas que `.th-layout--split` (thread.component.css): pasar de
+   la bandeja a un hilo no puede mover la lista de sitio. El alto lo mide el
+   componente en `--in-top`. */
+.inbox--split {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  max-width: 1200px;
+  height: calc(100dvh - var(--in-top, 112px));
+  min-height: 480px;
+  padding: 0 24px;
+}
+
+.inbox--split .inbox__list {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-  padding: 14px 16px;
-  border: none;
-  border-radius: var(--r-sm);
-  background: var(--clr-surface);
-  color: var(--clr-text);
-  font-family: var(--ff);
-  cursor: pointer;
-  transition: background-color .2s ease;
+  flex-direction: column;
+  min-height: 0;
+  padding-right: 16px;
+  box-shadow: inset -0.5px 0 0 var(--clr-border);
 }
 
-.conv:hover { background: var(--clr-surface-hover); }
+.inbox--split .inbox__top { padding: 24px 8px 12px; }
+.inbox--split .inbox__heading { font-size: 1.5rem; letter-spacing: -0.8px; }
+.inbox--split .inbox__state { padding-top: 32px; }
+.inbox__scroll { min-height: 0; }
+.inbox--split .inbox__scroll { flex: 1; overflow-y: auto; padding-bottom: 16px; scrollbar-width: thin; }
 
-.conv__avatar,
-.conv__avatar-img { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
+.inbox__pane { display: grid; place-items: center; min-width: 0; padding: 24px; }
+.inbox__pane .empty-state { max-width: 360px; }
 
-.conv__avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--clr-field);
-  font-size: 1rem;
-  font-weight: 800;
+/* Móvil: la pantalla de la pestaña, con los márgenes de la app (20 a los
+   lados, como el resto de pestañas). El hueco de la barra de pestañas ya lo
+   deja `.page-content`. */
+@media (max-width: 1024px) {
+  .inbox { padding: 20px 12px 24px; }
+  .inbox__state { padding-top: 48px; }
 }
-
-.conv__avatar-img { object-fit: cover; }
-
-.conv__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.conv__top { display: flex; align-items: baseline; gap: 8px; }
-.conv__name { flex: 1; min-width: 0; font-size: 0.9375rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.conv__when { font-size: 0.6875rem; font-weight: 600; color: var(--clr-text-3); flex-shrink: 0; }
-
-.conv__preview {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--clr-text-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.conv__preview--unread { color: var(--clr-text); font-weight: 600; }
-
-.conv__badge {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: var(--r-pill);
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
-  font-size: 0.6875rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-@media (max-width: 640px) { .inbox__inner { padding: 32px 20px 96px; } }

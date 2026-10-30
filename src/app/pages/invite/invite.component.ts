@@ -1,6 +1,7 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PageMetaService } from '../../core/page-meta.service';
+import { SessionService } from '../../core/session.service';
 import { ButtonComponent } from '../../components/button/button.component';
 import { StatusPageComponent } from '../../components/status-page/status-page.component';
 
@@ -32,6 +33,8 @@ const COPIED_FEEDBACK_MS = 2000;
 })
 export class InviteComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly session = inject(SessionService);
 
   readonly kind: InviteKind = this.route.snapshot.data['kind'] === 'team' ? 'team' : 'customer';
   readonly code = (this.route.snapshot.paramMap.get('codigo') ?? '').trim();
@@ -57,6 +60,18 @@ export class InviteComponent implements OnDestroy {
   /** `/descargar` ya decide la tienda; aquí solo se dice qué app. */
   get downloadLink(): string[] {
     return this.kind === 'team' ? ['/descargar', 'negocio'] : ['/descargar'];
+  }
+
+  /**
+   * Solo a quien aún no tiene cuenta: el código cuenta al crearla, y a quien
+   * ya está dentro llevarle al alta no le sirve de nada.
+   */
+  get canSignUpHere(): boolean {
+    return this.kind === 'customer' && !!this.code && !this.session.isAuthenticated;
+  }
+
+  signUpHere(): void {
+    this.router.navigate(['/crear-cuenta'], { queryParams: { ref: this.code } });
   }
 
   async copy(): Promise<void> {

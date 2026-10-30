@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiError } from '../../core/api-error';
@@ -27,6 +28,8 @@ export class FavoritesComponent implements OnInit {
   private readonly session = inject(SessionService);
   private readonly catalog = inject(CatalogRepository);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private loadSeq = 0;
 
   businesses: BusinessResponse[] = [];
   /** Destacados, para que una lista vacía proponga por dónde empezar. */
@@ -40,7 +43,10 @@ export class FavoritesComponent implements OnInit {
       .then(list => (this.suggestions = list))
       .catch(() => (this.suggestions = []));
 
-    this.session.status$.subscribe(status => {
+    // La sesión es un servicio raíz que no completa nunca: sin cortar, cada
+    // visita a Favoritos dejaba viva su suscripción, y cada cambio de
+    // favoritos relanzaba las cargas de todas las pantallas ya cerradas.
+    this.session.status$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status === 'unknown') {
         return;
       }
@@ -51,12 +57,14 @@ export class FavoritesComponent implements OnInit {
       }
     });
 
-    this.session.favoriteBusinessIds$.subscribe(ids => {
+    this.session.favoriteBusinessIds$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(ids => {
       void this.load(ids);
     });
   }
 
   async load(ids: number[]): Promise<void> {
+    // Quitar dos favoritos seguidos lanza dos cargas; solo vale la última.
+    const seq = ++this.loadSeq;
     if (ids.length === 0) {
       this.businesses = [];
       this.isLoading = false;
@@ -66,13 +74,14 @@ export class FavoritesComponent implements OnInit {
     this.loadError = null;
     try {
       const results = await Promise.allSettled(ids.map(id => this.catalog.business(id)));
+      if (seq !== this.loadSeq) return;
       this.businesses = results
         .filter((r): r is PromiseFulfilledResult<BusinessResponse> => r.status === 'fulfilled')
         .map(r => r.value);
     } catch (error) {
-      this.loadError = ApiError.from(error);
+      if (seq === this.loadSeq) this.loadError = ApiError.from(error);
     } finally {
-      this.isLoading = false;
+      if (seq === this.loadSeq) this.isLoading = false;
     }
   }
 

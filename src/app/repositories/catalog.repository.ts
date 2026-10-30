@@ -144,11 +144,21 @@ export class CatalogRepository {
 
   // ----- RESEÑAS --------------------
 
-  /** La ruta es `/reviews/business/{id}`, no `/reviews?businessId=`. */
-  reviewsByBusiness(businessId: number | string, page = 0, size = 10): Promise<PageResponse<ReviewResponse>> {
+  /**
+   * La ruta es `/reviews/business/{id}`, no `/reviews?businessId=`.
+   *
+   * `sort` es opcional y sin él no viaja: la ficha pide `rating,desc` como la
+   * app, y quien no lo pase sigue recibiendo el orden de siempre.
+   */
+  reviewsByBusiness(
+    businessId: number | string,
+    page = 0,
+    size = 10,
+    sort?: string,
+  ): Promise<PageResponse<ReviewResponse>> {
     return this.api.get<PageResponse<ReviewResponse>>(
       `/reviews/business/${businessId}`,
-      { page, size },
+      { page, size, sort },
       false,
     );
   }

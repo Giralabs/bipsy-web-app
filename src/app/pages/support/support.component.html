@@ -1,0 +1,137 @@
+<div class="flow anim-fade-up">
+  <div class="flow__inner">
+    <button type="button" class="flow__back" (click)="goBack()">
+      <span class="material-symbols-rounded">arrow_back</span>
+      Volver
+    </button>
+
+    @if (sent) {
+
+      <!-- ── Gracias ── -->
+      <div class="done" role="status">
+        <span class="done__icon"><span class="material-symbols-rounded fill">check_circle</span></span>
+        <h1 class="flow__title">¡Gracias!</h1>
+        <p class="flow__subtitle">Ya lo estamos mirando. Te hemos mandado una copia por correo y te contestamos ahí.</p>
+        @if (failedFiles.length) {
+          <p class="flow__error">
+            <span class="material-symbols-rounded fill">error</span>
+            No se pudieron subir: {{ failedFiles.join(', ') }}. Puedes mandarlos respondiendo al correo que te hemos enviado.
+          </p>
+        }
+        <div class="flow__actions">
+          <app-button variant="secondary" [routerLink]="'/'" [fullWidth]="true">Volver a Explorar</app-button>
+        </div>
+      </div>
+
+    } @else {
+
+      <h1 class="flow__title">Soporte</h1>
+      <p class="flow__subtitle">Cuéntanos qué ha pasado y te contestamos por correo.</p>
+
+      <!-- ── Abrir un ticket (opción principal) ── -->
+      @if (!sessionKnown) {
+        <div class="skeleton support-skeleton" aria-hidden="true"></div>
+      } @else if (!signedIn) {
+        <div class="form-group">
+          <div class="form-group__box">
+            <a class="support-row" routerLink="/acceder" [queryParams]="{ returnTo: '/soporte' }">
+              <span class="material-symbols-rounded support-row__icon support-row__icon--accent">login</span>
+              <span class="support-row__text"><strong>Entrar</strong></span>
+              <span class="material-symbols-rounded support-row__go">chevron_right</span>
+            </a>
+          </div>
+          <p class="form-group__footer">Para abrir un ticket tienes que entrar en tu cuenta. Mientras tanto, puedes escribirnos al correo.</p>
+        </div>
+      } @else {
+        <form (ngSubmit)="send()" novalidate>
+          <div class="form-group">
+            <p class="form-group__header" id="ticket-head">Nuevo ticket</p>
+            <div class="form-group__box">
+              <label class="form-row">
+                <span class="form-row__label">Asunto</span>
+                <input class="form-row__input" name="subject" [(ngModel)]="subject"
+                       placeholder="Resume el problema" maxlength="120" autocomplete="off" />
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-group__header" for="ticket-description">Descripción</label>
+            <div class="form-group__box">
+              <textarea id="ticket-description" class="support-textarea" name="description"
+                        [(ngModel)]="description" rows="6" required aria-required="true"
+                        placeholder="Cuéntanos qué ha pasado, en qué pantalla y qué esperabas que ocurriera."></textarea>
+            </div>
+            <p class="form-group__footer">Si es sobre una cita concreta, lo más rápido es hablar con el negocio desde el chat de la cita.</p>
+          </div>
+
+          <div class="form-group">
+            <p class="form-group__header">Adjuntos (opcional) · {{ files.length }}/{{ maxFiles }}</p>
+            <div class="form-group__box">
+              @for (item of files; track item) {
+                <div class="support-row">
+                  <span class="material-symbols-rounded support-row__icon">
+                    {{ item.type.startsWith('image/') ? 'image' : 'description' }}
+                  </span>
+                  <span class="support-row__text">
+                    <strong>{{ item.file.name }}</strong>
+                    <small>{{ size(item) }}</small>
+                  </span>
+                  <button type="button" class="support-row__remove" (click)="removeFile(item)"
+                          [attr.aria-label]="'Quitar ' + item.file.name">
+                    <span class="material-symbols-rounded">close</span>
+                  </button>
+                </div>
+              }
+              @if (files.length < maxFiles) {
+                <label class="support-row support-row--action">
+                  <span class="material-symbols-rounded support-row__icon support-row__icon--accent">attach_file</span>
+                  <span class="support-row__text"><strong>Añadir archivo</strong></span>
+                  <input #picker type="file" class="sr-only" [accept]="accept" multiple
+                         (change)="addFiles(picker)" />
+                </label>
+              }
+            </div>
+            <p class="form-group__footer">Imágenes (JPG, PNG, WebP, HEIC) o documentos (PDF, Word, TXT, CSV). Máximo 10 MB por archivo.</p>
+          </div>
+
+          @if (error) {
+            <p class="flow__error" role="alert">
+              <span class="material-symbols-rounded fill">error</span>{{ error }}
+            </p>
+          }
+
+          <div class="flow__actions">
+            <app-button type="submit" size="large" [fullWidth]="true" icon="send"
+                        [loading]="sending" [disabled]="!canSend">
+              {{ progress ?? 'Enviar ticket' }}
+            </app-button>
+          </div>
+        </form>
+      }
+
+      <!-- ── Contacto directo ── -->
+      <div class="form-group support-contact">
+        <p class="form-group__header">Contacto directo</p>
+        <div class="form-group__box">
+          <div class="support-row">
+            <a class="support-row__main" [href]="'mailto:' + email">
+              <span class="material-symbols-rounded support-row__icon">mail</span>
+              <span class="support-row__text">
+                <strong>{{ email }}</strong>
+                <small>Respuesta en 24-48 h laborables</small>
+              </span>
+            </a>
+            <button type="button" class="support-row__remove" (click)="copyEmail()"
+                    [attr.aria-label]="copied ? 'Correo copiado' : 'Copiar el correo'">
+              <span class="material-symbols-rounded">{{ copied ? 'check' : 'content_copy' }}</span>
+            </button>
+          </div>
+        </div>
+        <p class="form-group__footer" aria-live="polite">
+          {{ copied ? 'Correo copiado.' : 'Si lo prefieres, escríbenos directamente.' }}
+        </p>
+      </div>
+    }
+  </div>
+</div>

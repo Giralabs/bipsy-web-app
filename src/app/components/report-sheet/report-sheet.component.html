@@ -1,0 +1,77 @@
+<div class="sheet-backdrop" (click)="close()">
+  <div
+    #sheet
+    class="sheet rp"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="rp-title"
+    aria-describedby="rp-sub"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+    (keydown.escape)="close()"
+  >
+    <div class="rp__head">
+      <div class="rp__titles">
+        <h2 class="sheet__title rp__title" id="rp-title">Reportar negocio</h2>
+        <p class="sheet__sub rp__sub" id="rp-sub">{{ businessName }}</p>
+      </div>
+      <button type="button" class="rp__close" aria-label="Cerrar" [disabled]="busy" (click)="close()">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+
+    <!-- Motivo: radios de verdad, con la fila entera como etiqueta. Así el
+         teclado los recorre con las flechas y el lector anuncia «1 de 5». -->
+    <fieldset class="form-group rp__group" [disabled]="busy">
+      <legend class="form-group__header">Motivo</legend>
+      <div class="form-group__box rp__box">
+        @for (r of reasons; track r.code) {
+          <label class="rp__reason" [class.rp__reason--on]="reason === r.code">
+            <input
+              type="radio"
+              class="rp__radio"
+              name="report-reason"
+              [value]="r.code"
+              [(ngModel)]="reason"
+            />
+            <span class="material-symbols-rounded rp__reason-icon" aria-hidden="true">{{ r.icon }}</span>
+            <span class="rp__reason-label">{{ r.label }}</span>
+            <span class="material-symbols-rounded rp__tick" aria-hidden="true">check</span>
+          </label>
+        }
+      </div>
+    </fieldset>
+
+    <div class="form-group rp__group">
+      <label class="form-group__header" for="rp-detail">Cuéntanos más (opcional)</label>
+      <div class="form-group__box rp__box">
+        <textarea
+          id="rp-detail"
+          class="rp__input"
+          rows="4"
+          [maxlength]="descriptionMax"
+          placeholder="Qué ha pasado, con el mayor detalle que puedas."
+          [disabled]="busy"
+          [(ngModel)]="description"
+          name="report-detail"
+        ></textarea>
+      </div>
+      <p class="form-group__footer rp__counter">{{ description.length }}/{{ descriptionMax }}</p>
+    </div>
+
+    @if (error) {
+      <p class="flow__error" role="alert">
+        <span class="material-symbols-rounded fill">error</span>{{ error }}
+      </p>
+    }
+
+    <p class="rp__note">Lo revisa el equipo de Bipsy. El negocio no sabe quién le ha reportado.</p>
+
+    <div class="sheet__actions">
+      <app-button variant="primary" [fullWidth]="true" [overCard]="true" [loading]="busy"
+                  [disabled]="!reason" (onClick)="submit()">
+        Enviar reporte
+      </app-button>
+    </div>
+  </div>
+</div>

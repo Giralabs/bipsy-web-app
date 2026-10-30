@@ -24,19 +24,14 @@
 
 .row--disabled { opacity: .4; pointer-events: none; }
 
-/* El icono en su cuadro teñido, como los Ajustes del sistema: separa las
-   filas de un vistazo sin necesidad de leerlas. */
+/* El icono suelto en gris, como el `leading` de las filas de la app
+   (`Icon` de 22 en `secondaryLabel`): sin cuadro teñido detrás. */
 .row__icon {
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--clr-mint-dim);
-  color: var(--clr-mint);
-  font-size: 20px;
+  width: 24px;
+  text-align: center;
+  color: var(--clr-text-2);
+  font-size: 22px;
 }
 
 /* La etiqueta ocupa lo que mide, no la mitad de la fila: con un ancho fijo,
@@ -51,7 +46,7 @@
 }
 
 .row__label--destructive { color: var(--clr-danger-text); }
-.row__icon--destructive { background: rgba(230, 118, 118, .14); color: var(--clr-danger-text); }
+.row__icon--destructive { color: var(--clr-danger-text); }
 
 .row__subtitle {
   font-size: 0.75rem;

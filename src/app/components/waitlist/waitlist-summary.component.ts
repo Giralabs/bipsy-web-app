@@ -1,14 +1,16 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../core/api-error';
 import { WaitlistRepository } from '../../repositories/waitlist.repository';
+import { DialogService } from '../../core/dialog.service';
 import {
   WaitlistEntry,
   WaitlistOffer,
   isOfferOpen,
   offerTimeLeftMs,
 } from '../../models/bipsy.models';
+import { WaitlistOfferDetail } from '../../models/confirm.models';
 import { ButtonComponent } from '../button/button.component';
 import { longDate, time } from '../../shared/dates';
 
@@ -21,12 +23,13 @@ import { longDate, time } from '../../shared/dates';
 @Component({
   selector: 'app-waitlist-summary',
   standalone: true,
-  imports: [CommonModule, ButtonComponent],
+  imports: [CommonModule, RouterLink, ButtonComponent],
   templateUrl: './waitlist-summary.component.html',
   styleUrl: './waitlist-summary.component.css',
 })
 export class WaitlistSummaryComponent implements OnInit, OnDestroy {
   private readonly waitlist = inject(WaitlistRepository);
+  private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
 
   entries: WaitlistEntry[] = [];
@@ -69,14 +72,22 @@ export class WaitlistSummaryComponent implements OnInit, OnDestroy {
     return this.entries.filter(e => e.status === 'WAITING' && !offered.has(e.id));
   }
 
+  /** La página del aviso, con todo lo que hace falta para decidir. */
+  offerLink(offer: WaitlistOffer): (string | number)[] {
+    return ['/lista-espera', 'oferta', offer.id];
+  }
+
   slotLabel(offer: WaitlistOffer): string {
     const start = new Date(offer.slotStart);
     return `${longDate(start)} a las ${time(start)}`;
   }
 
   rangeLabel(entry: WaitlistEntry): string {
-    const from = new Date(entry.dateFrom);
-    const to = new Date(entry.dateTo);
+    // ⚠️ `LocalDate` («2026-10-31») a mano y no con `new Date(...)`: una fecha
+    // sola la lee como medianoche UTC, y al oeste de Greenwich salía el día
+    // anterior.
+    const from = localDay(entry.dateFrom);
+    const to = localDay(entry.dateTo);
     return from.toDateString() === to.toDateString()
       ? longDate(from)
       : `${longDate(from)} — ${longDate(to)}`;
@@ -100,12 +111,25 @@ export class WaitlistSummaryComponent implements OnInit, OnDestroy {
     if (this.busyId !== null) {
       return;
     }
+    // Si hace falta tarjeta o dirección, a la página del aviso: aquí no se
+    // pueden pedir, y aceptar sin ellas respondería 402 o 400 con el plazo
+    // corriendo. Allí se piden sin salir.
+    const detail = offer as WaitlistOfferDetail;
+    if (detail.requiresCard || detail.requiresAddress) {
+      this.router.navigate(this.offerLink(offer));
+      return;
+    }
     // Con política de cancelación hay que aceptarla: sin eso el servidor
     // responde 400 y el aviso sigue vivo, así que se pregunta aquí.
     if (offer.requiresPolicyConsent) {
       const text = offer.policyText ??
         'Este negocio cobra una tarifa si cancelas con poca antelación.';
-      if (!confirm(`${text}\n\n¿Aceptas y te quedas el hueco?`)) {
+      const ok = await this.dialog.confirm({
+        title: '¿Te quedas el hueco?',
+        message: text,
+        confirmLabel: 'Aceptar y quedármelo',
+      });
+      if (!ok) {
         return;
       }
     }
@@ -132,7 +156,13 @@ export class WaitlistSummaryComponent implements OnInit, OnDestroy {
     if (this.busyId !== null) {
       return;
     }
-    if (!confirm('Rechazar cierra tu espera entera y pasa el turno al siguiente. ¿Seguimos?')) {
+    const ok = await this.dialog.confirm({
+      title: '¿Rechazar el hueco?',
+      message: 'Rechazar cierra tu espera entera y pasa el turno a la siguiente persona.',
+      confirmLabel: 'Rechazar',
+      destructive: true,
+    });
+    if (!ok) {
       return;
     }
     this.busyId = offer.id;
@@ -151,7 +181,13 @@ export class WaitlistSummaryComponent implements OnInit, OnDestroy {
     if (this.busyId !== null) {
       return;
     }
-    if (!confirm(`¿Salimos de la lista de espera de "${entry.serviceName}"?`)) {
+    const ok = await this.dialog.confirm({
+      title: '¿Salir de la lista de espera?',
+      message: `Dejarás de recibir avisos de huecos para «${entry.serviceName}».`,
+      confirmLabel: 'Salir',
+      destructive: true,
+    });
+    if (!ok) {
       return;
     }
     this.busyId = entry.id;
@@ -169,4 +205,10 @@ export class WaitlistSummaryComponent implements OnInit, OnDestroy {
   private prune(): void {
     this.offers = this.offers.filter(isOfferOpen);
   }
+}
+
+/** `yyyy-MM-dd` como día del calendario local. */
+function localDay(value: string): Date {
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }

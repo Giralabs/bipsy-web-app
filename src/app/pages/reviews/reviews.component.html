@@ -58,23 +58,21 @@
             <app-button variant="secondary" icon="event" (onClick)="goToAppointments()">Ver mis citas</app-button>
           </div>
         } @else {
+          <!-- `_PendingCard` de la app: arriba el negocio y cuándo fuiste; abajo,
+               en el otro tono de la tarjeta, «Valorar» a lo ancho. -->
           <div class="rv__list">
             @for (booking of pending; track booking.id) {
-              <article class="rv-card rv-card--pending">
-                <span class="rv-card__thumb">
-                  @if (image(booking); as src) {
-                    <img [src]="src" alt="" loading="lazy" />
-                  } @else {
-                    <span class="material-symbols-rounded">storefront</span>
-                  }
-                </span>
-                <div class="rv-card__body">
-                  <strong class="rv-card__title">{{ booking.businessName || 'Negocio' }}</strong>
-                  <span class="rv-card__meta">{{ booking.serviceName }} · {{ when(booking) }}</span>
-                  <span class="rv-card__ask">¿Qué tal te fue?</span>
+              <article class="rv-card">
+                <div class="rv-card__top">
+                  <app-avatar class="rv-card__avatar" [name]="booking.businessName ?? null"
+                              [photoUrl]="photoOf(booking.businessId)" [size]="40" />
+                  <div class="rv-card__body">
+                    <strong class="rv-card__title">{{ booking.businessName || 'Negocio' }}</strong>
+                    <span class="rv-card__meta">Fuiste el {{ when(booking) }}@if (booking.serviceName) { · {{ booking.serviceName }} }</span>
+                  </div>
                 </div>
-                <button type="button" class="rv-card__cta" (click)="openSheet(booking)">
-                  <span class="material-symbols-rounded fill">star</span>
+                <button type="button" class="rv-card__foot rv-card__action" (click)="openSheet(booking)">
+                  <span class="material-symbols-rounded fill" aria-hidden="true">star</span>
                   Valorar
                 </button>
               </article>
@@ -93,23 +91,29 @@
         } @else {
           <div class="rv__list">
             @for (review of mine; track review.id) {
-              <article class="rv-card rv-card--mine">
-                <header class="rv-card__head">
-                  <a class="rv-card__title rv-card__link" [routerLink]="businessLink(review)">
-                    {{ businessOf(review) }}
+              <!-- `_MyReviewCard` de la app: la misma forma que en la ficha del
+                   negocio. La respuesta es la mitad de abajo, con su tono: son
+                   dos voces y se leen como tales, sin recuadro ni icono. -->
+              <article class="rv-card">
+                <div class="rv-card__top">
+                  <a class="rv-card__avatar-link" [routerLink]="businessLink(review)" tabindex="-1" aria-hidden="true">
+                    <app-avatar class="rv-card__avatar" [name]="businessOf(review)"
+                                [photoUrl]="photoOf(review.businessId)" [size]="40" />
                   </a>
-                  <button type="button" class="rv-card__delete" (click)="remove(review)" aria-label="Borrar reseña" title="Borrar reseña">
-                    <span class="material-symbols-rounded">delete</span>
+                  <div class="rv-card__body">
+                    <a class="rv-card__title rv-card__link" [routerLink]="businessLink(review)">{{ businessOf(review) }}</a>
+                    <span class="rv-card__stars" role="img" [attr.aria-label]="review.rating + ' de 5 estrellas'">
+                      @for (filled of stars(review.rating); track $index) {
+                        <span class="material-symbols-rounded fill rv-card__star" [class.rv-card__star--off]="!filled" aria-hidden="true">star</span>
+                      }
+                    </span>
+                  </div>
+                  <span class="rv-card__date">{{ shortDate(review) }}</span>
+                  <!-- Roja, como la del detalle de la cita: es la misma acción.
+                       En gris se leía como un icono de adorno más. -->
+                  <button type="button" class="rv-card__delete" (click)="remove(review)" aria-label="Eliminar reseña" title="Eliminar reseña">
+                    <span class="material-symbols-rounded fill" aria-hidden="true">delete</span>
                   </button>
-                </header>
-
-                <div class="rv-card__rating">
-                  @for (filled of stars(review.rating); track $index) {
-                    <span class="material-symbols-rounded rv-card__star" [class.fill]="filled">star</span>
-                  }
-                  <span class="rv-card__meta">
-                    @if (review.serviceName) { {{ review.serviceName }} · }{{ reviewDate(review) }}
-                  </span>
                 </div>
 
                 @if (review.comment) {
@@ -117,11 +121,8 @@
                 }
 
                 @if (review.reply) {
-                  <div class="rv-card__reply">
-                    <span class="rv-card__reply-label">
-                      <span class="material-symbols-rounded">storefront</span>
-                      Respuesta del negocio
-                    </span>
+                  <div class="rv-card__foot rv-card__reply">
+                    <span class="rv-card__reply-label">Respuesta del negocio</span>
                     <p>{{ review.reply }}</p>
                   </div>
                 }
@@ -146,20 +147,21 @@
                     [attr.aria-checked]="rating === n"
                     [attr.aria-label]="n + (n === 1 ? ' estrella' : ' estrellas')"
                     [class.rv-picker__star--on]="n <= rating"
-                    (click)="rating = n">
-              <span class="material-symbols-rounded fill">star</span>
+                    (click)="setRating(n)">
+              <span class="material-symbols-rounded fill" aria-hidden="true">star</span>
             </button>
           }
         </div>
-        <p class="rv-picker__word">{{ ratingWords[rating] }}</p>
+        <p class="rv-picker__word" [class.rv-picker__word--hint]="rating === 0" aria-live="polite">{{ starLabel(rating) }}</p>
 
         <textarea class="rv-input" rows="4" [maxlength]="commentMax"
-                  placeholder="Cuéntanos tu experiencia (opcional)"
+                  aria-label="Cuéntanos más (opcional)"
+                  placeholder="Qué tal fue, con el detalle que quieras."
                   [(ngModel)]="comment" name="review-comment"></textarea>
         <p class="rv-counter">{{ comment.length }}/{{ commentMax }}</p>
 
         @if (sheetError) {
-          <p class="flow__error"><span class="material-symbols-rounded fill">error</span>{{ sheetError }}</p>
+          <p class="flow__error" role="alert"><span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ sheetError }}</p>
         }
 
         <div class="sheet__actions">
@@ -167,12 +169,6 @@
           <app-button variant="ghost" [fullWidth]="true" (onClick)="closeSheet()">Cancelar</app-button>
         </div>
       </div>
-    </div>
-  }
-
-  @if (toast) {
-    <div class="toast" role="status">
-      <span class="material-symbols-rounded fill">check_circle</span>{{ toast }}
     </div>
   }
 </div>

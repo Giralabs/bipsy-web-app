@@ -3,10 +3,13 @@
 <aside class="appbanner">
   <!-- El símbolo sobre fondo, como se ve el icono en la pantalla de inicio. -->
   <span class="appbanner__icon" aria-hidden="true">
-    <img src="assets_bipsy/Resized/256px/Brand Marks/mint_symbol_nobackground.webp"
-         alt="" class="theme-dark-only" />
-    <img src="assets_bipsy/Resized/256px/Brand Marks/carbon_symbol_nobackground.webp"
-         alt="" class="theme-light-only" />
+    <picture>
+      <!-- Los de `assets_web/`: la ruta del kit lleva un espacio («Brand Marks»)
+           y en un `srcset` el espacio separa la URL del descriptor, así que el
+           navegador descartaba el símbolo del modo claro. -->
+      <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-symbol-carbon.webp" />
+      <img src="assets_web/bipsy-symbol-mint.webp" alt="" />
+    </picture>
   </span>
 
   <span class="appbanner__text">

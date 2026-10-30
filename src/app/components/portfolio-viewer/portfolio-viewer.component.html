@@ -1,0 +1,51 @@
+<div
+  #dialog
+  class="pv"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="'Galería de ' + businessName"
+  (click)="onBackdrop($event)"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd($event)"
+>
+  <button #closeBtn type="button" class="pv__btn pv__close" (click)="closed.emit()" aria-label="Cerrar">
+    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+  </button>
+
+  @if (current; as img) {
+    <!-- El marco tiene alto fijo y el pie también: así la foto no da saltos al
+         pasar entre una con pie y otra sin él, como en la app. -->
+    <div class="pv__stage" data-close>
+      @if (total > 1) {
+        <button type="button" class="pv__btn pv__nav pv__nav--prev" (click)="prev()"
+                [disabled]="!hasPrev" aria-label="Foto anterior">
+          <span class="material-symbols-rounded" aria-hidden="true">chevron_left</span>
+        </button>
+      }
+      <!-- track por id: al pasar de foto se cambia el elemento, y la imagen
+           anterior no se queda pintada mientras carga la nueva. -->
+      @for (shown of [img]; track shown.id) {
+        <img class="pv__img" [src]="shown.url" [alt]="shown.caption || businessName"
+             (click)="$event.stopPropagation()" />
+      }
+      @if (total > 1) {
+        <button type="button" class="pv__btn pv__nav pv__nav--next" (click)="next()"
+                [disabled]="!hasNext" aria-label="Foto siguiente">
+          <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+        </button>
+      }
+    </div>
+
+    <div class="pv__foot" data-close aria-live="polite">
+      @if (total > 1) {
+        <span class="pv__count">{{ index + 1 }} / {{ total }}</span>
+      }
+      @if (img.serviceName) {
+        <span class="pv__service">{{ img.serviceName }}</span>
+      }
+      @if (img.caption) {
+        <span class="pv__caption">{{ img.caption }}</span>
+      }
+    </div>
+  }
+</div>

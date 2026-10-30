@@ -1,19 +1,22 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../core/api-error';
 import { SessionService } from '../../core/session.service';
 import { BookingRepository } from '../../repositories/booking.repository';
+import { DialogService } from '../../core/dialog.service';
 import { BookingResponse, ReviewResponse } from '../../models/bipsy.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { SegmentedComponent } from '../../components/segmented/segmented.component';
+import { AvatarComponent } from '../../components/avatar/avatar.component';
+import { CatalogRepository } from '../../repositories/catalog.repository';
 import { fixImageUrl } from '../../shared/image-url';
 import { longDate, parseLocal } from '../../shared/dates';
 import { businessPath } from '../../shared/slug';
-
-/** Límite de `GipsiInputLimits.reviewComment` en la app. */
-const COMMENT_MAX = 500;
+import { ToastService } from '../../core/toast.service';
+import { REVIEW_COMMENT_MAX, REVIEW_NEEDS_STARS, reviewStarLabel } from './review-labels';
 
 /**
  * Reseñas. Port de `MyReviewsScreen`.
@@ -25,16 +28,21 @@ const COMMENT_MAX = 500;
 @Component({
   selector: 'app-reviews',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, SegmentedComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, SegmentedComponent, AvatarComponent],
   templateUrl: './reviews.component.html',
   styleUrl: './reviews.component.css',
 })
 export class ReviewsComponent implements OnInit {
   private readonly session = inject(SessionService);
   private readonly bookings = inject(BookingRepository);
+  private readonly dialog = inject(DialogService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly toasts = inject(ToastService);
+  private readonly catalog = inject(CatalogRepository);
 
-  readonly commentMax = COMMENT_MAX;
+  readonly commentMax = REVIEW_COMMENT_MAX;
+  readonly starLabel = reviewStarLabel;
 
   isAuthenticated = false;
   isLoading = true;
@@ -44,18 +52,18 @@ export class ReviewsComponent implements OnInit {
   pending: BookingResponse[] = [];
   mine: ReviewResponse[] = [];
 
-  // Hoja de valorar
+  // Hoja de valorar. Sin estrellas de partida, como la app: con cinco puestas
+  // de antemano, quien no toca nada publica un «Excelente» que no ha dicho.
   target: BookingResponse | null = null;
-  rating = 5;
+  rating = 0;
   comment = '';
   busy = false;
   sheetError: string | null = null;
-  toast: string | null = null;
-
-  readonly ratingWords = ['', 'Muy mal', 'Mal', 'Normal', 'Bien', '¡Genial!'];
 
   ngOnInit(): void {
-    this.session.status$.subscribe(status => {
+    // Cortada al salir: la sesión no completa nunca, y cada visita dejaba
+    // viva una suscripción que volvía a cargar las reseñas al iniciar sesión.
+    this.session.status$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status === 'unknown') {
         return;
       }
@@ -97,6 +105,7 @@ export class ReviewsComponent implements OnInit {
         this.selectedTab = 1;
       }
       this.refreshTabs();
+      void this.loadPhotos();
     } catch (error) {
       this.loadError = ApiError.from(error);
     } finally {
@@ -110,23 +119,45 @@ export class ReviewsComponent implements OnInit {
     return [1, 2, 3, 4, 5].map(i => (i <= Math.round(rating) ? 1 : 0));
   }
 
-  image(booking: BookingResponse): string | null {
-    return fixImageUrl(booking.serviceImageUrl) ?? null;
-  }
-
   when(booking: BookingResponse): string {
     return longDate(parseLocal(booking.startDateTime));
   }
 
-  reviewDate(review: ReviewResponse): string {
+  private businessNames = new Map<number, string>();
+
+  /**
+   * La foto de cada negocio, como `_BusinessAvatar` de la app. Se pide DESPUÉS
+   * de pintar la lista y sin bloquearla: mientras llega sale la inicial, y un
+   * negocio que falle se queda con ella.
+   */
+  private businessPhotos = new Map<number, string | null>();
+
+  private async loadPhotos(): Promise<void> {
+    const ids = [...new Set([...this.pending.map(b => b.businessId), ...this.mine.map(r => r.businessId)])]
+      .filter(id => !this.businessPhotos.has(id));
+    await Promise.all(ids.map(async id => {
+      try {
+        const business = await this.catalog.business(id);
+        this.businessPhotos.set(id, fixImageUrl(business.profileImageUrl) ?? null);
+        if (!this.businessNames.has(id) && business.name) this.businessNames.set(id, business.name);
+      } catch {
+        this.businessPhotos.set(id, null);
+      }
+    }));
+  }
+
+  photoOf(businessId: number): string | null {
+    return this.businessPhotos.get(businessId) ?? null;
+  }
+
+  /** «16 sept 2026», como el `d MMM y` de la tarjeta de la app. */
+  shortDate(review: ReviewResponse): string {
     if (!review.createdAt) return '';
     const date = new Date(review.createdAt);
     return Number.isNaN(date.getTime())
       ? ''
-      : new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+      : new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }).format(date).replace('.', '');
   }
-
-  private businessNames = new Map<number, string>();
 
   businessOf(review: ReviewResponse): string {
     return this.businessNames.get(review.businessId) ?? 'Negocio';
@@ -140,11 +171,18 @@ export class ReviewsComponent implements OnInit {
 
   openSheet(booking: BookingResponse): void {
     this.target = booking;
-    this.rating = 5;
+    this.rating = 0;
     this.comment = '';
     this.sheetError = null;
   }
 
+  setRating(n: number): void {
+    this.rating = n;
+    this.sheetError = null;
+  }
+
+  /** Escape cierra la hoja, como todas las demás. */
+  @HostListener('document:keydown.escape')
   closeSheet(): void {
     if (!this.busy) {
       this.target = null;
@@ -153,6 +191,10 @@ export class ReviewsComponent implements OnInit {
 
   async submit(): Promise<void> {
     if (!this.target || this.busy) {
+      return;
+    }
+    if (this.rating === 0) {
+      this.sheetError = REVIEW_NEEDS_STARS;
       return;
     }
     this.busy = true;
@@ -167,33 +209,43 @@ export class ReviewsComponent implements OnInit {
       this.pending = this.pending.filter(b => b.businessId !== this.target!.businessId);
       this.refreshTabs();
       this.target = null;
-      this.showToast('¡Gracias por tu reseña!');
+      this.toasts.success('¡Gracias por tu reseña!');
     } catch (raw) {
-      this.sheetError = ApiError.from(raw).message;
+      const error = ApiError.from(raw);
+      if (error.isConflict) {
+        // 409: esa cita ya tenía reseña (otra pestaña, otro dispositivo). Lo
+        // que el usuario quería ya está hecho: se cierra y se recarga.
+        this.target = null;
+        void this.load();
+      } else {
+        this.sheetError = error.message;
+      }
     } finally {
       this.busy = false;
     }
   }
 
   async remove(review: ReviewResponse): Promise<void> {
-    if (!confirm('¿Borrar esta reseña? No se puede deshacer.')) {
+    const ok = await this.dialog.confirm({
+      title: '¿Borrar esta reseña?',
+      message: 'El negocio dejará de verla. No se puede deshacer.',
+      confirmLabel: 'Borrar',
+      destructive: true,
+    });
+    if (!ok) {
       return;
     }
     try {
       await this.bookings.deleteReview(review.id);
       this.mine = this.mine.filter(r => r.id !== review.id);
       this.refreshTabs();
-      this.showToast('Reseña borrada');
+      this.toasts.success('Reseña borrada');
       // Puede volver a quedar pendiente: se recalcula con los datos del servidor.
       void this.load();
     } catch (raw) {
-      this.showToast(ApiError.from(raw).message);
+      // Antes salía con el mismo aviso verde que un acierto.
+      this.toasts.error(ApiError.from(raw).message);
     }
-  }
-
-  private showToast(message: string): void {
-    this.toast = message;
-    setTimeout(() => (this.toast = null), 2600);
   }
 
   goToLogin(): void {

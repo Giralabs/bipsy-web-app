@@ -18,7 +18,7 @@ export interface BipRigLayer {
 export const BIP_RIG_BASE = 'assets_bip/rig/support/';
 
 /** El dibujo entero, por si alguna capa no llega. */
-export const BIP_RIG_FALLBACK = 'assets_bip/bip_support.webp';
+export const BIP_RIG_FALLBACK = 'assets_web/bip-support.webp';
 
 /** De atrás adelante. */
 export const BIP_RIG_LAYERS: BipRigLayer[] = [

@@ -1,0 +1,38 @@
+/* Una fila más del bloque. Como el componente envuelve la fila, el separador
+   global `.form-row + .form-row` no la alcanza: lo pinta el propio host, arriba
+   si no es la primera y abajo si no es la última. */
+:host { display: block; }
+:host(:not(:first-child)) { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+:host(:not(:last-child)) { box-shadow: inset 0 -0.5px 0 var(--clr-border); }
+:host(:not(:first-child):not(:last-child)) {
+  box-shadow: inset 0 0.5px 0 var(--clr-border), inset 0 -0.5px 0 var(--clr-border);
+}
+
+/* Etiqueta encima, como las hojas del perfil (`.form-row--stack` vive en su
+   CSS y no llega aquí dentro). */
+.asf--stack { flex-direction: column; align-items: stretch; gap: 0; padding-top: 10px; padding-bottom: 2px; }
+.asf--stack .form-row__label { width: auto; font-size: 0.75rem; font-weight: 700; color: var(--clr-text-2); }
+.asf--stack .form-row__input { padding: 6px 0 10px; }
+
+.asf__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  box-shadow: inset 0 0.5px 0 var(--clr-border);
+}
+
+.asf__list[hidden] { display: none; }
+
+.asf__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.asf__item:hover,
+.asf__item--on { background: var(--clr-surface-hover); }
+
+.asf__main { font-size: 0.9375rem; font-weight: 600; color: var(--clr-text); }
+.asf__sub { font-size: 0.75rem; font-weight: 500; color: var(--clr-text-2); }

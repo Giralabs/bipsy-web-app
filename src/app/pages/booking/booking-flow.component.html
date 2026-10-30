@@ -1,276 +1,387 @@
-<div class="bf anim-fade-up">
-  <div class="bf__inner">
+<div class="bf">
+  <div class="bf__inner" [class.bf__inner--split]="!loading && !!business && !(step === 'done' && booking)">
 
     @if (loading) {
-      <div class="loading-state"><div class="spinner"></div><span>Cargando…</span></div>
+      <!-- Esqueleto con la forma del primer paso: cabecera y unas filas. -->
+      <div class="bf__skel" aria-busy="true" aria-label="Cargando">
+        <div class="skeleton bf__skel-title"></div>
+        <div class="skeleton bf__skel-bar"></div>
+        <div class="skeleton bf__skel-row"></div>
+        <div class="skeleton bf__skel-row"></div>
+        <div class="skeleton bf__skel-row"></div>
+      </div>
     } @else if (!business) {
       <div class="empty-state">
-        <span class="material-symbols-rounded">error</span>
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
         <h3>No hemos podido cargar el negocio</h3>
         <p>{{ error }}</p>
       </div>
-    } @else if (step === 'done') {
+    } @else if (step === 'done' && booking) {
 
-      <!-- ══════════ HECHO ══════════ -->
-      <div class="bf__done">
-        <span class="material-symbols-rounded fill bf__done-icon">check_circle</span>
-        <h1 class="flow__title">Reserva enviada</h1>
-        <p class="flow__subtitle">
-          {{ service?.name }} en {{ business.name }}<br />
-          {{ dayLabel }} a las {{ startTime }}
+      <!-- ══════════ RESULTADO ══════════
+           El último estado de la MISMA pantalla, no otra: volver sigue llevando
+           a la ficha del negocio y no a un paso que ya no existe. El icono va
+           del color del texto y sin animación: lo que distingue los dos casos
+           es su forma y el texto de debajo. -->
+      <section class="bf__result anim-fade-up" aria-labelledby="result-title">
+        <span class="material-symbols-rounded bf__result-icon" aria-hidden="true">
+          {{ resultPending ? 'schedule' : 'check_circle' }}
+        </span>
+        <h1 class="flow__title" id="result-title">
+          {{ resultPending ? 'Solicitud enviada' : 'Reserva confirmada' }}
+        </h1>
+        <p class="flow__subtitle bf__result-body">
+          <!-- Con el importe ya reservado hay que decirlo aquí: si no, busca en
+               su banco un cargo que todavía no existe, o cree que le han
+               cobrado dos veces cuando la reserva pase a cargo. -->
+          @if (resultHeld) {
+            El negocio la recibirá y te avisará en cuanto la acepte. El importe está reservado en
+            tu tarjeta: solo se cobra si acepta, y si la rechaza se libera solo.
+          } @else if (resultPending) {
+            El negocio la recibirá y te avisará en cuanto la acepte.
+          } @else {
+            Tu cita está reservada. Te esperamos el día acordado.
+          }
         </p>
+
+        <dl class="bf__sum bf__result-sum">
+          <div class="bf__sum-row"><dt>Servicio</dt><dd>{{ booking.serviceName }}</dd></div>
+          <div class="bf__sum-row"><dt>Día</dt><dd>{{ resultDay }}</dd></div>
+          <div class="bf__sum-row"><dt>Hora</dt><dd>{{ resultTime }}</dd></div>
+          <!-- Con quién va: quien eligió «Cualquiera disponible» no lo tenía en
+               ninguna parte. Sin nombre es que el negocio trabaja solo. -->
+          @if (booking.workerName) {
+            <div class="bf__sum-row"><dt>Profesional</dt><dd>{{ booking.workerName }}</dd></div>
+          }
+          <!-- Para otra persona: que se vea que la reserva salió a su nombre. -->
+          @if (booking.attendeeName) {
+            <div class="bf__sum-row"><dt>Para</dt><dd>{{ booking.attendeeName }}</dd></div>
+          }
+        </dl>
+
         <div class="flow__actions">
-          <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="goToBooking()">
+          <!-- Pagar ahora, solo si el negocio lo admite y queda algo. Antes de
+               las salidas: es cuando todavía tiene la cita en la cabeza. Y cuando
+               está, se queda la acción principal: es lo único a medias. -->
+          @if (canPayFromResult) {
+            <app-button variant="primary" size="large" [fullWidth]="true" icon="credit_card" (onClick)="payFromResult()">
+              {{ resultPayLabel }}
+            </app-button>
+          }
+          <app-button
+            [variant]="canPayFromResult ? 'secondary' : 'primary'"
+            size="large"
+            [fullWidth]="true"
+            (onClick)="goToBookings()"
+          >
             Ver mis citas
           </app-button>
+          <app-button variant="text" [fullWidth]="true" (onClick)="done()">Hecho</app-button>
         </div>
-      </div>
+      </section>
 
     } @else {
 
-      <button type="button" class="flow__back" (click)="back()">
-        <span class="material-symbols-rounded">arrow_back</span>
-        Atrás
-      </button>
+      <div class="bf__main">
+      <app-flow-header
+        class="bf__head"
+        [title]="stepTitle"
+        [progress]="progress"
+        [atStart]="atStart"
+        [stepNumber]="step === 'auth' ? 0 : stepIndexForAside + 1"
+        [stepCount]="steps.length"
+        (back)="back()"
+      ></app-flow-header>
 
-      <!-- ══════════ 1. SERVICIO ══════════ -->
-      @if (step === 'service') {
-        <h1 class="flow__title">¿Qué te hacemos?</h1>
-        <p class="flow__subtitle">Elige el servicio que quieres reservar en {{ business.name }}.</p>
+      <div class="bf__body">
 
-        @if (services.length === 0) {
-          <div class="empty-state">
-            <span class="material-symbols-rounded">inventory_2</span>
-            <h3>Sin servicios</h3>
-            <p>Este negocio todavía no ha publicado su catálogo.</p>
-          </div>
-        } @else {
-          <div class="bf__list">
-            @for (srv of services; track srv.id) {
-              <button type="button" class="bf__row" (click)="chooseService(srv)">
-                <span class="bf__row-main">
-                  <span class="bf__row-title">{{ srv.name }}</span>
-                  @if (srv.description) {
-                    <span class="bf__row-sub">{{ srv.description }}</span>
-                  }
-                  <span class="bf__row-meta">
-                    <span class="material-symbols-rounded bf__row-icon">schedule</span>
-                    {{ durationLabel(srv) }}
-                  </span>
-                </span>
-                <span class="bf__row-price">{{ price(srv) }}</span>
-                <span class="material-symbols-rounded bf__row-chevron">chevron_right</span>
-              </button>
-            }
-          </div>
+        <!-- ══════════ SERVICIO ══════════ -->
+        @if (step === 'service') {
+          <p class="bf__intro">Elige el servicio que quieres reservar en {{ business.name }}.</p>
+
+          @if (services.length === 0) {
+            <div class="empty-state">
+              <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+              <h3>Sin servicios</h3>
+              <p>Este negocio todavía no ha publicado su catálogo.</p>
+            </div>
+          } @else {
+            <!-- La misma tarjeta que la ficha (`GipsiServiceRow`): foto o icono
+                 de la categoría a la izquierda y a sangre, duración y precio en
+                 menta. Antes era una fila de texto distinta a la de la ficha y
+                 el servicio parecía otro al pasar de una pantalla a la otra. -->
+            <ul class="bf__svcs">
+              @for (srv of services; track srv.id) {
+                <li>
+                  <button type="button" class="bf__svc" (click)="chooseService(srv)"
+                          [attr.aria-label]="srv.name + ', ' + durationLabel(srv) + ', ' + price(srv)">
+                    @if (serviceImage(srv); as src) {
+                      <img class="bf__svc-thumb" [src]="src" alt="" loading="lazy" />
+                    } @else {
+                      <span class="bf__svc-thumb bf__svc-thumb--icon" aria-hidden="true">
+                        <span class="material-symbols-rounded">{{ categoryIconName }}</span>
+                      </span>
+                    }
+                    <span class="bf__svc-info">
+                      <span class="bf__svc-name">{{ srv.name }}</span>
+                      @if (srv.description) {
+                        <span class="bf__svc-desc">{{ srv.description }}</span>
+                      }
+                      <span class="bf__svc-meta">
+                        <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                        {{ durationLabel(srv) }}
+                        <span class="bf__svc-price">{{ price(srv) }}</span>
+                      </span>
+                      @if (srv.serviceMode === 'BOTH' || srv.serviceMode === 'AT_CUSTOMER') {
+                        <span class="bf__svc-place">
+                          <span class="material-symbols-rounded" aria-hidden="true">directions_car</span>
+                          {{ srv.serviceMode === 'BOTH' ? 'En el local o a domicilio' : 'A domicilio' }}
+                        </span>
+                      }
+                    </span>
+                    <span class="material-symbols-rounded bf__svc-go" aria-hidden="true">arrow_forward_ios</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
         }
-      }
 
-      <!-- ══════════ 2. PROFESIONAL ══════════ -->
-      @if (step === 'worker') {
-        <h1 class="flow__title">¿Con quién?</h1>
-        <p class="flow__subtitle">Puedes elegir profesional o dejar que el negocio asigne uno.</p>
+        <!-- ══════════ SITIO ══════════ -->
+        @if (step === 'place' && service) {
+          <app-booking-place-step
+            [business]="business"
+            [service]="service"
+            [place]="place"
+            [address]="address"
+            [signedIn]="!needsAuth"
+            (placeChange)="onPlaceChange($event)"
+            (addressChange)="onAddressChange($event)"
+            (next)="onPlaceNext()"
+          ></app-booking-place-step>
+        }
 
-        <div class="bf__list">
-          <button type="button" class="bf__row" (click)="chooseWorker(undefined)">
-            <span class="bf__row-main">
-              <span class="bf__row-title">Cualquiera disponible</span>
-              <span class="bf__row-sub">Más horarios entre los que elegir</span>
-            </span>
-            <span class="material-symbols-rounded bf__row-chevron">chevron_right</span>
-          </button>
-          @for (worker of workers; track worker.id) {
-            @if (worker.available) {
-              <button type="button" class="bf__row" (click)="chooseWorker(worker.id)">
-                <!-- Hoy ningún trabajador tiene foto y salen las iniciales. En
-                     cuanto el backend permita subirla, aparece sola. -->
+        <!-- ══════════ PROFESIONAL ══════════
+             Elegir MARCA y el paso lo da «Siguiente»: avanzar en el mismo clic
+             no dejaba ver qué se había elegido. -->
+        @if (step === 'worker') {
+          <p class="bf__intro">Elige un profesional o deja que lo asignemos según la disponibilidad.</p>
+
+          <div class="bf__group" role="group" aria-label="Profesional">
+            <button
+              type="button"
+              class="bf__opt"
+              [attr.aria-pressed]="workerId === undefined"
+              (click)="chooseWorker(undefined)"
+            >
+              <span class="bf__row-main">
+                <span class="bf__row-title">Cualquiera disponible</span>
+                <span class="bf__row-sub">El primero que tenga hueco a tu hora</span>
+              </span>
+              <span class="material-symbols-rounded bf__tick" aria-hidden="true">{{ workerId === undefined ? 'check' : '' }}</span>
+            </button>
+            @if (workersLoading) {
+              <div class="bf__opt bf__opt--skel">
+                <div class="skeleton bf__skel-avatar"></div>
+                <div class="skeleton bf__skel-line"></div>
+              </div>
+            }
+            @for (worker of eligibleWorkers; track worker.id) {
+              <button
+                type="button"
+                class="bf__opt"
+                [disabled]="!worker.available"
+                [attr.aria-pressed]="workerId === worker.id"
+                (click)="chooseWorker(worker.id)"
+              >
                 <app-avatar
-                  class="bf__row-avatar"
                   [photoUrl]="worker.profileImageUrl"
                   [name]="worker.name"
-                  [size]="40"
+                  [size]="36"
                 ></app-avatar>
                 <span class="bf__row-main">
                   <span class="bf__row-title">{{ worker.name }}</span>
+                  @if (!worker.available) {
+                    <span class="bf__row-sub">No disponible</span>
+                  }
                 </span>
-                <span class="material-symbols-rounded bf__row-chevron">chevron_right</span>
+                <span class="material-symbols-rounded bf__tick" aria-hidden="true">{{ workerId === worker.id ? 'check' : '' }}</span>
               </button>
             }
-          }
-        </div>
-      }
-
-      <!-- ══════════ 3. FECHA ══════════ -->
-      @if (step === 'date') {
-        <h1 class="flow__title">¿Qué día?</h1>
-        <p class="flow__subtitle">{{ service?.name }} · {{ workerName }}</p>
-
-        <div class="bf__days">
-          @for (d of days; track d.getTime()) {
-            <button type="button" class="bf__day" (click)="chooseDay(d)">
-              <span class="bf__day-label">{{ dayShort(d) }}</span>
-              <span class="bf__day-num">{{ d.getDate() }}</span>
-            </button>
-          }
-        </div>
-      }
-
-      <!-- ══════════ 4. HORA ══════════ -->
-      @if (step === 'time') {
-        <h1 class="flow__title">¿A qué hora?</h1>
-        <p class="flow__subtitle">{{ dayLabel }}</p>
-
-        @if (slotsLoading) {
-          <div class="loading-state"><div class="spinner"></div><span>Buscando huecos…</span></div>
-        } @else if (availableSlots.length === 0) {
-          <div class="empty-state">
-            <span class="material-symbols-rounded">event_busy</span>
-            <h3>Sin huecos ese día</h3>
-            @if (waitlistDone) {
-              <p>
-                Estás en la lista de espera. Si se libera un hueco te avisamos y podrás
-                quedártelo desde «Mis citas».
-              </p>
-            } @else {
-              <p>Prueba con otra fecha o, si prefieres, te avisamos en cuanto se libere uno.</p>
-            }
-            <div class="bf__empty-actions">
-              <app-button variant="secondary" icon="calendar_month" (onClick)="step = 'date'">
-                Cambiar de día
-              </app-button>
-              @if (canJoinWaitlist) {
-                <app-button
-                  variant="primary"
-                  icon="notifications_active"
-                  [loading]="waitlistBusy"
-                  (onClick)="joinWaitlist()"
-                >
-                  Avisadme si se libera
-                </app-button>
-              }
-            </div>
           </div>
-        } @else {
-          <div class="bf__slots">
-            @for (slot of availableSlots; track slot.start) {
-              <button type="button" class="bf__slot" (click)="chooseSlot(slot)">{{ slot.start }}</button>
-            }
+
+          <div class="flow__actions">
+            <app-button variant="primary" size="large" [fullWidth]="true" trailingIcon="arrow_forward" (onClick)="onWorkerNext()">
+              Siguiente
+            </app-button>
           </div>
         }
-      }
 
-      <!-- ══════════ 5. ENTRAR ══════════
-           Después de elegir la hora, no antes: pedírselo a quien todavía no sabe
-           si hay hueco es perder gente por nada. Y aquí dentro, no en /acceder,
-           para que la hora elegida no se pierda.
+        <!-- ══════════ DÍA ══════════ -->
+        @if (step === 'date') {
+          <p class="bf__intro">Disponibilidad para los próximos {{ horizonDays }} días.</p>
 
-           El formulario es EL MISMO de /acceder, no una copia: `app-login-form`.
-           Tenía uno propio y se notaba —ni el ojo de la contraseña ni el enlace
-           de recuperarla—, y una puerta que se parece a la de casa pero no lo es
-           no se le pone delante a quien va a escribir su contraseña. -->
-      @if (step === 'auth') {
-        <app-login-form
-          title="Entra para reservar"
-          subtitle="Tu cita queda en la app y no tendrás que escribir tus datos otra vez."
-          submitLabel="Entrar y reservar"
-          [returnTo]="returnToHere"
-          (signedIn)="onSignedIn()"
-        ></app-login-form>
-      }
+          <app-month-calendar
+            [first]="firstDay"
+            [last]="lastDay"
+            [selected]="day"
+            (selectedChange)="chooseDay($event)"
+          ></app-month-calendar>
 
-      @if (step === 'confirm') {
-        <h1 class="flow__title">Revisa tu cita</h1>
-
-        <div class="form-group">
-          <div class="form-group__box bf__summary">
-            <div class="bf__summary-row"><span>Servicio</span><strong>{{ service?.name }}</strong></div>
-            <div class="bf__summary-row"><span>Negocio</span><strong>{{ business.name }}</strong></div>
-            <div class="bf__summary-row">
-              <span>Profesional</span>
-              <strong class="bf__summary-worker">
-                @if (chosenWorker) {
-                  <app-avatar
-                    [photoUrl]="chosenWorker.profileImageUrl"
-                    [name]="chosenWorker.name"
-                    [size]="24"
-                  ></app-avatar>
-                }
-                {{ workerName }}
-              </strong>
-            </div>
-            <div class="bf__summary-row"><span>Día</span><strong>{{ dayLabel }}</strong></div>
-            <div class="bf__summary-row"><span>Hora</span><strong>{{ startTime }}</strong></div>
-            <div class="bf__summary-row"><span>Duración</span><strong>{{ service ? durationLabel(service) : '' }}</strong></div>
-            <div class="bf__summary-row bf__summary-row--total">
-              <span>Total</span><strong>{{ service ? price(service) : '' }}</strong>
-            </div>
+          <div class="flow__actions">
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              trailingIcon="arrow_forward"
+              [disabled]="!day"
+              (onClick)="onDateNext()"
+            >Siguiente</app-button>
           </div>
-        </div>
-
-        <div class="form-group">
-          <p class="form-group__header">Notas para el negocio (opcional)</p>
-          <div class="form-group__box">
-            <textarea
-              class="bf__notes"
-              rows="3"
-              maxlength="500"
-              placeholder="¿Algo que deba saber el negocio antes de tu cita?"
-              [(ngModel)]="notes"
-            ></textarea>
-          </div>
-        </div>
-
-        <!-- La política de cancelación es lo que sostiene el acuerdo: sin este
-             aviso, el cargo posterior no tendría base. -->
-        @if (needsPolicyAcceptance) {
-          <div class="form-group">
-            <p class="form-group__header">Tarifa de cancelación</p>
-            <div class="form-group__box bf__policy">
-              <label class="bf__policy-check">
-                <input type="checkbox" [(ngModel)]="acceptedPolicy" />
-                <span>
-                  Acepto que se cobre el {{ business.cancellationFeePercent }} % del servicio si
-                  cancelo, cambio o no acudo a la cita con menos de
-                  {{ business.cancellationWindowHours }} h de antelación.
-                </span>
-              </label>
-            </div>
-          </div>
-        } @else {
-          <p class="form-group__footer bf__no-fee">No se cobra nada por cancelar.</p>
         }
 
-        @if (error) {
+        <!-- ══════════ HORA ══════════ -->
+        @if (step === 'time') {
+          <p class="bf__intro">{{ dayLabel }}</p>
+
+          <app-slot-grid
+            [slots]="slots"
+            [selected]="startTime"
+            [loading]="slotsLoading"
+            [error]="slotsError"
+            [allowWaitlist]="canJoinWaitlist"
+            [waitlistBusy]="waitlistBusy"
+            [waitlistDone]="waitlistDone"
+            [hasWorkerFilter]="workerId !== undefined && showWorkerStep"
+            (pick)="chooseSlot($event)"
+            (waitlist)="joinWaitlist()"
+            (changeDay)="changeDay()"
+            (retry)="loadSlots()"
+          ></app-slot-grid>
+
+          @if (!slotsLoading && !slotsError && hasFreeSlots) {
+            <div class="flow__actions">
+              <app-button
+                variant="primary"
+                size="large"
+                [fullWidth]="true"
+                trailingIcon="arrow_forward"
+                [disabled]="!startTime"
+                (onClick)="onTimeNext()"
+              >Siguiente</app-button>
+            </div>
+          }
+
+          <!-- La lista de espera se afina en su hoja: días, franjas, con quién
+               y una nota. Al apuntarse se cierra el flujo con un aviso. -->
+          @if (waitlistSheetOpen && business && service) {
+            <app-waitlist-join-sheet
+              [business]="business"
+              [service]="service"
+              [preferredWorkerId]="workerId"
+              (joined)="onWaitlistJoined()"
+              (closed)="waitlistSheetOpen = false"
+            />
+          }
+        }
+
+        <!-- ══════════ ENTRAR ══════════
+             Después de elegir la hora, no antes, y aquí dentro y no en /acceder
+             para que la hora no se pierda. El formulario es EL MISMO de
+             /acceder: una puerta que se parece a la de casa pero no lo es no se
+             le pone delante a quien va a escribir su contraseña. -->
+        @if (step === 'auth') {
+          <app-login-form
+            subtitle="Tu cita queda en la app y no tendrás que escribir tus datos otra vez."
+            submitLabel="Entrar y reservar"
+            [returnTo]="returnToHere"
+            (signedIn)="onSignedIn()"
+          ></app-login-form>
+        }
+
+        <!-- ══════════ CONFIRMAR ══════════ -->
+        @if (step === 'confirm' && service) {
+          <ng-container *ngTemplateOutlet="confirmStep"></ng-container>
+        }
+
+        @if (error && step !== 'confirm') {
           <p class="flow__error" role="alert">
-            <span class="material-symbols-rounded fill">error</span>{{ error }}
+            <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
           </p>
         }
+      </div>
+      </div>
 
-        <!-- Falta la tarjeta que este negocio exige: se avisa antes de que el
-             botón cambie de texto, para que el cambio no sorprenda. -->
-        @if (needsCard) {
-          <div class="bf__card-notice">
-            <span class="material-symbols-rounded">credit_card</span>
-            <span>
-              Este negocio pide una tarjeta guardada para reservar. La guardas aquí en un paso y
-              sigues con la cita: <strong>no se te cobra nada ahora</strong>.
-            </span>
+      <!-- ══════════ RESUMEN (solo escritorio) ══════════
+           Lo que se lleva elegido, fijo a un lado mientras se recorren los
+           pasos. En el móvil no existe: allí cada paso ocupa la pantalla, como
+           en la app, y el resumen es el último paso. -->
+      <aside class="bf__aside" aria-label="Tu reserva">
+        <div class="bfa">
+          <div class="bfa__cover">
+            @if (coverUrl; as src) {
+              <img [src]="src" alt="" loading="lazy" />
+            } @else {
+              <span class="img-placeholder" aria-hidden="true">
+                <span class="material-symbols-rounded">storefront</span>
+              </span>
+            }
           </div>
-        }
+          <div class="bfa__body">
+            <p class="bfa__biz">{{ business.name }}</p>
+            @if (business.address || business.city) {
+              <p class="bfa__addr">
+                {{ business.address }}@if (business.address && business.city) {, }{{ business.city }}
+              </p>
+            }
 
-        <div class="flow__actions">
-          <app-button
-            variant="primary"
-            size="large"
-            [fullWidth]="true"
-            [icon]="confirmIcon"
-            [loading]="submitting || hasCard === null"
-            (onClick)="confirmOrAddCard()"
-          >
-            {{ confirmLabel }}
-          </app-button>
+            <dl class="bfa__list">
+              <div class="bfa__row">
+                <dt>Servicio</dt>
+                <dd [class.bfa__todo]="!service">{{ service?.name ?? 'Elige un servicio' }}</dd>
+              </div>
+              @if (service) {
+                <div class="bfa__row">
+                  <dt>Duración</dt><dd>{{ durationLabel(service) }}</dd>
+                </div>
+              }
+              @if (steps.includes('place')) {
+                <div class="bfa__row">
+                  <dt>Dónde</dt>
+                  <dd [class.bfa__todo]="stepIndexForAside <= steps.indexOf('place')">
+                    {{ stepIndexForAside > steps.indexOf('place') ? whereLabel : 'Por elegir' }}
+                  </dd>
+                </div>
+              }
+              @if (asideWorker; as w) {
+                <div class="bfa__row"><dt>Profesional</dt><dd>{{ w }}</dd></div>
+              }
+              <div class="bfa__row">
+                <dt>Día</dt>
+                <dd [class.bfa__todo]="!day || step === 'date'">{{ day && step !== 'date' ? dayLabel : 'Elige un día' }}</dd>
+              </div>
+              <div class="bfa__row">
+                <dt>Hora</dt>
+                <dd [class.bfa__todo]="!startTime">{{ startTime ?? 'Elige una hora' }}</dd>
+              </div>
+            </dl>
+
+            @if (service) {
+              <div class="bfa__total">
+                <span>{{ chargesHomeSurcharge ? 'Total' : 'Precio' }}</span>
+                <strong>{{ money(totalPrice) }}</strong>
+              </div>
+            }
+          </div>
         </div>
-      }
+        <p class="bfa__note">
+          @if (needsPolicyAcceptance) {
+            Cancelar gratis hasta {{ business.cancellationWindowHours }} h antes de la cita.
+          } @else {
+            Puedes cambiar o cancelar la cita desde Mis citas.
+          }
+        </p>
+      </aside>
 
       <!-- La hoja de tarjeta, la misma que en Ajustes › Pagos. -->
       @if (cardSheetOpen) {
@@ -282,11 +393,147 @@
         ></app-add-card-sheet>
       }
 
-      @if (error && step !== 'confirm') {
-        <p class="flow__error" role="alert">
-          <span class="material-symbols-rounded fill">error</span>{{ error }}
-        </p>
+      @if (attendeeSheetOpen) {
+        <app-attendee-sheet
+          [current]="attendee"
+          (picked)="onAttendeePicked($event)"
+          (closed)="attendeeSheetOpen = false"
+        ></app-attendee-sheet>
       }
+    }
+
+    <!-- La hoja de pago, fuera de los pasos: la abre el confirmar (pago
+         obligatorio) y también el resultado («Pagar»). -->
+    @if (paySheet; as p) {
+      <app-pay-booking-sheet
+        [quote]="p.quote"
+        [concept]="p.concept"
+        [retiene]="p.retiene"
+        (closed)="onPaySheetClosed($event)"
+      ></app-pay-booking-sheet>
     }
   </div>
 </div>
+
+<ng-template #confirmStep>
+  @if (business && service) {
+    <!-- El resumen, cada dato en su fila: concepto a la izquierda y valor a la
+         derecha. El título lo pone la cabecera. -->
+    <h2 class="bf__header">Tu cita</h2>
+    <dl class="bf__sum">
+      <div class="bf__sum-row"><dt>Servicio</dt><dd>{{ service.name }}</dd></div>
+      <div class="bf__sum-row"><dt>Negocio</dt><dd>{{ business.name }}</dd></div>
+      <!-- Dónde, solo cuando dice algo: un servicio que solo se da en el local
+           no necesita una fila para repetirlo. -->
+      @if (steps.includes('place')) {
+        <div class="bf__sum-row"><dt>Dónde</dt><dd>{{ whereLabel }}</dd></div>
+      }
+      <div class="bf__sum-row"><dt>Día</dt><dd>{{ dayLabel }}</dd></div>
+      <div class="bf__sum-row"><dt>Hora</dt><dd>{{ timeLabel }}</dd></div>
+      @if (hasTeam) {
+        <div class="bf__sum-row"><dt>Profesional</dt><dd>{{ workerName }}</dd></div>
+      }
+      <!-- Con recargo el precio se DESGLOSA: solo el total no cuadraría con la
+           tarifa de la ficha, y se leería como una subida a escondidas. -->
+      @if (chargesHomeSurcharge) {
+        <div class="bf__sum-row"><dt>Servicio</dt><dd>{{ price(service) }}</dd></div>
+        <div class="bf__sum-row"><dt>Desplazamiento</dt><dd>+{{ money((service.homeSurchargeCents ?? 0) / 100) }}</dd></div>
+      }
+      <div class="bf__sum-row bf__sum-row--total">
+        <dt>{{ chargesHomeSurcharge ? 'Total' : 'Precio' }}</dt><dd>{{ money(totalPrice) }}</dd>
+      </div>
+    </dl>
+    @if (hasTeam && workerWasAutoAssigned) {
+      <p class="bf__foot">Te hemos asignado profesional según quién tenía libre tu hora.</p>
+    }
+
+    <!-- Para quién es. Bloque propio y no una fila más del resumen: ahí dentro
+         nadie se enteraba de que se puede reservar para otra persona. -->
+    <h2 class="bf__header bf__header--gap">Para quién es</h2>
+    <div class="bf__group">
+      <button type="button" class="bf__opt" [disabled]="submitting" (click)="openAttendeeSheet()" aria-haspopup="dialog">
+        <span class="bf__row-main"><span class="bf__row-title">Para</span></span>
+        <span class="bf__opt-value">{{ attendee?.name ?? 'Mí' }}</span>
+        <span class="material-symbols-rounded bf__row-chevron" aria-hidden="true">chevron_right</span>
+      </button>
+    </div>
+    <p class="bf__foot">
+      @if (attendee) {
+        La reserva, el pago y los avisos siguen siendo tuyos. El negocio verá para quién es la cita.
+      } @else {
+        ¿Es para otra persona? Elige a quién y el negocio sabrá quién va a ir. La reserva, el pago y los avisos siguen siendo tuyos.
+      }
+    </p>
+
+    <!-- La política de cancelación: el importe ya calculado, no la fórmula. Es
+         dinero del cliente y no puede enterarse en el cargo. -->
+    @if (needsPolicyAcceptance) {
+      <div class="bf__policy">
+        <div class="bf__policy-head">
+          <span class="bf__policy-title">Tarifa de cancelación</span>
+          <span class="bf__policy-amount">{{ feeLabel }}</span>
+        </div>
+        <p class="bf__policy-text">
+          Si cancelas, cambias o no acudes a la cita con menos de
+          {{ business.cancellationWindowHours }} h de antelación.
+        </p>
+        <!-- Queda guardado con la fecha: es la prueba si después se reclama el
+             cobro al banco. Por eso dice lo que se cobra, no «acepto los términos». -->
+        <label class="bf__policy-check">
+          <input type="checkbox" [(ngModel)]="acceptedPolicy" [disabled]="submitting" />
+          <span>Entiendo y acepto esta política de cancelación.</span>
+        </label>
+      </div>
+    } @else if (business.requiresCard) {
+      <div class="bf__policy">
+        <span class="bf__policy-title">Tarjeta requerida</span>
+        <p class="bf__policy-text">No se cobra nada por cancelar.</p>
+      </div>
+    } @else {
+      <p class="bf__foot bf__foot--gap">No se cobra nada por cancelar.</p>
+    }
+
+    <div class="form-group">
+      <label class="bf__header" for="bf-notes">Notas para el negocio (opcional)</label>
+      <div class="form-group__box">
+        <textarea
+          id="bf-notes"
+          class="bf__notes"
+          rows="3"
+          maxlength="500"
+          placeholder="¿Algo que deba saber el negocio antes de tu cita?"
+          [(ngModel)]="notes"
+        ></textarea>
+      </div>
+    </div>
+
+    @if (error) {
+      <p class="flow__error" role="alert">
+        <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+      </p>
+    }
+
+    <!-- Falta la tarjeta que el negocio exige: se avisa antes de que el botón
+         cambie de texto, para que el cambio no sorprenda. -->
+    @if (needsCard) {
+      <p class="bf__card-notice">
+        Este negocio pide una tarjeta guardada para reservar. La guardas aquí en un paso y sigues
+        con la cita: <strong>no se te cobra nada ahora</strong>.
+      </p>
+    }
+
+    <div class="flow__actions">
+      <app-button
+        variant="primary"
+        size="large"
+        [fullWidth]="true"
+        [icon]="confirmIcon"
+        [loading]="submitting || hasCard === null"
+        [disabled]="confirmBlocked"
+        (onClick)="confirmOrAddCard()"
+      >
+        {{ confirmLabel }}
+      </app-button>
+    </div>
+  }
+</ng-template>

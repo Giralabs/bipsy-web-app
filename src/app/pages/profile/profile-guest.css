@@ -1,0 +1,62 @@
+/* ══════════ SIN SESIÓN ══════════
+   Port de `_SignInSection` de `ProfileScreen`: el mismo círculo que espera en
+   la esquina de las otras pantallas —el botón que se ha tocado para llegar—,
+   en el acento como el avatar con sesión, y las dos puertas. Aparte de
+   profile.component.css, que va justo de presupuesto. */
+.guest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  border-radius: var(--r-xxl);
+  background: var(--clr-surface);
+  text-align: center;
+}
+
+.guest__avatar {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+}
+
+.guest__avatar .material-symbols-rounded { font-size: 38px; }
+
+.guest__title {
+  margin-top: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  color: var(--clr-text);
+}
+
+.guest__text {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--clr-text-2);
+}
+
+.guest__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.guest__btn { width: 100%; justify-content: center; }
+
+/* En el móvil va sobre el fondo, sin tarjeta, como en la app: la tarjeta
+   la ponen los bloques de debajo. */
+@media (max-width: 1024px) {
+  .guest {
+    padding: 24px 20px 28px;
+    background: none;
+  }
+  .guest__actions { max-width: 420px; }
+}

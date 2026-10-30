@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
 
 /**
  * Título de la pestaña y `noindex` para las pantallas que no son contenido:
@@ -43,5 +44,38 @@ export class PageMetaService {
       this.title.setTitle(this.defaultTitle);
       this.meta.removeTag('name="robots"');
     };
+  }
+
+  /** Vuelve al título de `index.html` y deja sin efecto lo que haya pendiente de deshacer. */
+  reset(): void {
+    ++this.owner;
+    this.title.setTitle(this.defaultTitle);
+    this.meta.removeTag('name="robots"');
+  }
+}
+
+/**
+ * El título de cada ruta, de su `title` en `app.routes.ts`.
+ *
+ * Pasa por [PageMetaService] y no por `Title` directamente para no pisarse
+ * con las páginas que ponen el suyo (la ficha de un negocio, no encontrada,
+ * error): esas rutas no llevan `title`, y aquí no se toca nada. Las que
+ * quieren el título general de la web lo piden con `data: { defaultTitle: true }`.
+ */
+@Injectable({ providedIn: 'root' })
+export class BipsyTitleStrategy extends TitleStrategy {
+  private readonly meta = inject(PageMetaService);
+
+  override updateTitle(snapshot: RouterStateSnapshot): void {
+    const title = this.buildTitle(snapshot);
+    if (title) {
+      this.meta.set(title);
+      return;
+    }
+    let route = snapshot.root;
+    while (route.firstChild) route = route.firstChild;
+    if (route.data['defaultTitle']) {
+      this.meta.reset();
+    }
   }
 }

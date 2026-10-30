@@ -1,0 +1,132 @@
+/* ══════════ PIEZAS COMUNES DE LOS AJUSTES ══════════
+   Las comparten la página y sus apartados hijos (Mis direcciones, Mis
+   personas). Con encapsulación emulada una regla de profile.component.css no
+   llega dentro de un hijo, y copiarlas en cada uno era la forma segura de que
+   acabaran pareciendo de pantallas distintas. Un solo fichero, incluido en los
+   tres componentes. */
+
+/* ── Tarjetas ── */
+.card {
+  padding: 22px;
+  border-radius: var(--r-xl);
+  background: var(--clr-surface);
+}
+
+.card + .card, .card + .savebar { margin-top: 12px; }
+
+.card__title {
+  font-family: var(--ff-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -.3px;
+}
+
+.card__text { margin-top: 4px; font-size: 0.875rem; font-weight: 500; line-height: 1.5; color: var(--clr-text-2); }
+.card__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+.card--row { display: flex; align-items: center; gap: 16px; }
+.card__body { flex: 1; min-width: 0; }
+.card--list { padding: 6px; }
+
+/* El icono de una fila: gris y sin cuadro detrás, como en los Ajustes del
+   sistema. El cuadro de color era adorno: no decía nada que no dijera el texto. */
+.card__icon {
+  flex: 0 0 auto;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--clr-text-2);
+}
+
+.card__icon .material-symbols-rounded { font-size: 22px; }
+.card__icon--accent { color: var(--clr-mint); }
+.card__icon--danger { color: var(--clr-danger-text); }
+
+/* ── Encabezado y pie de un bloque ── */
+.group__head {
+  margin: 24px 4px 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--clr-text);
+}
+
+.group__head:first-child { margin-top: 0; }
+
+.pane__foot { margin: 10px 4px 0; font-size: 0.75rem; font-weight: 600; line-height: 1.5; color: var(--clr-text-3); }
+
+/* ── Filas: interruptor o enlace ── */
+.toggle,
+.linkrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--clr-text);
+  font-family: var(--ff);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+
+.toggle:hover, .linkrow:hover { background: var(--clr-field); }
+.linkrow:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: -2px; }
+
+.toggle__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.toggle__text strong, .linkrow > strong { flex: 1; font-size: 0.9375rem; font-weight: 700; }
+.toggle__text small { font-size: 0.8125rem; font-weight: 500; color: var(--clr-text-2); }
+.toggle__text--clip strong,
+.toggle__text--clip small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.linkrow__go { color: var(--clr-text-3); }
+.linkrow__value { font-size: 0.875rem; font-weight: 600; color: var(--clr-text-2); }
+
+/* Interruptor de verdad, no una casilla. Es un <input type="checkbox"> con
+   role="switch": el lector de pantalla lo anuncia como interruptor y su
+   estado sale del propio `checked`. */
+.switch {
+  flex: 0 0 auto;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 48px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--clr-subtle);
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+  transition: transform .2s cubic-bezier(.2,.8,.2,1);
+}
+
+.switch:checked { background: var(--clr-success); }
+.switch:checked::after { transform: translateX(20px); }
+.switch:disabled { opacity: .5; cursor: default; }
+.switch:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+
+/* ── Botones ── */
+.pill-btn--danger { background: var(--clr-danger); color: #15171A; }
+.pill-btn--danger:hover { background: #EF8A8A; }
+
+@media (max-width: 640px) {
+  .card { padding: 18px; }
+  .card--list { padding: 6px; }
+  .card--row { flex-wrap: wrap; }
+  .card--row > .pill-btn { width: 100%; justify-content: center; }
+}

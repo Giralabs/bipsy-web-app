@@ -1,0 +1,111 @@
+:host { display: block; }
+
+/* Sobre su propia superficie, como el resto de bloques del flujo: suelta en el
+   suelo, la rejilla se confundía con el texto de alrededor. */
+.cal {
+  padding: 12px 12px 16px;
+  border-radius: var(--r-lg);
+  background: var(--clr-surface);
+}
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 0 8px;
+}
+
+.cal__month {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--clr-text);
+}
+
+.cal__nav {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--clr-text);
+  cursor: pointer;
+}
+
+.cal__nav:hover:not(:disabled) { background: var(--clr-surface-hover); }
+.cal__nav:disabled { color: var(--clr-text-3); opacity: .4; cursor: default; }
+.cal__nav:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 0; }
+.cal__nav .material-symbols-rounded { font-size: 22px; }
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 4px;
+  justify-items: center;
+}
+
+.cal__wd {
+  padding: 6px 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--clr-text-2);
+  text-decoration: none;
+  cursor: default;
+}
+
+/* Círculo de 44: el mínimo que se toca con el dedo sin acertar al de al lado. */
+.cal__day,
+.cal__gap {
+  width: 44px;
+  height: 44px;
+}
+
+.cal__day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--clr-text);
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.cal__day:hover:not(:disabled):not(.cal__day--on) { background: var(--clr-surface-hover); }
+.cal__day:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+
+/* Fuera del horizonte: se ve, para que el mes no tenga agujeros, pero apagado. */
+.cal__day:disabled { color: var(--clr-text-3); opacity: .4; cursor: default; }
+
+/* Hoy: un relleno tenue, que no compita con el elegido, y el número en el color
+   de la marca, como `todayTextStyle` de la app. */
+.cal__day--today { background: var(--clr-mint-dim); font-weight: 700; color: var(--clr-mint); }
+
+.cal__day--on {
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-weight: 700;
+}
+
+/* Móvil: el mes de Material de la app, suelto sobre la pantalla —sin tarjeta—,
+   con el título centrado entre las flechas (`titleMedium`) y filas de 52. */
+@media (max-width: 767px) {
+  .cal { padding: 0; background: none; border-radius: 0; }
+  .cal__head { padding: 4px 0 12px; }
+  .cal__month { font-size: 1.0625rem; }
+  .cal__grid { row-gap: 8px; }
+  .cal__wd { padding: 0 0 8px; font-size: 0.75rem; }
+  .cal__day { font-size: 1rem; }
+}
+
+@media (max-width: 380px) {
+  .cal__day, .cal__gap { width: 40px; height: 40px; }
+}

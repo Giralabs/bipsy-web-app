@@ -1,118 +1,102 @@
 :host { display: block; }
 
+/* Port de `BookingCard`: alto fijo —104 en la app— con la foto cuadrada del
+   mismo lado. Fijo y no medido del contenido para que la lista tenga un ritmo
+   regular: dos líneas o tres, todas las citas ocupan lo mismo. */
 .bk-card {
+  --bk-h: 104px;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px 12px 12px;
-  border-radius: var(--r-xl);
+  align-items: stretch;
+  height: var(--bk-h);
+  border-radius: var(--r-lg);
   background: var(--clr-surface);
+  overflow: hidden;
   cursor: pointer;
-  transition: background-color .2s ease, transform .2s cubic-bezier(.2,.8,.2,1);
+  transition: background-color .2s ease;
 }
 
 .bk-card:hover { background: var(--clr-surface-hover); }
 .bk-card:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
 
-@media (hover: hover) and (min-width: 1025px) {
-  .bk-card:hover { transform: translateX(4px); }
+.bk-card__photo {
+  flex: 0 0 var(--bk-h);
+  width: var(--bk-h);
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-/* ── Hoja de calendario ── */
-.bk-card__leaf {
-  flex: 0 0 auto;
-  width: 68px;
-  height: 76px;
-  border-radius: var(--r-sm);
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
+.bk-card__info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  line-height: 1;
+  padding: 12px 12px 12px 16px;
 }
 
-.bk-card__weekday,
-.bk-card__month {
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: .6px;
-  text-transform: uppercase;
-  opacity: .75;
-}
-
-.bk-card__day {
-  margin: 3px 0 2px;
-  font-family: var(--ff-display);
-  font-size: 1.75rem;
-  font-weight: 800;
-}
-
-/* Cancelada o sin acudir: la hoja pasa a gris. El resto sigue legible. */
-.bk-card--off .bk-card__leaf { background: var(--clr-field); color: var(--clr-text-2); }
-.bk-card--off .bk-card__service { text-decoration: line-through; text-decoration-color: var(--clr-text-3); }
-
-.bk-card__thumb {
-  flex: 0 0 auto;
-  width: 76px;
-  height: 76px;
-  border-radius: var(--r-sm);
-  object-fit: cover;
-}
-
-.bk-card__info { flex: 1; min-width: 0; }
-
+/* titleSmall de la app. */
 .bk-card__service {
-  font-family: var(--ff-display);
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -.3px;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -.1px;
   color: var(--clr-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Cancelada o sin acudir: tachado, sin apagar la tarjeta entera, que en
+   «Pasadas» es justo donde se vuelve a reservar. */
+.bk-card--off .bk-card__service { text-decoration: line-through; text-decoration-color: var(--clr-text-3); }
+
 .bk-card__business {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   margin-top: 2px;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--clr-text-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.bk-card__business .material-symbols-rounded { font-size: 15px; }
-
-.bk-card__when { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
-
-.bk-card__chip {
-  display: inline-flex;
+.bk-card__when {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px 3px 7px;
-  border-radius: var(--r-pill);
-  background: var(--clr-field);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--clr-text);
+  gap: 5px;
+  margin-top: 8px;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.bk-card__chip .material-symbols-rounded { font-size: 14px; color: var(--clr-text-2); }
-.bk-card__rel { font-size: 0.75rem; font-weight: 600; color: var(--clr-text-3); }
+.bk-card__date { color: var(--clr-text); font-weight: 600; }
+.bk-card__worker { overflow: hidden; text-overflow: ellipsis; }
+.bk-card__for { display: inline-flex; color: var(--clr-text-2); }
+.bk-card__for .material-symbols-rounded { font-size: 16px; }
+
+.bk-card__awaiting {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--clr-warn);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 .bk-card__aside {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  padding: 12px 14px 12px 0;
 }
 
 .bk-card__price {
@@ -122,14 +106,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-.bk-card__chevron { font-size: 22px; color: var(--clr-text-3); }
-
+/* `RebookButton`: un círculo menta de 44 con el icono. */
 .bk-card__rebook {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 14px 0 10px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border: none;
   border-radius: var(--r-pill);
   background: var(--clr-mint);
@@ -141,18 +126,35 @@
   transition: background-color .2s ease, transform .12s ease;
 }
 
-.bk-card__rebook .material-symbols-rounded { font-size: 18px; }
+.bk-card__rebook .material-symbols-rounded { font-size: 20px; }
 .bk-card__rebook:hover { background: var(--clr-mint-hover); }
 .bk-card__rebook:active { transform: scale(0.95); }
+.bk-card__rebook:focus-visible { outline: 2px solid var(--clr-text); outline-offset: 2px; }
 
-@media (max-width: 640px) {
-  .bk-card { gap: 12px; padding: 10px 12px 10px 10px; align-items: flex-start; }
-  .bk-card__leaf { width: 56px; height: 64px; }
-  .bk-card__day { font-size: 1.5rem; }
-  .bk-card__thumb { display: none; }
-  .bk-card__service { font-size: 1rem; }
-  .bk-card__rel { display: none; }
-  .bk-card__rebook-label { display: none; }
-  .bk-card__rebook { padding: 0; width: 36px; justify-content: center; }
-  .bk-card__chevron { display: none; }
+/* ── Móvil: la tarjeta de la app, tal cual ── */
+.bk-card__status--full,
+.bk-card__time--long,
+.bk-card__worker,
+.bk-card__price,
+.bk-card__rebook-label { display: none; }
+
+/* ── Escritorio: con sitio, más datos y el estado con su texto ── */
+@media (min-width: 1025px) {
+  .bk-card { --bk-h: 120px; border-radius: var(--r-xl); }
+  .bk-card__info { padding: 16px 16px 16px 20px; }
+  .bk-card__service { font-family: var(--ff-display); font-size: 1.125rem; font-weight: 700; letter-spacing: -.3px; }
+  .bk-card__aside { padding: 16px 18px 16px 0; }
+
+  .bk-card__status--icon,
+  .bk-card__time--short { display: none; }
+
+  .bk-card__status--full,
+  .bk-card__time--long,
+  .bk-card__worker,
+  .bk-card__price { display: inline-flex; }
+
+  /* En escritorio el botón dice lo que hace. */
+  .bk-card__rebook { width: auto; height: 36px; padding: 0 14px 0 10px; }
+  .bk-card__rebook-label { display: inline; }
+  .bk-card__rebook .material-symbols-rounded { font-size: 18px; }
 }

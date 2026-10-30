@@ -1,4 +1,4 @@
-.pay { min-height: 100vh; }
+.pay { }
 .pay__inner { max-width: 680px; margin: 0 auto; padding: 48px 24px 96px; }
 
 .pay__heading {
@@ -35,12 +35,64 @@
 .pay__link--bad { color: var(--clr-danger-text); }
 
 .pay__amount { display: inline-flex; align-items: center; gap: 8px; }
-.pay__amount strong { font-size: 0.9375rem; font-weight: 800; }
+.pay__amount strong { font-size: 0.9375rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+/* Un cobro fallido no se ha llevado dinero: tachado, para que no se lea como cobrado. */
+.pay__amount strong.pay__amount--void { text-decoration: line-through; color: var(--clr-text-3); font-weight: 600; }
 
-.pay__add { margin: -12px 0 24px; }
+/* La tarjeta principal: texto de acento, como el `additionalInfo` de la app. */
+.pay__principal { font-size: 0.8125rem; font-weight: 700; color: var(--clr-mint); }
+
+/* La etiqueta neutra de «En curso»: no es ni buena ni mala noticia. */
+.badge--muted { background: var(--clr-field); color: var(--clr-text-2); }
+
+/* ── Esqueleto de carga ── */
+.pay__skel { display: flex; flex-direction: column; gap: 10px; }
+.pay__skel-head { width: 120px; height: 14px; margin-top: 8px; border-radius: var(--r-xs); }
+.pay__skel-block { height: 112px; border-radius: var(--r-lg); }
+.pay__skel-block--tall { height: 200px; }
+.pay__skel-btn { width: 170px; height: 44px; margin-bottom: 14px; border-radius: var(--r-pill); }
+
+/* «Añadir tarjeta», última fila del bloque: el + y el texto en acento, como
+   el `CupertinoListTile` de la app. El separador lo pone el bloque. */
+.pay__addrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: none;
+  background: none;
+  color: var(--clr-mint);
+  font-family: var(--ff);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.pay__addrow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 52px;
+  height: 1px;
+  background: var(--clr-border);
+}
+.pay__addrow .material-symbols-rounded { width: 24px; font-size: 22px; text-align: center; }
+.pay__addrow:hover { background: var(--clr-field); }
+.pay__addrow:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: -2px; }
+
+/* En el móvil el título ya lo pone la barra de arriba, como la AppBar de la
+   app: repetirlo debajo era decir «Pagos» dos veces. */
+@media (max-width: 1024px) {
+  .pay__heading, .pay__sub { display: none; }
+  .pay__inner { padding-top: 12px; }
+}
 
 /* Hueco del formulario de Stripe. El alto mínimo evita que la hoja pegue un
    salto cuando el iframe termina de cargar. */
 .pay__element { margin: 20px 0 4px; min-height: 220px; }
 
-@media (max-width: 640px) { .pay__inner { padding: 32px 20px 96px; } }
+@media (max-width: 640px) { .pay__inner { padding: 12px 16px 96px; } }

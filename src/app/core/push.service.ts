@@ -59,20 +59,7 @@ export class PushService {
         return false;
       }
 
-      const [{ initializeApp, getApps }, { getMessaging, getToken }] = await Promise.all([
-        import('firebase/app'),
-        import('firebase/messaging'),
-      ]);
-      const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
-
-      // El service worker se registra a mano para poder darle una ruta
-      // explícita: servido desde otro sitio, FCM no lo encuentra.
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-
-      const token = await getToken(getMessaging(app), {
-        vapidKey: webPushVapidKey,
-        serviceWorkerRegistration: registration,
-      });
+      const token = await this.fetchToken();
       if (!token) {
         return false;
       }
@@ -95,16 +82,42 @@ export class PushService {
    * ordenador recibiría los avisos del anterior.
    */
   async disable(): Promise<void> {
-    const token = this.currentToken;
-    if (!token) {
-      return;
-    }
+    let token = this.currentToken;
     this.currentToken = null;
     try {
+      // El token solo vive en memoria: tras recargar la página `currentToken`
+      // está vacío aunque este navegador siga dado de alta, y cerrar sesión no
+      // daba de baja nada. Con el permiso ya concedido, FCM devuelve el mismo
+      // token sin preguntar al usuario.
+      if (!token && this.isAvailable && Notification.permission === 'granted') {
+        token = await this.fetchToken();
+      }
+      if (!token) {
+        return;
+      }
       await this.api.delete(`/me/devices/${encodeURIComponent(token)}`);
     } catch {
       // Si la baja falla, el token acaba muriendo solo: el backend borra los
       // que FCM devuelve como UNREGISTERED.
     }
+  }
+
+  /** El token FCM de este navegador. Exige el permiso ya concedido. */
+  private async fetchToken(): Promise<string | null> {
+    const [{ initializeApp, getApps }, { getMessaging, getToken }] = await Promise.all([
+      import('firebase/app'),
+      import('firebase/messaging'),
+    ]);
+    const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
+
+    // El service worker se registra a mano para poder darle una ruta
+    // explícita: servido desde otro sitio, FCM no lo encuentra.
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+    const token = await getToken(getMessaging(app), {
+      vapidKey: webPushVapidKey,
+      serviceWorkerRegistration: registration,
+    });
+    return token || null;
   }
 }

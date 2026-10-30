@@ -1,0 +1,116 @@
+:host { display: contents; }
+
+/* El título recibe el foco al abrir solo para que el lector de pantalla
+   empiece por él; no es un control, así que no se le pinta el anillo. */
+.sheet__title:focus,
+.sheet__title:focus-visible { outline: none; box-shadow: none; }
+
+/* En la revisión el título va a la izquierda, como el de la app: la hoja se
+   lee de arriba abajo hasta el botón que cobra. */
+.bcs__title { text-align: left; }
+
+.bcs__amount {
+  margin-top: 20px;
+  font-family: var(--ff-display);
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.bcs__concept {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--clr-text-2);
+  text-align: center;
+}
+
+.bcs__card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--clr-field);
+}
+
+.bcs__card-label { font-size: 0.9375rem; font-weight: 600; }
+.bcs__card-exp { font-size: 0.75rem; font-weight: 600; color: var(--clr-text-3); }
+.bcs__card--none .bcs__card-label { color: var(--clr-danger-text); }
+
+.bcs__card-skel { height: 48px; margin-top: 20px; border-radius: var(--r-md); }
+
+.bcs__note {
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+.flow__error { margin-top: 16px; }
+
+/* ── Cobrando ── */
+.bcs__processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0 24px;
+  text-align: center;
+}
+
+.bcs__processing .bcs__note { text-align: center; }
+
+.bcs__processing-title {
+  margin-top: 20px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.bcs__spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--clr-subtle);
+  border-top-color: var(--clr-mint);
+  border-radius: 50%;
+  animation: bcs-spin .8s linear infinite;
+}
+
+@keyframes bcs-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bcs__spinner { animation-duration: 2.4s; }
+}
+
+/* ── Recibo ── */
+.bcs__result-icon {
+  display: block;
+  margin: 0 auto 12px;
+  font-size: 44px;
+  text-align: center;
+}
+
+.bcs__result-icon--ok { color: var(--clr-success); }
+.bcs__result-icon--warn { color: var(--clr-warn); }
+.bcs__result-icon--bad { color: var(--clr-danger-text); }
+
+.bcs__result-body { line-height: 1.5; }
+
+.bcs__receipt { margin-top: 20px; }
+
+.bcs__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  font-size: 0.875rem;
+}
+
+.bcs__row + .bcs__row { border-top: 1px solid var(--clr-border); }
+.bcs__row dt { color: var(--clr-text-2); }
+.bcs__row dd { text-align: right; font-weight: 500; }
+.bcs__row--strong dd { font-size: 1.0625rem; font-weight: 800; font-variant-numeric: tabular-nums; }

@@ -14,6 +14,8 @@ import {
 import { ButtonComponent } from '../button/button.component';
 import { SocialButtonsComponent } from '../social-buttons/social-buttons.component';
 import { isValidEmail, isValidPhone } from '../../shared/validation';
+import { confirmPhone } from '../../shared/confirm-phone';
+import { DialogService } from '../../core/dialog.service';
 
 /**
  * El formulario de acceso. **Uno solo, para los dos sitios que entran.**
@@ -39,6 +41,7 @@ import { isValidEmail, isValidPhone } from '../../shared/validation';
 export class LoginFormComponent implements OnInit {
   private readonly session = inject(SessionService);
   private readonly social = inject(SocialAuthService);
+  private readonly dialog = inject(DialogService);
 
   /** Encabezado, si la pantalla quiere uno. El acceso entra sin título. */
   @Input() title: string | null = null;
@@ -156,6 +159,11 @@ export class LoginFormComponent implements OnInit {
       : !isValidPhone(this.phone) ? 'Introduce tu teléfono' : null;
     if (problema) {
       this.error = problema;
+      return;
+    }
+    // El teléfono que ni Google ni Apple dan se relee antes de guardarlo,
+    // como en el alta: es justo para lo que existe este paso.
+    if (this.socialLoading || !(await confirmPhone(this.dialog, this.phone))) {
       return;
     }
     const provider = this.identity?.provider ?? 'google';

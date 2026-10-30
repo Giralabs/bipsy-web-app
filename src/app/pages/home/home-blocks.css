@@ -10,20 +10,6 @@
   margin: 24px 0 14px;
 }
 
-.blk-head__icon {
-  flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--clr-mint-dim);
-  color: var(--clr-mint);
-  font-size: 20px;
-}
-
-.blk-head__icon--star { background: rgba(255, 176, 32, .16); color: var(--clr-star); }
 .blk-head__main { flex: 1; min-width: 0; }
 
 /* ── Flechas de las filas horizontales ──
@@ -51,11 +37,7 @@
 
 /* El corte del último elemento, en degradado: se lee como «hay más», no como
    un fallo de maquetación. */
-.cats__row,
-.voices__row {
-  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
-  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 64px), transparent 100%);
-}
+/* El degradado de los bordes lo pone `.fade-row` (styles.css). */
 
 /* Hueco al final para que el último elemento salga del degradado al llegar. */
 .cats__row, .voices__row { padding-right: 64px; }
@@ -334,7 +316,9 @@
   transition: transform .3s cubic-bezier(.2,1.4,.4,1);
 }
 
-.pin img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transform: rotate(45deg); }
+.pin img,
+.pin .img-placeholder { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; transform: rotate(45deg); }
+.pin .img-placeholder .material-symbols-rounded { font-size: 22px; }
 
 .pin--0 { left: 14%; top: 18%; }
 .pin--1 { left: 48%; top: 24%; width: 64px; height: 64px; background: #C0EED3; }

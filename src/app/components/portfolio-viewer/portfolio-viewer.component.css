@@ -1,0 +1,111 @@
+/* La ficha sigue detrás, más oscura y desenfocada: se amplía sobre lo que se
+   estaba mirando, como el visor de la app. Blanco fijo encima, que el fondo es
+   oscuro en los dos temas. */
+.pv {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, .55);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  color: #fff;
+  animation: pv-in .2s ease both;
+}
+
+@keyframes pv-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) { .pv { animation: none; } }
+
+.pv__stage {
+  position: relative;
+  width: min(90vw, 1100px);
+  height: 72dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* contain y no cover: en el visor se mira la foto entera, con su proporción. */
+.pv__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--r-xl);
+  display: block;
+}
+
+.pv__btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .5);
+  color: #fff;
+  cursor: pointer;
+}
+
+.pv__btn:hover:not(:disabled) { background: rgba(0, 0, 0, .7); }
+.pv__btn:disabled { opacity: .3; cursor: default; }
+.pv__btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.pv__close {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+}
+
+.pv__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pv__nav--prev { left: 8px; }
+.pv__nav--next { right: 8px; }
+
+/* En táctil se pasa arrastrando: las flechas sobre la foto estorban. */
+@media (hover: none) and (pointer: coarse) {
+  .pv__nav { display: none; }
+}
+
+/* Alto fijo, tenga pie o no: con alto variable la foto subía y bajaba. */
+.pv__foot {
+  height: 96px;
+  width: min(90vw, 640px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.pv__count {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, .5);
+  font-size: 0.8125rem;
+}
+
+.pv__service {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, .7);
+}
+
+/* Dos líneas como mucho: más texto no puede estirar el hueco. */
+.pv__caption {
+  font-size: 0.9375rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

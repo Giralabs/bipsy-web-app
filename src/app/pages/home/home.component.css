@@ -7,7 +7,7 @@
   :host { --accent-ink: #4E7D62; }
 }
 
-.home { position: relative; min-height: 100vh; }
+.home { position: relative; }
 
 .wrap {
   position: relative;
@@ -26,8 +26,9 @@
   /* Por encima de `.wrap`: los paneles del buscador son hijos del hero. */
   z-index: 2;
   width: min(1240px, 100% - 48px);
-  /* Aire arriba para la cabeza de Bip, que sobresale de la tarjeta. */
-  margin: 96px auto 0;
+  /* 32 y no 96: Bip ya no asoma por encima de la tarjeta, y aquel aire dejaba
+     una franja vacía bajo la barra antes de lo primero que se lee. */
+  margin: 32px auto 0;
 }
 
 .hero__card {
@@ -59,20 +60,14 @@
   background: linear-gradient(135deg, #D4F7E3 0%, #A0E3BD 100%);
 }
 
-/* Un segundo aro, fino, que repite el disco y le da profundidad sin brillo. */
-.hero__disc::after {
-  content: '';
-  position: absolute;
-  inset: -48px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(192, 238, 211, .22);
-}
 
 .hero__mascot {
   position: absolute;
   right: 100px;
   bottom: 0;
-  height: 610px;
+  /* La tarjeta mide 430 y encima hay 96 de aire: con 610 la cabeza asomaba
+     180 y se metía en la barra. Con 500 asoma unos 70 y le sobra hueco. */
+  height: 500px;
   width: auto;
   pointer-events: none;
   filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .25));
@@ -180,7 +175,7 @@
 
 @media (max-width: 1240px) {
   .hero__disc { width: 460px; bottom: -170px; right: -60px; }
-  .hero__mascot { height: 460px; right: 70px; }
+  .hero__mascot { height: 440px; right: 70px; }
   .hero__text { max-width: 560px; }
 }
 
@@ -209,17 +204,6 @@
 }
 
 /* El filo menta de la izquierda: lo que la separa de una tarjeta cualquiera. */
-.ticket::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 18px;
-  bottom: 18px;
-  width: 4px;
-  border-radius: 0 4px 4px 0;
-  background: var(--clr-mint);
-}
-
 .ticket:hover { background: var(--clr-surface-hover); }
 .ticket:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
 
@@ -227,7 +211,6 @@
   flex: 0 0 auto;
   width: 64px;
   height: 68px;
-  margin-left: 6px;
   border-radius: var(--r-sm);
   background: var(--clr-mint);
   color: var(--clr-mint-text);
@@ -407,20 +390,15 @@
 
 .cat-card:hover { background: var(--clr-surface-hover); transform: translateY(-3px); }
 
+/* El icono a secas, como `_CategoryTile`: sin disco detrás. */
 .cat-card__icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--clr-mint-dim);
-  color: var(--accent-ink);
-  transition: transform .25s cubic-bezier(.2,1.4,.4,1);
+  color: var(--clr-text);
 }
 
-.cat-card:hover .cat-card__icon { transform: scale(1.08) rotate(-6deg); }
-.cat-card__icon .material-symbols-rounded { font-size: 26px; }
+.cat-card__icon .material-symbols-rounded { font-size: 30px; }
 
 .cat-card__name {
   font-size: 0.8125rem;
@@ -435,7 +413,7 @@
 
 .cat-card--on { background: var(--clr-mint); color: var(--clr-mint-text); }
 .cat-card--on:hover { background: var(--clr-mint-hover); }
-.cat-card--on .cat-card__icon { background: rgba(0, 0, 0, .1); color: inherit; }
+.cat-card--on .cat-card__icon { color: inherit; }
 
 /* ══════════ UBICACIÓN ══════════ */
 .locate {
@@ -448,19 +426,14 @@
   background: var(--clr-mint-dim);
 }
 
+/* El icono de ubicación a secas, en menta, como `_LocationBanner`. */
 .locate__icon {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
+  color: var(--clr-mint);
 }
 
-.locate__icon .material-symbols-rounded { font-size: 20px; }
+.locate__icon .material-symbols-rounded { font-size: 24px; }
 
 .locate__text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 0.8125rem; }
 .locate__text strong { font-weight: 800; color: var(--clr-text); }
@@ -545,6 +518,9 @@
 .join__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 
 .join__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   height: 46px;
   padding: 0 22px;
   border: none;
@@ -558,6 +534,7 @@
   transition: background-color .2s ease, transform .12s ease;
 }
 
+.join__btn .material-symbols-rounded { font-size: 20px; }
 .join__btn:hover { background: var(--clr-subtle); }
 .join__btn:active { transform: scale(.96); }
 .join__btn--primary { background: var(--clr-mint); color: var(--clr-mint-text); }
@@ -601,7 +578,7 @@
   max-width: 56%;
 }
 
-.app-card__logo { height: 30px; width: auto; margin-bottom: 18px; }
+.app-card__logo { display: block; height: 30px; width: auto; margin-bottom: 18px; }
 
 .app-card__badge {
   padding: 4px 10px;
@@ -667,33 +644,139 @@
 }
 
 /* ══════════ MÓVIL ══════════ */
-.mhead { padding: 12px 20px 4px; }
+/* `_SaludoFila`: 20 a los lados, 20 arriba y 16 abajo; fila de 44. */
+.mhead { padding: 20px 20px 4px; }
 
-.mhead__top { display: flex; align-items: center; gap: 16px; }
-.mhead__hello { flex: 1; min-width: 0; }
+.mhead__top { display: flex; align-items: center; gap: 16px; min-height: 44px; }
 
-.mhead__eyebrow {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--clr-text-2);
-}
-
-/* headlineMedium de la app: el texto más grande de la pantalla. */
+/* displaySmall de la app: Bricolage 32, 800, -1,2. Una línea; un nombre largo
+   se recorta antes que empujar el buscador. */
 .mhead__greeting {
+  flex: 1;
+  min-width: 0;
   font-family: var(--ff-display);
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 800;
-  letter-spacing: -.6px;
-  line-height: 1.15;
+  letter-spacing: -1.2px;
+  line-height: 1;
   color: var(--clr-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.mhead__avatar { flex: 0 0 auto; display: inline-flex; text-decoration: none; }
+.mhead__avatar { position: relative; flex: 0 0 auto; display: inline-flex; text-decoration: none; border-radius: 50%; }
 
-.mhead__row { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+/* `CustomerAvatar`: iniciales sobre el primario (menta en oscuro, pizarra en
+   claro), no sobre el gris de campo, que apenas se separaba del suelo. */
+.mhead__avatar app-avatar { background: var(--clr-mint); color: var(--clr-mint-text); font-weight: 800; }
+
+/* El distintivo: 38 % del círculo, al revés de colores y con un filo del
+   color del suelo, como en la app. */
+.mhead__badge {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--clr-mint-text);
+  color: var(--clr-mint);
+  box-shadow: 0 0 0 2px var(--clr-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mhead__badge .material-symbols-rounded { font-size: 12px; }
+
+.mhead__row { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+
+/* GipsiFilterCircle: 44, superficie, icono del texto. */
+.mhead__circle {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mhead__circle .material-symbols-rounded { font-size: 20px; }
+
+/* ── El aviso de ubicación del móvil: `_LocationBanner` ──
+   Superficie, icono y texto en el acento, y una ✕ que lo quita. */
+.mlocate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px 8px 12px 16px;
+  border-radius: var(--r-xl);
+  background: var(--clr-surface);
+  color: var(--clr-mint);
+}
+
+.mlocate__go {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: var(--ff);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mlocate__go .material-symbols-rounded { font-size: 20px; }
+
+.mlocate__close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  opacity: .7;
+  cursor: pointer;
+}
+
+.mlocate__close .material-symbols-rounded { font-size: 18px; }
+
+/* El botón del mapa: `_MapToggleFab`, 46 en menta, abajo a la derecha y por
+   encima de la barra de pestañas. */
+.map-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(16px + var(--tabbar-space, 0px));
+  z-index: 25;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  box-shadow: var(--shadow-float);
+  text-decoration: none;
+}
+
+.map-fab .material-symbols-rounded { font-size: 22px; }
 
 .mhead__search {
   flex: 1;
@@ -702,7 +785,7 @@
   align-items: center;
   gap: 10px;
   padding: 0 16px;
-  height: 48px;
+  height: 44px;
   border-radius: var(--r-pill);
   background: var(--clr-surface);
 }
@@ -723,22 +806,6 @@
 .mhead__search input:focus { outline: none; }
 .mhead__search input::placeholder { color: var(--clr-text-3); }
 
-.mhead__filters {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border: none;
-  border-radius: 50%;
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.mhead__filters .material-symbols-rounded { font-size: 20px; }
 
 @media (max-width: 1024px) {
   .wrap { width: calc(100% - 40px); padding-bottom: 40px; }
@@ -762,6 +829,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hero__mascot { animation: none; }
-  .cat-card:hover, .cat-card:hover .cat-card__icon,
+  .cat-card:hover,
   .app-card:hover .app-card__img { transform: none; }
 }

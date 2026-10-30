@@ -31,10 +31,15 @@
   --clr-mint-glow:  rgba(192,238,211,0.35);
   --clr-mint-text:  #2E343B;
 
-  /* ── Text (darkTextHigh / Medium / Low) ── */
+  /* ── Text (darkTextHigh / Medium / Low) ──
+     El terciario, algo más claro que el darkTextLow de la app: el #7F8E89
+     daba 3,4:1 sobre una tarjeta y no llegaba al AA (4,5:1). Este da 4,7. */
   --clr-text:      #F5F7F6;
   --clr-text-2:    #B5C3BE;
-  --clr-text-3:    #7F8E89;
+  --clr-text-3:    #9AA8A3;
+
+  /* ── Foco de teclado ── */
+  --focus-ring: 0 0 0 3px var(--clr-base), 0 0 0 5px var(--clr-mint);
 
   /* ── Semánticos ── */
   --clr-warn:    #E8B657;
@@ -114,7 +119,7 @@
 
     --clr-text:      #1A2529;       /* lightTextHigh */
     --clr-text-2:    #4C5A54;       /* lightTextMedium */
-    --clr-text-3:    #8A958F;       /* lightTextLow */
+    --clr-text-3:    #5E6A64;       /* lightTextLow (#8A958F) oscurecido: daba 2,7:1 */
 
     --clr-danger-text: #D70015;
 
@@ -142,6 +147,120 @@ html, body {
   color: var(--clr-text);
   font-family: var(--ff);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Que el navegador pinte en el tema de la web lo que pinta él: barras de
+   desplazamiento, campos de fecha, el autocompletado. */
+html { color-scheme: dark; }
+@media (prefers-color-scheme: light) { html { color-scheme: light; } }
+
+/* El `<picture>` que elige el logo de cada tema no es una caja: el `<img>` de
+   dentro se coloca como si no lo envolviera nada, que es como estaba
+   maquetado cuando eran dos `<img>` sueltos. */
+picture { display: contents; }
+
+/* ============================================================
+   ACCESIBILIDAD
+   ============================================================ */
+
+/* Foco de teclado: un anillo menta con un hueco del color del suelo, visible
+   sobre la tarjeta, sobre la foto y sobre el propio menta. Solo con teclado
+   (`:focus-visible`): con el ratón no sale. Muchos campos quitaban el
+   `outline` sin poner nada en su lugar, y con el tabulador no se sabía
+   dónde se estaba. */
+:focus-visible {
+  outline: 2px solid var(--clr-mint);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="link"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--clr-mint);
+  outline-offset: 2px;
+}
+
+/* En las filas agrupadas (Ajustes de iOS) el campo no tiene caja propia: un
+   anillo pegado a su texto quedaba como un recuadro sin margen. Ahí se marca
+   la fila entera, por dentro y con la curva del bloque. */
+.form-row__input:focus-visible,
+.support-textarea:focus-visible,
+.composer__input:focus-visible,
+.hero-search-input:focus-visible,
+.search-bar-input:focus-visible { outline: none; }
+
+.form-row:focus-within,
+.form-group__box:has(> .support-textarea:focus-visible) {
+  box-shadow: inset 0 0 0 2px var(--clr-mint);
+  border-radius: var(--r-sm);
+}
+
+/* El campo suelto (`.input-field`) ya cambia de relleno al enfocarlo; el
+   anillo va separado y con su mismo radio. */
+.input-field:focus-visible { outline-offset: 3px; }
+
+/* Saltar al contenido: el primer tabulador de la página. Escondido hasta que
+   lo enfoca el teclado. */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 2000;
+  padding: 12px 18px;
+  border-radius: var(--r-pill);
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform .15s ease;
+}
+.skip-link:focus { transform: none; }
+
+/* Solo para el lector de pantalla. */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   HUECO DE FOTO — GipsiImagePlaceholder
+   Donde iba una foto que el negocio no ha subido: el acento de
+   fondo y su `onPrimary` en el icono, que se invierten solos
+   entre temas. Significa «no hay foto», nunca «está cargando».
+   El icono crece con el hueco (un 32 % del lado menor, entre 20
+   y 72), igual que en la app.
+   ============================================================ */
+.img-placeholder {
+  /* !important: quien lo usa le pone también su clase de foto, y esa suele
+     traer `display: block`. */
+  display: grid !important;
+  place-items: center;
+  container-type: size;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  overflow: hidden;
+}
+
+.img-placeholder > .material-symbols-rounded {
+  font-size: clamp(20px, 32cqmin, 72px);
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
 }
 
 /* ── Material Symbols Rounded (Matches Flutter Icons) ── */
@@ -182,6 +301,28 @@ html, body {
 
 .page-content {
   flex: 1;
+}
+
+/* ============================================================
+   FILAS HORIZONTALES — los dos bordes, en degradado
+   Lo que se sale de una fila se funde en vez de cortarse en seco:
+   por la derecha mientras quede fila, y por la izquierda en cuanto
+   se ha desplazado. `appDragScroll` pone las clases `drag--*`.
+   ============================================================ */
+.fade-row {
+  --fade-l: 0px;
+  --fade-r: 64px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent 100%);
+}
+
+.fade-row.drag--scrolled { --fade-l: 64px; }
+.fade-row.drag--end { --fade-r: 0px; }
+
+/* En móvil y tablet las filas van a sangre hasta el borde de la pantalla,
+   como en la app: ahí corta la pantalla y no hace falta fundir nada. */
+@media (max-width: 1024px) {
+  .fade-row { -webkit-mask-image: none; mask-image: none; }
 }
 
 /* ============================================================
@@ -435,26 +576,43 @@ html, body {
 /* ============================================================
    ANIMACIONES
    ============================================================ */
+/* Acaba en `transform: none` y se rellena solo HACIA ATRÁS (`backwards`), no
+   `both`: con `both` la página se quedaba para siempre con un
+   `translateY(0)`, y cualquier transform convierte al elemento en el
+   contenedor de lo `position: fixed` de dentro. Los modales y hojas de las
+   páginas se colocaban entonces respecto a la página —abajo del todo y por
+   debajo de la cabecera— y no respecto a la pantalla. */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 
 .anim-fade-up {
-  animation: fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+  animation: fadeUp .4s cubic-bezier(.16,1,.3,1) backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-up, .skeleton, .spinner { animation: none; }
+
+  /* Con «Reducir movimiento», nada se desliza ni rebota en ninguna página:
+     las transiciones pasan a ser instantáneas y el scroll, directo. Más
+     seguro que perseguir cada animación componente a componente. */
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================================
-   CABECERA DE PÁGINA — el motivo del hero de la portada
-   Tarjeta con el disco menta a sangre por la esquina y un icono
-   grande dentro. Mis citas, Ajustes, Favoritos y Reseñas la
-   comparten para que se lean como una sola app.
+   CABECERA DE PÁGINA
+   Mis citas, Ajustes, Favoritos y Reseñas la comparten para que
+   se lean como una sola app.
    ============================================================ */
-.page { min-height: 100vh; }
+/* Las páginas NO llevan `min-height: 100vh`: el <main> ya ocupa el alto que
+   sobra (`.page-content { flex: 1 }`). Con 100vh, la cabecera y el pie
+   sumaban scroll en toda página, aunque su contenido fuera corto. */
 
 .page__inner {
   width: min(1160px, 100% - 48px);
@@ -462,22 +620,23 @@ html, body {
   padding: 32px 0 96px;
 }
 
+/* La cabecera de las pantallas de la app (Mis citas, Favoritos, Reseñas,
+   Ajustes): título grande y subtítulo, como `displaySmall` + subtítulo en la
+   app. Antes era una tarjeta con un disco menta a sangre y un icono gigante
+   girado dentro: se leía como una plantilla, no como Bipsy. */
 .phead {
-  position: relative;
   display: flex;
-  align-items: center;
-  min-height: 188px;
-  padding: 32px 40px;
-  padding-right: 260px;
-  border-radius: var(--r-xxl);
-  background: var(--clr-surface);
-  overflow: hidden;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  padding: 8px 0 4px;
 }
 
 .phead__eyebrow {
   font-size: 0.8125rem;
   font-weight: 700;
-  color: var(--clr-text-2);
+  color: var(--clr-mint);
 }
 
 .phead__title {
@@ -501,35 +660,8 @@ html, body {
 
 .phead__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 
-.phead__art {
-  position: absolute;
-  right: -50px;
-  bottom: -110px;
-  width: 290px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #D4F7E3 0%, #A0E3BD 100%);
-  pointer-events: none;
-}
-
-.phead__art::after {
-  content: '';
-  position: absolute;
-  inset: -36px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(192, 238, 211, .2);
-}
-
-.phead__art .material-symbols-rounded {
-  position: absolute;
-  top: 52px;
-  left: 70px;
-  font-size: 96px;
-  color: #2E343B;
-  transform: rotate(-10deg);
-  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 48;
-}
-
+/* El disco decorativo ya no se pinta, lo pida quien lo pida. */
+.phead__art { display: none; }
 /* Botón de cabecera: píldora menta con icono. */
 .pill-btn {
   display: inline-flex;
@@ -600,15 +732,15 @@ a.stat:hover { background: var(--clr-subtle); }
 
 @media (max-width: 1024px) {
   .page__inner { width: calc(100% - 40px); padding-top: 16px; }
-  .phead { min-height: 150px; padding: 24px; padding-right: 150px; border-radius: var(--r-xl); }
-  .phead__art { width: 190px; right: -50px; bottom: -80px; }
-  .phead__art .material-symbols-rounded { top: 34px; left: 40px; font-size: 64px; }
-}
 
-@media (max-width: 480px) {
-  .phead { padding-right: 110px; }
-  .phead__art { width: 150px; right: -44px; bottom: -60px; }
-  .phead__art .material-symbols-rounded { top: 26px; left: 30px; font-size: 50px; }
+  /* Con la barra de arriba (app-mobile-topbar, que pone `has-mtop` en el
+     body) el título ya va en ella, como el AppBar de la app: repetirlo debajo
+     en grande sobraba. Mis citas es pestaña, no lleva barra y conserva el
+     suyo. */
+  .has-mtop .phead__eyebrow,
+  .has-mtop .phead__title,
+  .has-mtop .pay__heading { display: none; }
+  .has-mtop .phead__sub { margin-top: 0; }
 }
 
 /* ============================================================
@@ -618,7 +750,9 @@ a.stat:hover { background: var(--clr-subtle); }
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(24px + var(--tabbar-space, 0px));
+  /* `--toast-lift` lo pone quien tiene algo fijo abajo que no es la barra de
+     pestañas: el hilo de chat, con su caja de escribir. */
+  bottom: calc(24px + var(--tabbar-space, 0px) + var(--toast-lift, 0px));
   z-index: 1100;
   display: inline-flex;
   align-items: center;
@@ -636,6 +770,15 @@ a.stat:hover { background: var(--clr-subtle); }
 }
 
 .toast .material-symbols-rounded { font-size: 20px; color: var(--clr-success); }
+
+/* Con una barra de acción fija abajo —«Pedir cita» en la ficha, «Siguiente» al
+   reservar o al cambiar la cita— el aviso sube por encima: «Estás en la lista
+   de espera» tapaba el botón. Con `:has` y no a mano en cada página, para que
+   no dependa de que cada pantalla se acuerde. En escritorio esas barras no son
+   fijas y subir el aviso no estorba. */
+:root:has(.bookbar, .bf__main .flow__actions, .rs__main .flow__actions) {
+  --toast-lift: 84px;
+}
 
 @keyframes toast-in {
   from { opacity: 0; transform: translate(-50%, 16px); }
@@ -679,7 +822,6 @@ a.stat:hover { background: var(--clr-subtle); }
    en la app. Centrarlo verticalmente lo dejaba flotando en mitad del monitor
    y obligaba a bajar la vista para escribir. */
 .flow {
-  min-height: 100vh;
   display: flex;
   justify-content: center;
   padding: 48px 24px 96px;

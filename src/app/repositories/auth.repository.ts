@@ -9,6 +9,9 @@ import {
   VerifyCodeResult,
 } from '../models/bipsy.models';
 
+/** Situación de un correo antes del alta. Port de `SignupEmailStatus`. */
+export type SignupEmailStatus = 'free' | 'taken' | 'takenGoogle';
+
 /**
  * Login, alta y recuperación de contraseña. Port de `AuthRepository`.
  *
@@ -37,6 +40,39 @@ export class AuthRepository {
   }
 
   // ----- ALTA POR PASOS --------------------
+
+  /**
+   * Si el correo ya tiene cuenta, y de qué tipo. Se pregunta ANTES de mandar
+   * el código: el 409 de `send-code` solo dice «ocupado», y a una cuenta de
+   * Google —que no tiene contraseña— mandarla al login normal es mandarla a
+   * una pantalla que no puede superar.
+   *
+   * Por POST para que el correo no acabe en la barra ni en los logs.
+   */
+  async signupEmailStatus(email: string): Promise<SignupEmailStatus> {
+    const res = await this.api.post<{ status?: string }>('/auth/signup/email-status', { email }, false);
+    switch (res.status) {
+      case 'FREE':
+      // Ya no lo manda el servidor —un alta a medias no reserva el correo—;
+      // si llegara de uno viejo, significa lo mismo que libre.
+      case 'RESUMABLE':
+        return 'free';
+      case 'TAKEN_GOOGLE':
+        return 'takenGoogle';
+      // Un valor desconocido se trata como ocupado, igual que la app: que un
+      // caso nuevo pare el alta se nota y se arregla; que la deje pasar, no.
+      default:
+        return 'taken';
+    }
+  }
+
+  /**
+   * Reenvía el correo con el enlace de verificación. Exige sesión: es para
+   * quien ya tiene cuenta y no ha confirmado el correo.
+   */
+  resendVerification(): Promise<void> {
+    return this.api.post<void>('/auth/resend-verification', {});
+  }
 
   /**
    * Manda un código de 6 dígitos al correo para empezar el alta.

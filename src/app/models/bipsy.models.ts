@@ -90,6 +90,9 @@ export interface BusinessResponse {
   autoAccept?: boolean;
   setupComplete?: boolean;
   availabilityHorizonDays?: number;
+  /** Tope de citas pendientes por cliente. Viaja en la respuesta pública. */
+  bookingLimitEnabled?: boolean;
+  bookingLimitPerCustomer?: number;
   waitlistEnabled?: boolean;
   chatEnabled?: boolean;
   averageRating?: number;
@@ -167,6 +170,10 @@ export interface ServiceResponse {
   workerIds?: number[];
   averageRating?: number;
   reviewCount?: number;
+  /** Dónde se presta EN VIGOR (ya con lo que manda el negocio). No mirar `serviceModeIntent`. */
+  serviceMode?: 'AT_BUSINESS' | 'AT_CUSTOMER' | 'BOTH';
+  /** Recargo por ir a casa del cliente, en céntimos. Viene a 0 si no se desplaza. */
+  homeSurchargeCents?: number;
 }
 
 // ----- WORKERS --------------------
@@ -284,6 +291,31 @@ export interface BookingResponse {
   status: BookingStatus;
   notes?: string;
   cancelReason?: string;
+  /** Si el negocio acepta mensajes: con false el hilo responde 403. */
+  businessChatEnabled?: boolean;
+  /** Dónde se presta: en el local o en casa del cliente. */
+  servicePlace?: 'AT_BUSINESS' | 'AT_CUSTOMER';
+  /**
+   * A dónde ir, o null. Null vale para las dos cosas a propósito: la cita es
+   * en el local, o es a domicilio y no hay dirección guardada (las de antes de
+   * la V94). Que sea a domicilio lo dice `servicePlace`.
+   */
+  address?: BookingResponseAddress | null;
+  /** Quien se presenta, si no es el titular. Null = viene quien reservó. */
+  attendeeName?: string | null;
+}
+
+/** `AddressDto` tal como viaja en la cita. `oneLine` lo compone el servidor. */
+export interface BookingResponseAddress {
+  address?: string;
+  details?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  latitude?: number;
+  longitude?: number;
+  placeId?: string;
+  oneLine?: string;
 }
 
 export interface CreateBookingRequest {
@@ -314,6 +346,15 @@ export interface CancellationFee {
   feePercent: number;
   windowHours: number;
   hoursBeforeStart: number;
+  /**
+   * Lo que cobraría la política en cuanto se entre en la ventana. Aparte de
+   * `feePercent`/`amountCents`, que son lo que cuesta AHORA, para poder avisar
+   * antes de que sea tarde. A 0 si este negocio no cobra.
+   */
+  policyFeePercent?: number;
+  policyAmountCents?: number;
+  /** Hasta cuándo se cancela gratis. `LocalDateTime` sin zona; null sin política. */
+  freeUntil?: string | null;
 }
 
 /**
@@ -543,9 +584,14 @@ export interface ChatMessageResponse {
   side: ChatSide;
   kind: ChatMessageKind;
   body?: string;
-  /** Solo llega en la app de negocio: al cliente le habla "el negocio". */
+  /**
+   * Quien firma. Al cliente le llega SOLO en los mensajes de un trabajador,
+   * para ponerle cara a quien atiende; los del dueño llegan sin firma, porque
+   * como cuenta se llama igual que su negocio y su foto ya es la del hilo.
+   */
   senderId?: number;
   senderName?: string;
+  senderImageUrl?: string;
   attachment?: ChatAttachmentView;
   booking?: BookingContextView;
   clientMessageId?: string;
@@ -578,6 +624,44 @@ export interface ConversationResponse {
    */
   canWrite?: boolean;
   createdAt: string;
+  /**
+   * El trabajador que contestó el último, para ponerle cara en el hilo y en
+   * la bandeja. Ausente si fue el dueño o aún no ha contestado nadie: entonces
+   * atiende «el negocio».
+   */
+  handlerName?: string;
+  handlerImageUrl?: string;
+}
+
+/** Quien atiende un hilo ahora: el trabajador que contestó el último. */
+export interface ChatHandler {
+  name: string;
+  imageUrl?: string;
+}
+
+/**
+ * Quien atiende, a partir de lo que hay en pantalla. Port de
+ * `currentChatHandler` (apps/gipsi, chat_providers.dart).
+ *
+ * Manda el último mensaje del negocio que se tiene: si lo firma un
+ * trabajador, es él; si llega sin firma, lo escribió el dueño y atiende «el
+ * negocio» (null). Sin ningún mensaje del negocio cargado se usa lo que trajo
+ * la conversación, que el servidor calcula sobre el historial entero.
+ *
+ * [messages] va del más viejo al más nuevo, como los pinta el hilo.
+ */
+export function currentChatHandler(
+  messages: ChatMessageResponse[],
+  conversation?: ConversationResponse | null,
+): ChatHandler | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.side !== 'BUSINESS') continue;
+    return m.senderName ? { name: m.senderName, imageUrl: m.senderImageUrl } : null;
+  }
+  return conversation?.handlerName
+    ? { name: conversation.handlerName, imageUrl: conversation.handlerImageUrl }
+    : null;
 }
 
 // ----- LISTA DE ESPERA --------------------

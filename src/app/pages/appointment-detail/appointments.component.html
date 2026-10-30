@@ -1,32 +1,46 @@
 <div class="page anim-fade-up">
   <div class="page__inner">
 
-    <header class="phead">
-      <div>
-        <p class="phead__eyebrow">Tu agenda</p>
-        <h1 class="phead__title">Mis citas</h1>
-        <p class="phead__sub">
-          @if (isAuthenticated && !isLoading && !loadError) {
-            {{ upcoming.length === 0 ? 'No tienes nada por delante.' : upcoming.length === 1 ? 'Tienes 1 cita por delante.' : 'Tienes ' + upcoming.length + ' citas por delante.' }}
-          } @else {
-            Tus reservas, pasadas y futuras, en un mismo sitio.
-          }
-        </p>
-        <div class="phead__actions">
-          <a routerLink="/buscar" class="pill-btn">
-            <span class="material-symbols-rounded">add</span>
-            Reservar cita
+    @if (desktop()) {
+      <header class="phead">
+        <div>
+          <p class="phead__eyebrow">Tu agenda</p>
+          <h1 class="phead__title">Mis citas</h1>
+          <p class="phead__sub">
+            @if (isAuthenticated && !isLoading && !loadError) {
+              {{ aheadLabel }}
+            } @else {
+              Tus reservas, pasadas y futuras, en un mismo sitio.
+            }
+          </p>
+        </div>
+        <a routerLink="/buscar" class="pill-btn phead__cta">
+          <span class="material-symbols-rounded" aria-hidden="true">add</span>
+          Reservar cita
+        </a>
+      </header>
+    } @else {
+      <!-- La cabecera de `MyBookingsScreen`: «Mis citas» en grande, tu foto en
+           la esquina —que es por donde se entra a Perfil— y el subtítulo. -->
+      <header class="mhead">
+        <div class="mhead__top">
+          <h1 class="mhead__title">Mis citas</h1>
+          <a [routerLink]="isAuthenticated ? '/ajustes' : '/acceder'" class="mhead__avatar" aria-label="Tu perfil y ajustes">
+            <app-avatar [photoUrl]="avatarPhoto" [name]="avatarName" [size]="44" />
+            @if (isAuthenticated) {
+              <span class="mhead__gear" aria-hidden="true">
+                <span class="material-symbols-rounded fill">settings</span>
+              </span>
+            }
           </a>
         </div>
-      </div>
-      <span class="phead__art" aria-hidden="true">
-        <span class="material-symbols-rounded">event_available</span>
-      </span>
-    </header>
+        <p class="mhead__sub">Tus reservas, pasadas y futuras</p>
+      </header>
+    }
 
     @if (!isAuthenticated && !isLoading) {
       <div class="empty-state">
-        <span class="material-symbols-rounded">lock</span>
+        <span class="material-symbols-rounded" aria-hidden="true">lock</span>
         <h3>Entra para ver tus citas</h3>
         <p>Con tu cuenta de Bipsy tienes aquí todas tus reservas y puedes cambiarlas o cancelarlas.</p>
         <app-button variant="primary" icon="login" (onClick)="openLogin()">Iniciar sesión</app-button>
@@ -35,9 +49,43 @@
       <div class="ap">
         <div class="ap__main">
 
-          <!-- ══════════ LA PRÓXIMA ══════════ -->
-          @if (!isLoading && next) {
-            <article class="next" role="link" tabindex="0" (click)="openBooking(next)" (keydown.enter)="openBooking(next)">
+          <!-- ══════════ TE PIDEN EL PAGO ══════════
+               `PaymentRequestSummary`: lo primero de todo. La ventana de pagar
+               salta una vez; si se cerró con «Ahora no», esto es lo que queda
+               mientras corra el plazo. -->
+          @if (paymentRequest(); as req) {
+            <button type="button" class="ap__pay" (click)="payNow(req)">
+              <app-deadline-countdown
+                [expiresAt]="req.expiresAt"
+                [title]="req.businessName + ' te pide el pago'"
+                after="para pagarla"
+                [urgentUnderMs]="180000"
+                (expired)="gate.check()"
+              />
+              <span class="ap__pay-detail">{{ req.concept }} · {{ payAmount(req) }}</span>
+            </button>
+          }
+
+          <!-- ══════════ POR CONFIRMAR ══════════
+               Lo primero de la pantalla: son citas que te ha dado el negocio
+               y caducan en minutos si no las aceptas. -->
+          @if (!isLoading && awaiting.length > 0) {
+            <section class="ap__awaiting" aria-labelledby="ap-awaiting-title">
+              <h2 id="ap-awaiting-title" class="ap__month ap__month--first">Por confirmar</h2>
+              <div class="ap__list">
+                @for (booking of awaiting; track booking.id) {
+                  <app-booking-card [booking]="booking" (open)="openBooking($event)" />
+                }
+              </div>
+            </section>
+          }
+
+          <!-- ══════════ LA PRÓXIMA ══════════
+               Solo en escritorio: en el móvil la app no la destaca, la lista
+               ya empieza por ella. -->
+          @if (desktop() && !isLoading && next) {
+            <!-- `div` y no `article`: un `article` no admite `role="link"`. -->
+            <div class="next" role="link" tabindex="0" (click)="openBooking(next)" (keydown.enter)="openBooking(next)">
               <div class="next__leaf">
                 <span class="next__month">{{ nextMonth }}</span>
                 <span class="next__day">{{ nextDay }}</span>
@@ -49,10 +97,10 @@
                 </p>
                 <h2 class="next__title">{{ next.serviceName }}</h2>
                 <p class="next__meta">
-                  <span><span class="material-symbols-rounded">storefront</span>{{ next.businessName || 'Negocio' }}</span>
-                  <span><span class="material-symbols-rounded">schedule</span>{{ nextWhen }}</span>
+                  <span><span class="material-symbols-rounded" aria-hidden="true">storefront</span>{{ next.businessName || 'Negocio' }}</span>
+                  <span><span class="material-symbols-rounded" aria-hidden="true">schedule</span>{{ nextWhen }}</span>
                   @if (next.workerName) {
-                    <span><span class="material-symbols-rounded">person</span>{{ next.workerName }}</span>
+                    <span><span class="material-symbols-rounded" aria-hidden="true">person</span>{{ next.workerName }}</span>
                   }
                 </p>
               </div>
@@ -62,15 +110,15 @@
                 }
                 <span class="next__go">
                   Ver cita
-                  <span class="material-symbols-rounded">arrow_forward</span>
+                  <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
                 </span>
               </div>
-            </article>
+            </div>
           }
 
           <app-segmented
             class="ap__segmented"
-            [labels]="tabs"
+            [labels]="desktop() ? tabs : plainTabs"
             [selectedIndex]="selectedTab"
             (selectedIndexChange)="selectedTab = $event"
           />
@@ -88,33 +136,54 @@
             </div>
           } @else if (loadError) {
             <div class="empty-state">
-              <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
+              <span class="material-symbols-rounded" aria-hidden="true">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
               <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido cargar tus citas' }}</h3>
               <p>{{ loadError.message }}</p>
               <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
             </div>
-          } @else if (groups.length === 0) {
-            <div class="ap__empty">
-              <span class="ap__empty-icon">
-                <span class="material-symbols-rounded">{{ selectedTab === 0 ? 'event_upcoming' : 'history' }}</span>
-              </span>
-              <div>
-                <h3>
-                  @if (selectedTab === 0) {
-                    {{ next ? 'No hay más citas por ahora' : 'No tienes citas próximas' }}
-                  } @else {
-                    Sin historial todavía
-                  }
-                </h3>
-                <p>{{ selectedTab === 0 ? 'Cuando reserves, tus citas aparecerán aquí.' : 'Aquí verás tus citas pasadas y canceladas, y podrás repetirlas.' }}</p>
-              </div>
-              @if (selectedTab === 0) {
+          } @else if (!desktop()) {
+            <!-- Móvil: la lista de la app, sin cabeceras de mes, y su estado
+                 vacío centrado con «Explorar negocios». -->
+            @if (items.length === 0) {
+              <div class="empty-state ap__mempty">
+                <span class="material-symbols-rounded" aria-hidden="true">event_busy</span>
+                <h3>{{ selectedTab === 0 ? 'No tienes citas próximas' : 'Sin historial' }}</h3>
+                <p>{{ selectedTab === 0 ? 'Cuando reserves una cita aparecerá aquí.' : 'Aquí verás tus citas pasadas y canceladas.' }}</p>
                 <button type="button" class="pill-btn" (click)="goExplore()">
-                  <span class="material-symbols-rounded">search</span>
-                  Buscar un sitio
+                  <span class="material-symbols-rounded" aria-hidden="true">explore</span>
+                  Explorar negocios
                 </button>
-              }
-            </div>
+              </div>
+            } @else {
+              <div class="ap__list">
+                @for (booking of items; track booking.id) {
+                  <app-booking-card
+                    [booking]="booking"
+                    [canRebook]="selectedTab === 1"
+                    (open)="openBooking($event)"
+                    (rebook)="rebook($event)"
+                  />
+                }
+              </div>
+            }
+          } @else if (groups.length === 0) {
+            <!-- Si la única próxima ya está en la tarjeta de arriba, no hay nada
+                 que decir: un «no tienes citas» debajo de una cita confunde. -->
+            @if (!(selectedTab === 0 && next)) {
+              <div class="ap__empty">
+                <span class="material-symbols-rounded ap__empty-icon" aria-hidden="true">{{ selectedTab === 0 ? 'event_busy' : 'history' }}</span>
+                <div>
+                  <h3>{{ selectedTab === 0 ? 'No tienes citas próximas' : 'Sin historial' }}</h3>
+                  <p>{{ selectedTab === 0 ? 'Cuando reserves una cita aparecerá aquí.' : 'Aquí verás tus citas pasadas y canceladas.' }}</p>
+                </div>
+                @if (selectedTab === 0) {
+                  <button type="button" class="pill-btn" (click)="goExplore()">
+                    <span class="material-symbols-rounded" aria-hidden="true">explore</span>
+                    Explorar negocios
+                  </button>
+                }
+              </div>
+            }
           } @else {
             @for (group of groups; track group.label) {
               <h3 class="ap__month">{{ group.label }}</h3>
@@ -133,7 +202,7 @@
         </div>
 
         <!-- ══════════ LATERAL ══════════ -->
-        @if (!isLoading && !loadError) {
+        @if (desktop() && !isLoading && !loadError) {
           <aside class="ap__aside">
             <div class="side-card">
               <h2 class="side-card__title">Tu actividad</h2>
@@ -155,17 +224,17 @@
 
             @if (pendingReviews > 0) {
               <a routerLink="/resenas" class="side-card ap__review">
-                <span class="ap__review-icon"><span class="material-symbols-rounded fill">star</span></span>
+                <span class="ap__review-icon"><span class="material-symbols-rounded fill" aria-hidden="true">star</span></span>
                 <span class="ap__review-text">
                   <strong>{{ pendingReviews === 1 ? 'Tienes 1 cita por valorar' : 'Tienes ' + pendingReviews + ' citas por valorar' }}</strong>
                   <span>Cuenta qué tal te fue y ayuda a otros a elegir.</span>
                 </span>
-                <span class="material-symbols-rounded ap__review-go">arrow_forward</span>
+                <span class="material-symbols-rounded ap__review-go" aria-hidden="true">arrow_forward</span>
               </a>
             }
 
             <div class="side-card ap__tip">
-              <span class="material-symbols-rounded">tips_and_updates</span>
+              <span class="material-symbols-rounded" aria-hidden="true">tips_and_updates</span>
               <p>
                 <strong>¿Te ha surgido algo?</strong>
                 Abre la cita para cambiar el día o cancelarla. Si el negocio cobra por cancelar tarde, te lo decimos antes.

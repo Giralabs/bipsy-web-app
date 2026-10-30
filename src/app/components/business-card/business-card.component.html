@@ -2,8 +2,16 @@
 
   <!-- La foto llega a los cantos: sin margen ni radio propio. -->
   <div class="biz-card__photo">
-    <img [src]="imageUrl" [alt]="business.name" class="biz-card__img" loading="lazy" />
-    <span class="biz-card__shade" aria-hidden="true"></span>
+    <!-- `alt` vacío: el nombre ya va debajo, y el lector lo leía dos veces. -->
+    <!-- Sin velo, como `_GlassHomeCard`: la foto se ve tal cual la sube el
+         negocio, y las insignias llevan su propio fondo oscuro. -->
+    @if (imageUrl; as src) {
+      <img [src]="src" alt="" class="biz-card__img" loading="lazy" decoding="async" />
+    } @else {
+      <span class="biz-card__img img-placeholder" aria-hidden="true">
+        <span class="material-symbols-rounded">storefront</span>
+      </span>
+    }
 
     <!-- Insignias de la izquierda. Las dos pueden salir a la vez: un negocio
          recién abierto donde ya has reservado es las dos cosas. -->
@@ -46,10 +54,6 @@
       >
         <span class="material-symbols-rounded" [class.fill]="isFavorite">favorite</span>
       </button>
-    }
-
-    @if (categoryName) {
-      <span class="biz-card__cat">{{ categoryName }}</span>
     }
   </div>
 

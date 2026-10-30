@@ -1,16 +1,24 @@
+<!-- En escritorio, el panel a la izquierda (auth-layout.css); en el móvil,
+     solo el formulario, como la app. -->
+<div class="auth">
+<app-auth-aside title="Tus citas, en un solo sitio" />
 <div class="flow anim-fade-up">
   <div class="flow__inner">
 
-    <img src="assets_bipsy/Combination Marks/combinationmark_mint_vertical_nobackground.webp"
-         alt="Bipsy" class="flow__logo theme-dark-only" />
-    <img src="assets_bipsy/Combination Marks/combinationmark_carbon_vertical_nobackground.webp"
-         alt="Bipsy" class="flow__logo theme-light-only" />
+    <!-- El logo con el nombre debajo, el mismo que Crear cuenta: las dos
+         puertas de entrada se ven iguales. -->
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-vertical-carbon.webp" />
+      <img src="assets_web/bipsy-vertical-mint.webp" alt="Bipsy" class="flow__logo" width="108" height="108" />
+    </picture>
 
     <app-login-form
       [email]="email"
       [notice]="notice"
+      [subtitle]="subtitle"
       [returnTo]="returnTo"
       (signedIn)="onSignedIn()"
     ></app-login-form>
   </div>
+</div>
 </div>

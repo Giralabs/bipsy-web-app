@@ -31,10 +31,6 @@
 }
 
 .appbanner__icon img { width: 68%; height: 68%; object-fit: contain; }
-/* Las dos variantes ocupan la misma celda: el helper de tema esconde una. */
-.appbanner__icon .theme-light-only,
-.appbanner__icon .theme-dark-only { grid-area: 1 / 1; }
-.appbanner__icon { display: grid; place-items: center; }
 
 .appbanner__text {
   flex: 1;
@@ -77,6 +73,7 @@
    igual, pero no promete un toque que no lleva a ninguna parte. */
 .appbanner__go--soon {
   background: var(--clr-field);
-  color: var(--clr-text-3);
+  /* `text-2`: con `text-3` sobre el campo se quedaba en 3,7:1. */
+  color: var(--clr-text-2);
   font-weight: 600;
 }

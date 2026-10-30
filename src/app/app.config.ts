@@ -1,5 +1,6 @@
 import { ApplicationConfig, ErrorHandler, provideZoneChangeDetection } from '@angular/core';
-import { provideRouter, withInMemoryScrolling, withNavigationErrorHandler } from '@angular/router';
+import { TitleStrategy, provideRouter, withInMemoryScrolling, withNavigationErrorHandler } from '@angular/router';
+import { BipsyTitleStrategy } from './core/page-meta.service';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -21,6 +22,9 @@ export const appConfig: ApplicationConfig = {
       withNavigationErrorHandler(onNavigationError),
     ),
     provideHttpClient(withFetch()),
+    // Cada página con su título en la pestaña: «Mis citas · Bipsy». Es lo
+    // primero que anuncia el lector de pantalla al llegar.
+    { provide: TitleStrategy, useClass: BipsyTitleStrategy },
     // Lo mismo, para los `import()` que no pasan por el router. Todo lo demás
     // sigue yendo a la consola y nada más: ver `AppErrorHandler`.
     { provide: ErrorHandler, useClass: AppErrorHandler },

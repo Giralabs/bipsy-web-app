@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../core/api.service';
 import { JoinWaitlistRequest, WaitlistEntry, WaitlistOffer } from '../models/bipsy.models';
+import { AcceptOfferRequest, WaitlistOfferDetail } from '../models/confirm.models';
 
 /**
  * Lista de espera del cliente: apuntarse a un servicio sin hueco y responder a
@@ -38,6 +39,23 @@ export class WaitlistRepository {
    */
   acceptOffer(offerId: number, acceptedPolicy = false): Promise<WaitlistOffer> {
     return this.api.post<WaitlistOffer>(`/waitlist/offers/${offerId}/accept`, { acceptedPolicy });
+  }
+
+  /** Un aviso concreto. Es lo que abre el enlace de la notificación o del correo. */
+  offer(offerId: number): Promise<WaitlistOfferDetail> {
+    return this.api.get<WaitlistOfferDetail>(`/waitlist/offers/${offerId}`);
+  }
+
+  /**
+   * Acepta el hueco con todo lo que puede pedir: política y, si el servicio es
+   * a domicilio, a dónde ir.
+   *
+   * Aparte de `acceptOffer` para no cambiar su firma. La dirección se pide AL
+   * ACEPTAR y no al apuntarse: una guardada hace semanas lleva todo ese tiempo
+   * caducando. Si falta cuando hace falta, 400 con el aviso intacto.
+   */
+  acceptOfferWith(offerId: number, req: AcceptOfferRequest): Promise<WaitlistOfferDetail> {
+    return this.api.post<WaitlistOfferDetail>(`/waitlist/offers/${offerId}/accept`, req);
   }
 
   /** Rechazar cierra la espera entera y pasa el turno al siguiente. */

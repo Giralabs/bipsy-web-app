@@ -57,6 +57,13 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
    */
   keepSaved = false;
 
+  /**
+   * Si se ofrece la casilla de «guardar para próximas reservas». En false la
+   * tarjeta se guarda sin preguntar: es el caso de la hoja de pago, donde se
+   * está pagando y «solo para esta cita» no significa nada.
+   */
+  @Input() canDecline = true;
+
   @Output() saved = new EventEmitter<PaymentMethodResponse>();
 
   @Output() closed = new EventEmitter<void>();
@@ -71,6 +78,10 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
   private stripe: import('@stripe/stripe-js').Stripe | null = null;
   private elements: import('@stripe/stripe-js').StripeElements | null = null;
   private mounted = false;
+  /** La tarjeta que Stripe ya ha confirmado en esta apertura. */
+  private confirmedMethodId: string | null = null;
+  /** Para descartar una apertura que se cerró antes de terminar de cargar. */
+  private openSeq = 0;
 
   /** El Element solo se puede montar cuando su hueco existe en el DOM. */
   ngAfterViewChecked(): void {
@@ -106,9 +117,11 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
       this.error = 'La pasarela de pago no está disponible ahora mismo.';
       return false;
     }
+    const seq = ++this.openSeq;
     this.busy = true;
     this.error = null;
     this.mounted = false;
+    this.confirmedMethodId = null;
     try {
       const { loadStripe } = await import('@stripe/stripe-js');
       this.stripe = await loadStripe(this.publishableKey);
@@ -117,7 +130,19 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
         return false;
       }
       const clientSecret = await this.payments.createSetupIntent();
-      this.elements = this.stripe.elements({ clientSecret, appearance: { theme: 'night' } });
+      // Cerrada mientras cargaba: sin esto se marcaba lista y el formulario
+      // se montaba en una hoja que ya no estaba abierta.
+      if (seq !== this.openSeq) return false;
+      // El tema del formulario sigue al de la web, que va con el del sistema.
+      // Con 'night' fijo, en modo claro salía un bloque negro en una hoja
+      // blanca. Se lee al abrir: cambiar de tema con la hoja abierta es raro y
+      // rehacer el Element a medio escribir perdería lo tecleado.
+      const light = window.matchMedia?.('(prefers-color-scheme: light)').matches ?? false;
+      this.elements = this.stripe.elements({
+        clientSecret,
+        locale: 'es',
+        appearance: { theme: light ? 'stripe' : 'night' },
+      });
       this.ready = true;
       return true;
     } catch (raw) {
@@ -135,6 +160,13 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
     this.busy = true;
     this.error = null;
     try {
+      // Ya confirmada y lo que falló fue guardarla en nuestro servidor: se
+      // reintenta solo eso. Volver a confirmar un SetupIntent que ya ha
+      // salido bien lo rechaza Stripe, y la hoja quedaba atascada.
+      if (this.confirmedMethodId) {
+        this.saved.emit(await this.payments.registerMethod(this.confirmedMethodId, this.keepSaved || !this.canDecline));
+        return;
+      }
       // `redirect: 'if_required'` deja el 3-D Secure en un modal cuando el
       // banco lo pide y evita salir de la página cuando no hace falta. La
       // autenticación fuerte se resuelve AQUÍ, con el titular delante: si se
@@ -155,8 +187,9 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
         this.error = 'La pasarela no ha devuelto la tarjeta. Inténtalo de nuevo.';
         return;
       }
+      this.confirmedMethodId = paymentMethodId;
 
-      this.saved.emit(await this.payments.registerMethod(paymentMethodId, this.keepSaved));
+      this.saved.emit(await this.payments.registerMethod(paymentMethodId, this.keepSaved || !this.canDecline));
     } catch (raw) {
       this.error = ApiError.from(raw).message;
     } finally {
@@ -165,6 +198,7 @@ export class AddCardSheetComponent implements AfterViewChecked, OnDestroy {
   }
 
   close(): void {
+    this.openSeq++;
     this.ready = false;
     this.mounted = false;
     this.elements = null;

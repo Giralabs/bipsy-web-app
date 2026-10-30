@@ -21,3 +21,5 @@ const onLocalhost = typeof location !== 'undefined'
 
 export const HELP_URL = onLocalhost ? HELP_DEV_URL : HELP_PROD_URL;
 export const HELP_CLIENTS_URL = `${HELP_URL}/clientes`;
+/** The half for business owners: what Bipsy Business is and how to start. */
+export const HELP_BUSINESS_URL = `${HELP_URL}/negocios`;

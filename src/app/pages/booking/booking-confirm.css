@@ -1,0 +1,153 @@
+/* El resumen y lo que va con él. Aparte de `booking-flow.component.css` para
+   que ninguna de las dos hojas se acerque al límite de tamaño por componente. */
+
+/* Encabezado de bloque: pequeño y en mayúsculas, fuera de la caja. */
+.bf__header {
+  display: block;
+  margin: 0;
+  padding: 0 6px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-text-2);
+}
+
+.bf__header--gap { margin-top: 28px; }
+
+/* Lista de concepto / valor. Un <dl>: es lo que es, y el lector de pantalla lo
+   lee como pares. */
+.bf__sum {
+  margin: 0;
+  background: var(--clr-surface);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.bf__sum-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.bf__sum-row + .bf__sum-row { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+
+.bf__sum-row dt {
+  flex-shrink: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--clr-text);
+}
+
+/* El valor puede ser una dirección larga: parte en líneas en vez de cortarse,
+   que una dirección con puntos suspensivos no lleva a ninguna puerta. */
+.bf__sum-row dd {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.bf__sum-row--total dd { font-weight: 700; color: var(--clr-text); }
+
+.bf__foot {
+  padding: 8px 6px 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text-2);
+}
+
+.bf__foot--gap { margin-top: 16px; }
+
+/* ── Política de cancelación ──
+   Una superficie más, sin borde ni ámbar: lo que hace destacar el importe es
+   su peso y su sitio, no el color. */
+.bf__policy {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: var(--r-sm);
+  background: var(--clr-surface);
+}
+
+.bf__policy-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bf__policy-title { font-size: 0.9375rem; font-weight: 700; color: var(--clr-text); }
+.bf__policy-amount { font-size: 1.0625rem; font-weight: 800; color: var(--clr-text); }
+
+.bf__policy-text {
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+.bf__policy-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  box-shadow: inset 0 0.5px 0 var(--clr-border);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--clr-text);
+}
+
+.bf__policy-check input {
+  margin: 1px 0 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--clr-mint);
+  flex-shrink: 0;
+}
+
+.bf__policy-check input:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+
+/* ── Notas ── */
+.bf__notes {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  outline: none;
+  resize: vertical;
+  padding: 14px 16px;
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--clr-text);
+  line-height: 1.5;
+}
+
+.bf__notes::placeholder { color: var(--clr-text-3); }
+.bf__notes:focus-visible { outline: none; }
+.form-group__box:has(> .bf__notes:focus-visible) { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+
+/* Aviso de tarjeta pendiente. Tenue y no rojo: no es un error, es un paso
+   más que ya se puede dar aquí mismo. */
+.bf__card-notice {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  background: var(--clr-mint-dim);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+.bf__card-notice strong { color: var(--clr-text); font-weight: 700; }

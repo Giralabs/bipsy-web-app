@@ -14,10 +14,12 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
+    data: { defaultTitle: true },
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
   },
   {
     path: 'buscar',
+    title: 'Buscar',
     loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent),
   },
   {
@@ -30,12 +32,14 @@ export const routes: Routes = [
   // Mis citas con el servicio ya elegido.
   {
     path: 'negocio/:id/reservar',
+    title: 'Pedir cita',
     loadComponent: () =>
       import('./pages/booking/booking-flow.component').then(m => m.BookingFlowComponent),
   },
 
   {
     path: 'citas',
+    title: 'Mis citas',
     loadComponent: () =>
       import('./pages/appointment-detail/appointments.component').then(m => m.AppointmentsComponent),
   },
@@ -44,62 +48,104 @@ export const routes: Routes = [
     // haría match con el UUID de un token. Esta es la cita que el NEGOCIO le dio
     // a alguien sin app, y el destino del correo con el que la gestiona.
     path: 'cita/:token',
+    title: 'Tu cita',
     loadComponent: () =>
       import('./pages/guest-booking/guest-booking.component').then(m => m.GuestBookingComponent),
   },
+  // Una cita que te ha dado el negocio y espera que la confirmes. Antes que
+  // `citas/:id` para que esa no se la quede.
+  {
+    path: 'citas/:id/confirmar',
+    title: 'Confirma tu cita',
+    loadComponent: () =>
+      import('./pages/booking-confirm/booking-confirm.component').then(m => m.BookingConfirmComponent),
+  },
+  // El aviso de un hueco libre de la lista de espera.
+  {
+    path: 'lista-espera/oferta/:id',
+    title: 'Hueco libre',
+    loadComponent: () =>
+      import('./pages/waitlist-offer/waitlist-offer.component').then(m => m.WaitlistOfferComponent),
+  },
   {
     path: 'citas/:id',
+    title: 'Tu cita',
     loadComponent: () =>
       import('./pages/appointment-detail/booking-detail.component').then(m => m.BookingDetailComponent),
   },
   {
     path: 'citas/:id/cambiar',
+    title: 'Cambiar la cita',
     loadComponent: () =>
       import('./pages/appointment-detail/reschedule.component').then(m => m.RescheduleComponent),
   },
 
   {
     path: 'mensajes',
+    title: 'Mensajes',
     loadComponent: () => import('./pages/chat/inbox.component').then(m => m.ChatInboxComponent),
   },
   {
     path: 'mensajes/:id',
+    title: 'Conversación',
     loadComponent: () => import('./pages/chat/thread.component').then(m => m.ChatThreadComponent),
   },
 
   {
     path: 'favoritos',
+    title: 'Favoritos',
     loadComponent: () =>
       import('./pages/favorites/favorites.component').then(m => m.FavoritesComponent),
   },
   {
     path: 'resenas',
+    title: 'Mis reseñas',
     loadComponent: () => import('./pages/reviews/reviews.component').then(m => m.ReviewsComponent),
   },
   {
     path: 'pagos',
+    title: 'Pagos',
     loadComponent: () => import('./pages/payments/payments.component').then(m => m.PaymentsComponent),
   },
   {
     path: 'ajustes',
+    title: 'Ajustes',
     loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent),
+  },
+
+  // Soporte: el ticket y el correo, como la pantalla de la app de cliente.
+  {
+    path: 'soporte',
+    title: 'Soporte',
+    loadComponent: () => import('./pages/support/support.component').then(m => m.SupportComponent),
   },
 
   // Acceso. Pantallas y no un modal, como en la app: el navegador puede
   // guardar la contraseña y el enlace se puede compartir.
   {
     path: 'acceder',
+    title: 'Iniciar sesión',
     loadComponent: () => import('./pages/auth/login/login.component').then(m => m.LoginComponent),
   },
   {
     path: 'crear-cuenta',
+    title: 'Crear cuenta',
     loadComponent: () =>
       import('./pages/auth/register/register.component').then(m => m.RegisterComponent),
   },
   {
     path: 'recuperar',
+    title: 'Recuperar la contraseña',
     loadComponent: () =>
       import('./pages/auth/recover/recover.component').then(m => m.RecoverComponent),
+  },
+  // La espera de verificación del correo. A ella lleva `SessionService` a
+  // quien tiene sesión con el correo sin verificar (`EMAIL_PENDING_PATH`).
+  {
+    path: 'verificar-correo',
+    title: 'Verifica tu email',
+    loadComponent: () =>
+      import('./pages/auth/email-pending/email-pending.component').then(m => m.EmailPendingComponent),
   },
 
   // Documentos legales. La app móvil enlaza aquí desde la casilla de
@@ -107,6 +153,7 @@ export const routes: Routes = [
   { path: 'legal', redirectTo: 'legal/terminos', pathMatch: 'full' },
   {
     path: 'legal/:slug',
+    title: 'Información legal',
     loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
   },
 

@@ -51,9 +51,9 @@ export class BipsyService {
     }
   }
 
-  async getFeaturedBusinesses(size = 12, coords?: { lat: number; lng: number }): Promise<BusinessResponse[]> {
+  async getFeaturedBusinesses(size = 12, coords?: { lat: number; lng: number }, page = 0): Promise<BusinessResponse[]> {
     try {
-      return await this.catalog.featured(0, size, coords);
+      return await this.catalog.featured(page, size, coords);
     } catch (error) {
       return this.orDemo(error, DEMO_BUSINESSES);
     }
@@ -64,23 +64,23 @@ export class BipsyService {
    * llamar: los endpoints exigen cliente autenticado y un 401 en la portada
    * dispararía el refresco de token de alguien que simplemente no ha entrado.
    */
-  async getFavoriteBusinesses(): Promise<BusinessResponse[]> {
+  async getFavoriteBusinesses(page = 0, size = 12): Promise<BusinessResponse[]> {
     if (!this.session.isAuthenticated) {
       return [];
     }
     try {
-      return await this.catalog.favorites();
+      return await this.catalog.favorites(page, size);
     } catch {
       return [];
     }
   }
 
-  async getRebookableBusinesses(): Promise<BusinessResponse[]> {
+  async getRebookableBusinesses(page = 0, size = 12): Promise<BusinessResponse[]> {
     if (!this.session.isAuthenticated) {
       return [];
     }
     try {
-      return await this.catalog.rebookable();
+      return await this.catalog.rebookable(page, size);
     } catch {
       return [];
     }

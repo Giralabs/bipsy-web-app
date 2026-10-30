@@ -1,0 +1,22 @@
+# Bipsy (web de cliente). Se indexa lo público: Explorar, Buscar, las fichas de
+# los negocios y los documentos legales. Lo de la cuenta, el acceso y los enlaces
+# personales (cita de invitado, invitaciones, puerta del equipo) no tienen nada
+# que buscar y algunos llevan un token en la dirección.
+User-agent: *
+Disallow: /citas
+Disallow: /cita/
+Disallow: /mensajes
+Disallow: /favoritos
+Disallow: /resenas
+Disallow: /pagos
+Disallow: /ajustes
+Disallow: /soporte
+Disallow: /acceder
+Disallow: /crear-cuenta
+Disallow: /recuperar
+Disallow: /verificar-correo
+Disallow: /lista-espera/
+Disallow: /invitacion/
+Disallow: /equipo/
+Disallow: /admin
+Disallow: /negocio/*/reservar

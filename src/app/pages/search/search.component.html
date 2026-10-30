@@ -17,7 +17,7 @@
           <input
             type="text"
             class="search-bar-input"
-            placeholder="Nombre, servicio o ciudad…"
+            placeholder="Nombre, servicio"
             name="bipsy-search"
             autocomplete="off"
             autocorrect="off"
@@ -33,13 +33,30 @@
           }
         </div>
 
+        <!-- El círculo de la fecha, como en la cabecera de Buscar de la app
+             (píldora, fecha y filtros). La fecha y la franja viven en la hoja
+             de filtros, así que abre esa misma hoja. -->
+        <button
+          type="button"
+          class="tool-btn only-touch"
+          [class.tool-btn--on]="slot !== 'any'"
+          aria-label="Fecha y hora"
+          aria-haspopup="dialog"
+          (click)="filtersOpen = true"
+        >
+          <span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>
+        </button>
+
         <button
           type="button"
           class="tool-btn"
           [class.tool-btn--on]="activeFilterCount > 0"
+          [attr.aria-label]="activeFilterCount > 0 ? 'Filtros, ' + activeFilterCount + ' activos' : 'Filtros'"
+          aria-haspopup="dialog"
           (click)="filtersOpen = !filtersOpen"
         >
-          <span class="material-symbols-rounded">tune</span>
+          <!-- En móvil la etiqueta se oculta: el nombre va en el aria-label. -->
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>
           <span class="tool-btn__label">Filtros</span>
           @if (activeFilterCount > 0) {
             <span class="tool-btn__count">{{ activeFilterCount }}</span>
@@ -48,7 +65,7 @@
 
         @if (mapAvailable) {
           <button type="button" class="tool-btn only-desk" [class.tool-btn--on]="showMap" (click)="showMap = !showMap">
-            <span class="material-symbols-rounded">{{ showMap ? 'view_list' : 'map' }}</span>
+            <span class="material-symbols-rounded" aria-hidden="true">{{ showMap ? 'view_list' : 'map' }}</span>
             <span class="tool-btn__label">{{ showMap ? 'Lista' : 'Mapa' }}</span>
           </button>
         }
@@ -128,6 +145,11 @@
             A domicilio <span class="material-symbols-rounded active-filter__x">close</span>
           </button>
         }
+        @if (openNow) {
+          <button type="button" class="active-filter" (click)="toggleSwitch('openNow')">
+            Disponibles <span class="material-symbols-rounded active-filter__x">close</span>
+          </button>
+        }
         @if (topRated) {
           <button type="button" class="active-filter" (click)="toggleSwitch('topRated')">
             Mejor valorados <span class="material-symbols-rounded active-filter__x">close</span>
@@ -159,40 +181,57 @@
       </div>
     } @else {
 
-      <p class="results-count">
-        {{ businesses.length }} resultado{{ businesses.length !== 1 ? 's' : '' }}
+      <!-- Las tarjetas llevan su nombre en `h3`: sin un `h2` encima, el lector
+           saltaba del título de la página al tercer nivel. -->
+      <h2 class="sr-only">Resultados</h2>
+      <!-- Sin contador cuando no hay nada: «0 resultados» encima de «Sin
+           resultados» decía lo mismo dos veces, y la app tampoco lo pinta. -->
+      <p class="results-count" aria-live="polite">
+        @if (businesses.length > 0) {
+          {{ businesses.length }} resultado{{ businesses.length !== 1 ? 's' : '' }}
+        }
       </p>
 
-      @if (showMap) {
-        <app-business-map
-          [businesses]="businesses"
-          [area]="area"
-          (areaChange)="onAreaChange($event)"
-        />
-      } @else if (businesses.length === 0) {
-        <div class="empty-state">
-          <span class="material-symbols-rounded">search_off</span>
-          <h3>Sin resultados</h3>
-          <p>Prueba con otro término, cambia la categoría o quita algún filtro.</p>
-          @if (activeFilterCount > 0) {
-            <app-button variant="secondary" icon="restart_alt" (onClick)="clearFilters()">
-              Quitar filtros
-            </app-button>
+      <!-- Con el mapa puesto: en el móvil el mapa ocupa la pantalla, como en
+           la app; en escritorio va al lado de la lista y se mueven juntos,
+           que es lo que se espera de un buscador en pantalla grande. -->
+      <div class="results-layout" [class.results-layout--map]="showMap">
+        <div class="results-list">
+          @if (businesses.length === 0) {
+            <!-- El de `_ResultsSlivers`: «Ver todo» siempre, que deja la
+                 búsqueda en blanco. Antes el botón solo salía con filtros, y
+                 quien había escrito un nombre sin resultados no tenía salida. -->
+            <div class="empty-state">
+              <span class="material-symbols-rounded" aria-hidden="true">travel_explore</span>
+              <h3>Sin resultados</h3>
+              <p>Prueba con otra búsqueda o quita algunos filtros.</p>
+              <app-button variant="secondary" icon="refresh" (onClick)="showEverything()">Ver todo</app-button>
+            </div>
+          } @else {
+            <div class="results-grid">
+              @for (biz of businesses; track biz.id) {
+                <app-business-card
+                  [business]="biz"
+                  [previouslyBooked]="!!biz.discovery?.previouslyBooked"
+                  [isNew]="!!biz.discovery?.recentlyOpened"
+                  [distanceKm]="biz.discovery?.distanceKm ?? null"
+                  (rebook)="onRebook($event)"
+                />
+              }
+            </div>
           }
         </div>
-      } @else {
-        <div class="results-grid">
-          @for (biz of businesses; track biz.id) {
-            <app-business-card
-              [business]="biz"
-              [previouslyBooked]="!!biz.discovery?.previouslyBooked"
-              [isNew]="!!biz.discovery?.recentlyOpened"
-              [distanceKm]="biz.discovery?.distanceKm ?? null"
-              (rebook)="onRebook($event)"
+
+        @if (showMap) {
+          <div class="results-map">
+            <app-business-map
+              [businesses]="businesses"
+              [area]="area"
+              (areaChange)="onAreaChange($event)"
             />
-          }
-        </div>
-      }
+          </div>
+        }
+      </div>
     }
   </div>
 </div>
@@ -204,11 +243,19 @@
      segunda forma de salir con un resultado distinto. Para deshacer está
      "Quitar filtros", que dice exactamente lo que hace. -->
 @if (filtersOpen) {
-  <div class="sheet-backdrop" (click)="filtersOpen = false">
-    <div class="sheet sheet--filters" (click)="$event.stopPropagation()">
+  <div class="sheet-backdrop" (click)="closeFilters()">
+    <!-- Un diálogo de verdad: el foco entra, no se escapa con el tabulador,
+         Escape cierra y al cerrar vuelve al botón que la abrió. Antes el foco
+         seguía en la página de detrás y Escape no hacía nada. -->
+    <div #filterSheet class="sheet sheet--filters" role="dialog" aria-modal="true"
+         aria-labelledby="filters-title" tabindex="-1"
+         (click)="$event.stopPropagation()"
+         (keydown.escape)="closeFilters()"
+         (keydown.tab)="trapFocus($event)"
+         (keydown.shift.tab)="trapFocus($event)">
       <header class="sheet__head">
-        <h2 class="sheet__title">Filtros</h2>
-        <button type="button" class="sheet__done" (click)="filtersOpen = false" aria-label="Hecho">
+        <h2 class="sheet__title" id="filters-title">Filtros</h2>
+        <button type="button" class="sheet__done" (click)="closeFilters()" aria-label="Hecho">
           <span class="material-symbols-rounded">check</span>
         </button>
       </header>
@@ -256,6 +303,9 @@
         <app-grouped-section header="Preferencias">
           <app-grouped-row label="A domicilio" icon="directions_car" (action)="toggleSwitch('atHomeOnly')">
             <input type="checkbox" class="sheet__switch" [checked]="atHomeOnly" tabindex="-1" />
+          </app-grouped-row>
+          <app-grouped-row label="Disponibles" icon="event_available" (action)="toggleSwitch('openNow')">
+            <input type="checkbox" class="sheet__switch" [checked]="openNow" tabindex="-1" />
           </app-grouped-row>
           <app-grouped-row label="Mejor valorados" icon="star" (action)="toggleSwitch('topRated')">
             <input type="checkbox" class="sheet__switch" [checked]="topRated" tabindex="-1" />

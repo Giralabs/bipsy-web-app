@@ -8,28 +8,52 @@
 } @else {
 
   <div class="app-root">
+    <!-- Lo primero que alcanza el tabulador: salta la barra, el buscador y
+         la tira, que si no hay que recorrer en cada página. -->
+    <a class="skip-link" href="#contenido" (click)="skipToContent($event)">Saltar al contenido</a>
+
     @if (chrome()) {
       <!-- ── Móvil y tablet: la app ──
            La tira de la tienda arriba y la barra de pestañas abajo, como en
            cualquier app con web. El cromo de escritorio no se pinta siquiera. -->
-      <app-app-banner class="only-touch"></app-app-banner>
-
-      <!-- ── Escritorio ── -->
-      <app-promo-bar class="only-desk"></app-promo-bar>
-      <app-navbar class="only-desk"></app-navbar>
-      <app-search-header class="only-desk"></app-search-header>
+      @if (desktop()) {
+        <!-- ── Escritorio ── -->
+        <app-promo-bar class="only-desk"></app-promo-bar>
+        <app-navbar class="only-desk"></app-navbar>
+      } @else {
+        <!-- Solo con las fichas de las tiendas publicadas: una tira que invita a
+             una app con el botón en «Próximamente» delataba una web a medias. -->
+        @if (storeLinksReady) {
+          <app-app-banner class="only-touch"></app-app-banner>
+        }
+        <app-mobile-topbar class="only-touch" />
+      }
     }
 
     <!-- Sin cromo solo quedan, en mantenimiento, `/admin` y los documentos legales. -->
-    <main class="page-content">
+    <main class="page-content" id="contenido" tabindex="-1" #main
+          [class.page-content--footer]="chrome() && desktop() && showFooter()">
       <router-outlet></router-outlet>
     </main>
 
     @if (chrome()) {
-      <app-footer class="only-desk"></app-footer>
-      <app-tab-bar class="only-touch"></app-tab-bar>
+      @if (desktop()) {
+        @if (showFooter()) {
+          <app-footer class="only-desk"></app-footer>
+        }
+      } @else {
+        <app-tab-bar class="only-touch"></app-tab-bar>
+      }
     }
   </div>
+
+  <!-- Los diálogos de confirmación de toda la web (DialogService). -->
+  <app-confirm-dialog />
+  <!-- Los avisos flotantes de toda la web (ToastService). -->
+  <app-toast-host />
+  <!-- Un negocio que pide el pago de una cita: abre la hoja de pagar sola,
+       como el PaymentRequestGate del shell de la app. -->
+  <app-payment-request-gate />
 
   <!-- Dentro con el pase del equipo: que no se olvide de que el público no
        está viendo esto. -->

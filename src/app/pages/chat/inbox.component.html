@@ -1,61 +1,66 @@
-<div class="inbox anim-fade-up">
-  <div class="inbox__inner">
-    <h1 class="inbox__heading">Mensajes</h1>
-    <p class="inbox__sub">Tus conversaciones con los negocios</p>
+<div class="inbox" [class.inbox--split]="desktop()">
+  <section class="inbox__list" aria-labelledby="inbox-title">
+    <!-- El título vive FUERA de la carga: dentro, se entraba al esqueleto sin
+         título y aparecía de golpe al llegar la lista. Con la foto a la
+         derecha, que es por donde se entra a Perfil, como en la pestaña de la
+         app (`ProfileAvatarButton`). En escritorio la foto ya está en la barra. -->
+    <div class="inbox__top">
+      <h1 class="inbox__heading" id="inbox-title">Mensajes</h1>
+      @if (!desktop()) {
+        <a [routerLink]="avatarLink" class="inbox__avatar" aria-label="Tu perfil">
+          <app-avatar [photoUrl]="avatarPhoto" [name]="avatarName" [size]="44" />
+        </a>
+      }
+    </div>
 
-    @if (!isAuthenticated) {
-      <div class="empty-state">
-        <span class="material-symbols-rounded">chat_bubble</span>
-        <h3>Entra para ver tus mensajes</h3>
-        <p>Aquí hablas con los negocios donde tienes o has tenido cita.</p>
+    @if (isAuthenticated === false) {
+      <p class="inbox__sub">Inicia sesión para ver tus mensajes</p>
+      <div class="empty-state inbox__state">
+        <span class="material-symbols-rounded" aria-hidden="true">lock</span>
+        <h3>Inicia sesión</h3>
+        <p>Accede a tu cuenta para hablar con los negocios donde reserves.</p>
         <app-button variant="primary" icon="login" (onClick)="goToLogin()">Iniciar sesión</app-button>
       </div>
-    } @else if (isLoading) {
-      <div class="inbox__list">
-        @for (i of [1, 2, 3]; track i) {
-          <div class="skeleton inbox__skeleton"></div>
-        }
-      </div>
+    } @else if (isAuthenticated === null || isLoading) {
+      <app-chat-conversation-list [loading]="true" />
     } @else if (loadError) {
-      <div class="empty-state">
-        <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
-        <h3>No hemos podido cargar tus mensajes</h3>
-        <p>{{ loadError.message }}</p>
+      <div class="empty-state inbox__state">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ loadError.networkError ? 'wifi_off' : 'wifi_tethering_error' }}</span>
+        <h3>{{ loadError.networkError ? 'Sin conexión' : 'Algo no ha ido bien' }}</h3>
+        <p>{{ loadError.networkError
+          ? 'No hemos podido conectar con Bipsy. Comprueba tu conexión a internet e inténtalo de nuevo.'
+          : 'No hemos podido cargar tus mensajes. Inténtalo de nuevo.' }}</p>
         <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
       </div>
     } @else if (conversations.length === 0) {
-      <div class="empty-state">
-        <span class="material-symbols-rounded">forum</span>
-        <h3>Todavía no tienes mensajes</h3>
-        <p>Cuando escribas a un negocio desde su ficha o desde una cita, la conversación aparecerá aquí.</p>
-        <app-button variant="primary" icon="explore" (onClick)="goExplore()">Explorar negocios</app-button>
+      <div class="empty-state inbox__state">
+        <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+        <h3>Sin conversaciones</h3>
+        <p>Aquí hablarás con los negocios donde reserves. En cuanto pidas una cita, aparecerá su conversación.</p>
       </div>
     } @else {
-      <div class="inbox__list">
-        @for (c of conversations; track c.id) {
-          <button type="button" class="conv" (click)="open(c)">
-            @if (avatar(c)) {
-              <img class="conv__avatar-img" [src]="avatar(c)" [alt]="c.otherPartyName" />
-            } @else {
-              <span class="conv__avatar">{{ (c.otherPartyName || '?')[0] }}</span>
-            }
-
-            <span class="conv__main">
-              <span class="conv__top">
-                <strong class="conv__name">{{ c.otherPartyName }}</strong>
-                <span class="conv__when">{{ when(c) }}</span>
-              </span>
-              <span class="conv__preview" [class.conv__preview--unread]="c.unread > 0">
-                {{ c.lastMessagePreview || 'Sin mensajes todavía' }}
-              </span>
-            </span>
-
-            @if (c.unread > 0) {
-              <span class="conv__badge">{{ c.unread }}</span>
-            }
-          </button>
-        }
+      <div class="inbox__scroll">
+        <app-chat-conversation-list [conversations]="conversations" />
       </div>
     }
-  </div>
+  </section>
+
+  <!-- Escritorio: el hueco del hilo, para que la bandeja tenga la misma forma
+       que con una conversación abierta. Saltar de aquí a un hilo no mueve la
+       lista de sitio. -->
+  @if (desktop()) {
+    <section class="inbox__pane" aria-label="Conversación">
+      <div class="empty-state">
+        <span class="material-symbols-rounded" aria-hidden="true">forum</span>
+        @if (isAuthenticated && conversations.length > 0) {
+          <h3>Elige una conversación</h3>
+          <p>Escribe al negocio para preguntar lo que necesites antes o después de tu cita.</p>
+        } @else {
+          <h3>Tus conversaciones</h3>
+          <p>Cuando reserves en un sitio, su conversación aparecerá aquí para que podáis hablar.</p>
+          <app-button variant="secondary" icon="explore" (onClick)="goExplore()">Explorar negocios</app-button>
+        }
+      </div>
+    </section>
+  }
 </div>

@@ -1,0 +1,69 @@
+/* ══════════ LIBRETAS: DIRECCIONES Y PERSONAS ══════════
+   Lo que tienen en común los dos apartados hijos: la lista, su esqueleto, el
+   vacío, el botón de añadir y la hoja de alta y edición. */
+
+.list-add { margin-top: 20px; }
+.list-add .pill-btn { width: 100%; justify-content: center; }
+
+@media (min-width: 641px) {
+  .list-add .pill-btn { width: auto; }
+}
+
+/* El vacío va dentro de la tarjeta y con menos aire que el global: aquí es un
+   apartado de unos ajustes, no una página entera sin nada. */
+.list-empty { padding: 40px 24px; }
+
+.list-error { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+
+.list-skel { display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: var(--r-xl); background: var(--clr-surface); }
+.list-skel span { height: 52px; border-radius: var(--r-md); background: var(--clr-field); }
+
+/* ── Hoja de alta y edición ── */
+.sheet--form { padding: 20px 20px 24px; }
+.sheet__head .sheet__title { margin: 0; }
+
+.sheet__close {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-field);
+  color: var(--clr-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.sheet__close:hover { background: var(--clr-subtle); }
+.sheet__close .material-symbols-rounded { font-size: 20px; }
+
+/* Los campos van en el bloque agrupado de siempre (.form-group), pero con la
+   etiqueta ENCIMA: «Piso, puerta, timbre» o «Nombre (opcional)» no caben en
+   la columna fija de 108 px y partían en dos líneas. */
+.sheet .form-group { margin-top: 0; }
+.sheet .form-group + .form-group { margin-top: 16px; }
+.sheet .form-group__box { background: var(--clr-field); }
+
+.form-row--stack { flex-direction: column; align-items: stretch; gap: 0; padding-top: 10px; padding-bottom: 2px; }
+.form-row--stack .form-row__label { width: auto; font-size: 0.75rem; font-weight: 700; color: var(--clr-text-2); }
+.form-row--stack .form-row__input { padding: 6px 0 10px; }
+
+.form-row__switch { justify-content: space-between; cursor: pointer; }
+.form-row__switch .form-row__label { width: auto; flex: 1; }
+
+/* `.switch` vive en profile-shared.css; sobre el gris del campo necesita un
+   tono más para verse apagado. */
+.form-row__switch .switch:not(:checked) { background: var(--clr-subtle); }
+
+.sheet__error {
+  margin-top: 14px;
+  padding: 0 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-danger-text);
+}
+
+.sheet__buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+.sheet__buttons .pill-btn { width: 100%; justify-content: center; }

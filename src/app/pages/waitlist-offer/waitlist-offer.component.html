@@ -1,0 +1,208 @@
+<!-- Móvil: la `AppBar` de la app («Hueco libre»), de borde a borde. En
+     escritorio va la cabecera de la columna (`.cf__desk`). -->
+<header class="cf__bar">
+  <button type="button" class="cf__bar-back" (click)="goBack()" aria-label="Volver">
+    <span class="material-symbols-rounded" aria-hidden="true">arrow_back_ios_new</span>
+  </button>
+  <h1 class="cf__bar-title">Hueco libre</h1>
+  <span aria-hidden="true"></span>
+</header>
+
+<div class="flow cf anim-fade-up">
+  <div class="cf__inner">
+
+    <div class="cf__head cf__desk">
+      <button type="button" class="flow__back" (click)="goBack()">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        Volver
+      </button>
+      <!-- «Se ha liberado un hueco» ya lo dice el plazo de debajo: aquí va el
+           título de la pantalla en la app. -->
+      <p class="cf__eyebrow">Lista de espera</p>
+      <h2 class="cf__title">Hueco libre</h2>
+    </div>
+
+    @if (isLoading && !offer) {
+      <div class="skeleton wo__skeleton wo__skeleton--short"></div>
+      <div class="skeleton wo__skeleton"></div>
+      <div class="skeleton wo__skeleton wo__skeleton--short"></div>
+    } @else if (loadError || !offer) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ loadError?.networkError ? 'wifi_off' : 'event_busy' }}</span>
+        <h3>{{ loadError?.networkError ? 'Sin conexión' : 'No se ha podido cargar el aviso' }}</h3>
+        @if (loadError?.message) {
+          <p>{{ loadError?.message }}</p>
+        }
+        <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+      </div>
+    } @else if (!isOpen) {
+
+      <!-- ══════════ CERRADO ══════════ -->
+      <div class="empty-state">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ offer.status === 'ACCEPTED' ? 'event_available' : 'schedule' }}</span>
+        <h3>{{ closed.title }}</h3>
+        <p>{{ closed.message }}</p>
+      </div>
+      <div class="cf__actions cf__actions--inline">
+        @if (offer.status === 'ACCEPTED' && offer.bookingId) {
+          <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="openBooking()">
+            Ver la cita
+          </app-button>
+        }
+        <app-button variant="secondary" size="large" [fullWidth]="true" (onClick)="goToBookings()">
+          Ir a Mis citas
+        </app-button>
+      </div>
+
+    } @else {
+
+      <!-- ══════════ ABIERTO ══════════ -->
+      <div class="cf__grid">
+        <div class="cf__main">
+          <app-deadline-countdown
+            class="wo__countdown"
+            [expiresAt]="offer.expiresAt"
+            title="Se ha liberado un hueco"
+            before="Te quedan"
+            after="para decidir"
+            (expired)="onExpired()"
+          />
+
+          <!-- En el móvil, qué hueco es va aquí, como en la app; en escritorio,
+               en la tarjeta de la derecha. -->
+          @if (!desktop()) {
+            <div class="form-group">
+              <div class="form-group__box">
+                <div class="wo__head">
+                  <h2 class="wo__service">{{ offer.serviceName }}</h2>
+                  <p class="wo__business">{{ offer.businessName }}</p>
+                </div>
+                <div class="form-row">
+                  <span class="form-row__label">Día</span>
+                  <span class="wo__value">{{ dayLabel }}</span>
+                </div>
+                <div class="form-row">
+                  <span class="form-row__label">Hora</span>
+                  <span class="wo__value">{{ timeLabel }}</span>
+                </div>
+                @if (offer.workerName) {
+                  <div class="form-row">
+                    <span class="form-row__label">Profesional</span>
+                    <span class="wo__value">{{ offer.workerName }}</span>
+                  </div>
+                }
+                @if (priceLabel) {
+                  <div class="form-row">
+                    <span class="form-row__label">Precio</span>
+                    <span class="wo__value">{{ priceLabel }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (needsAddress) {
+            <!-- La libreta primero, con la predeterminada ya marcada; escribir una
+                 nueva solo si hace falta. El aviso de fuera de zona lo da el propio
+                 selector, y aquí además apaga el botón (ver `outOfArea`). Sin
+                 «Guardar en mis direcciones», como en la app: con el plazo
+                 corriendo, cada control de más es tiempo. -->
+            <div class="form-group">
+              <p class="wo__intro">Es un servicio a domicilio: dinos dónde quieres que te atendamos.</p>
+              <app-address-picker
+                [address]="address"
+                [disabled]="sending"
+                [allowSave]="false"
+                [area]="area"
+                [businessName]="offer.businessName"
+                verb="quedarte el hueco"
+                (addressChange)="address = $event"
+              />
+            </div>
+          }
+
+          <!-- La política es lo que sostiene el acuerdo: sin aceptarla aquí, un
+               cargo posterior no tendría base. -->
+          @if (needsPolicy) {
+            <div class="form-group">
+              <p class="form-group__header">Política de cancelación</p>
+              <div class="form-group__box">
+                <p class="wo__text">{{ offer.policyText }}</p>
+                <label class="wo__check">
+                  <input type="checkbox" [(ngModel)]="acceptedPolicy" [disabled]="sending" />
+                  <span>Acepto la política de cancelación</span>
+                </label>
+              </div>
+            </div>
+          }
+
+          @if (needsCard) {
+            <p class="form-group__footer wo__card-note">
+              Este negocio pide una tarjeta guardada para quedarte el hueco. La guardas aquí en un
+              paso: no se te cobra nada ahora.
+            </p>
+          }
+
+          @if (error) {
+            <p class="flow__error" role="alert">
+              <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+            </p>
+          }
+
+          <div class="cf__actions">
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              [loading]="sending"
+              [disabled]="!canAccept"
+              [icon]="needsCard ? 'credit_card' : ''"
+              (onClick)="acceptOrAddCard()"
+            >
+              {{ needsCard ? 'Añadir tarjeta y continuar' : 'Quiero este hueco' }}
+            </app-button>
+            <app-button variant="text" [fullWidth]="true" [disabled]="sending" (onClick)="decline()">
+              No me viene bien
+            </app-button>
+          </div>
+
+          <p class="flow__subtitle cf__fineprint">
+            Al rechazarlo sales de esta lista de espera y el hueco pasa al siguiente.
+            Puedes volver a apuntarte cuando quieras.
+          </p>
+        </div>
+
+        @if (desktop()) {
+          <aside class="cf__side" aria-label="El hueco">
+            <div class="cf__card">
+              <div class="cf__card-head">
+                <h3 class="cf__card-service">{{ offer.serviceName }}</h3>
+                <p class="cf__card-business">{{ offer.businessName }}</p>
+              </div>
+              <dl class="cf__card-list">
+                <div class="cf__card-row"><dt>Día</dt><dd>{{ dayLabel }}</dd></div>
+                <div class="cf__card-row"><dt>Hora</dt><dd>{{ timeLabel }}</dd></div>
+                @if (offer.workerName) {
+                  <div class="cf__card-row"><dt>Profesional</dt><dd>{{ offer.workerName }}</dd></div>
+                }
+                @if (priceLabel) {
+                  <div class="cf__card-row"><dt>Precio</dt><dd>{{ priceLabel }}</dd></div>
+                }
+              </dl>
+            </div>
+          </aside>
+        }
+      </div>
+    }
+
+    <!-- La hoja de tarjeta, la misma que en el flujo de reserva. -->
+    @if (cardSheetOpen) {
+      <app-add-card-sheet
+        [publishableKey]="stripeKey"
+        reason="Se usa para cobrar la tarifa solo si cancelas tarde o no acudes. Ahora no se te cobra nada."
+        (saved)="onCardSaved()"
+        (closed)="onCardSheetClosed()"
+      ></app-add-card-sheet>
+    }
+  </div>
+</div>

@@ -1,4 +1,4 @@
-import { environment } from '../../environments/environment';
+import { resolveApiUrl } from '../core/api.service';
 
 /**
  * Reescritura de las URL de imagen. Port de `GipsiImageUrl`.
@@ -16,17 +16,13 @@ export function fixImageUrl(raw?: string | null): string | null {
   if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
     return value;
   }
-  const base = environment.apiUrl.replace(/\/$/, '');
+  // La misma base que `ApiService`: si no, servida desde localhost la API iba
+  // al backend local y las fotos al remoto.
+  const base = resolveApiUrl().replace(/\/$/, '');
   return value.startsWith('/') ? `${base}${value}` : `${base}/${value}`;
 }
 
-/**
- * Imagen de relleno estable por negocio. Port de `GipsiPlaceholderImages`.
- *
- * Estable a propósito: con una aleatoria, el mismo negocio cambiaba de foto
- * en cada recarga y la lista parecía otra.
- */
-export function placeholderImage(businessId: number, categoryCode?: string | null): string {
-  const code = (categoryCode ?? 'other').toLowerCase();
-  return `https://picsum.photos/seed/gipsi-${code}-${businessId}/1600/900`;
-}
+// Ya no hay imagen de relleno. Se pedía a `picsum.photos` y hacía que un
+// negocio sin portada enseñara como suya la foto de un tercero —y bajaba una
+// foto de 1600×900 por cada tarjeta—. Donde falta la foto se pinta el hueco de
+// marca `.img-placeholder` (styles.css), port de `GipsiImagePlaceholder`.

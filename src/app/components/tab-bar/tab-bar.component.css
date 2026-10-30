@@ -59,7 +59,9 @@
   justify-content: center;
   gap: 2px;
   border-radius: var(--r-xxl);
-  color: var(--clr-text-3);
+  /* `text-2` y no `text-3`: sobre el cristal de la barra, el gris claro se
+     quedaba en 2,4:1 con etiquetas de 10 px (Lighthouse pide 4,5). */
+  color: var(--clr-text-2);
   text-decoration: none;
   transition: color .2s ease;
   -webkit-tap-highlight-color: transparent;
