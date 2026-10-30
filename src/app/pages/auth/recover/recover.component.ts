@@ -5,6 +5,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiError } from '../../../core/api-error';
 import { AuthRepository } from '../../../repositories/auth.repository';
 import { ButtonComponent } from '../../../components/button/button.component';
+import { newPasswordError } from '../../../shared/password-policy';
+import { AuthAsideComponent } from '../auth-aside.component';
+import { PasswordRulesComponent } from '../../../shared/password-rules.component';
 
 type Step = 'email' | 'code' | 'password';
 
@@ -18,8 +21,9 @@ type Step = 'email' | 'code' | 'password';
 @Component({
   selector: 'app-recover',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent],
+  imports: [AuthAsideComponent, CommonModule, FormsModule, RouterLink, ButtonComponent, PasswordRulesComponent],
   templateUrl: './recover.component.html',
+  styleUrl: '../auth-layout.css',
 })
 export class RecoverComponent implements OnInit {
   private readonly auth = inject(AuthRepository);
@@ -70,7 +74,7 @@ export class RecoverComponent implements OnInit {
       this.step = 'email';
       return;
     }
-    const problem = validatePassword(this.password);
+    const problem = newPasswordError(this.password, 'Introduce una contraseña nueva');
     if (problem) {
       this.error = problem;
       return;
@@ -109,15 +113,4 @@ export class RecoverComponent implements OnInit {
       this.loading = false;
     }
   }
-}
-
-/** La misma regla que aplica el servidor (`@StrongPassword`). */
-function validatePassword(value: string): string | null {
-  if (value.length < 8) {
-    return 'Mínimo 8 caracteres';
-  }
-  if (!/[a-zA-Z]/.test(value) || !/\d/.test(value)) {
-    return 'Añade al menos una letra y un número';
-  }
-  return null;
 }

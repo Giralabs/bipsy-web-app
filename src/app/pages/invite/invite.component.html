@@ -16,5 +16,14 @@
     Descargar la app
   </app-button>
 
+  <!-- La de cliente también se puede crear aquí mismo, con el código ya puesto:
+       es lo que hace la app al abrir este enlace. La de equipo no, porque
+       trabajar en un negocio solo se hace desde Bipsy Business. -->
+  @if (canSignUpHere) {
+    <app-button statusActions variant="secondary" icon="person_add" (onClick)="signUpHere()">
+      Crear cuenta en la web
+    </app-button>
+  }
+
   <span statusNote>¿Ya tienes la app? Ábrela y escribe el código.</span>
 </app-status-page>

@@ -1,0 +1,186 @@
+/* ══════════ AJUSTES EN EL MÓVIL ══════════
+   Aparte de profile.component.css, que va justo de presupuesto. Aquí se
+   calca `ProfileScreen` de la app: bloques agrupados al estilo de iOS, filas de
+   una línea con el valor a la derecha y las dos salidas centradas en rojo.
+   En escritorio no cambia nada de lo de abajo salvo lo que se esconde. */
+
+.menu__box { display: flex; flex-direction: column; gap: 2px; }
+.menu__value { display: none; }
+
+/* Las salidas en rojo y su pie solo existen en el móvil; en escritorio hay un
+   apartado «Cuenta» que explica las dos. */
+.menu__exits, .menu__footer { display: none; }
+
+@media (max-width: 1024px) {
+  /* Sin la tarjeta de foto y cifras: la app no la tiene, y la foto se cambia
+     en «Editar perfil». */
+  .me { display: none; }
+
+  .st__side { gap: 0; padding-top: 4px; }
+
+  /* El bloque: el título encima, fuera de la caja (`_SectionHeader`), y la
+     caja con esquinas suaves (`GipsiRadii.rSm`). */
+  .menu { gap: 0; padding: 0; background: none; border-radius: 0; margin-top: 16px; }
+  .menu:first-child { margin-top: 0; }
+  /* Un bloque sin título se separa más, como `GipsiSpacing.xxl`. */
+  .menu:not(:has(.menu__label)) { margin-top: 28px; }
+
+  .menu__label {
+    padding: 0 4px 6px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--clr-text);
+  }
+
+  .menu__box { gap: 0; border-radius: 12px; background: var(--clr-surface); overflow: hidden; }
+  .menu__box:empty { display: none; }
+
+  /* La fila de `CupertinoListTile.notched`: 44 de alto, icono de 22 gris y
+     separador sangrado que empieza donde el texto. */
+  .menu__item {
+    position: relative;
+    min-height: 48px;
+    gap: 14px;
+    padding: 0 12px 0 14px;
+    border-radius: 0;
+  }
+  .menu__item + .menu__item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 52px;
+    height: 1px;
+    background: var(--clr-border);
+  }
+  .menu__item:hover { background: var(--clr-field); }
+  .menu__item:active { background: var(--clr-field); }
+
+  .menu__text strong { font-size: 1rem; font-weight: 500; }
+  .menu__text small { display: none; }
+
+  .menu__value {
+    display: block;
+    max-width: 33vw;
+    overflow: hidden;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--clr-text-2);
+  }
+
+  /* Pagos, Reseñas y Favoritos abren otra pantalla, pero en el móvil todo se
+     abre así: el galón de siempre y no la flecha de salida. */
+  .menu__item .menu__chevron { font-size: 22px; }
+  a.menu__item .menu__chevron { font-size: 0; }
+  a.menu__item .menu__chevron::before { content: 'chevron_right'; font-size: 22px; }
+
+  .menu__item--account { display: none; }
+
+  .menu__exits {
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    background: var(--clr-surface);
+    overflow: hidden;
+  }
+  .menu__exit {
+    position: relative;
+    min-height: 48px;
+    border: none;
+    background: none;
+    font-family: var(--ff);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--clr-danger-text);
+    cursor: pointer;
+  }
+  .menu__exit + .menu__exit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 16px;
+    height: 1px;
+    background: var(--clr-border);
+  }
+  .menu__exit:active { background: var(--clr-field); }
+
+  .menu__footer {
+    display: block;
+    margin: 8px 4px 0;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    color: var(--clr-text-2);
+  }
+
+  /* Los bloques de los apartados, con las mismas esquinas que el menú. */
+  .card { padding: 16px; border-radius: 12px; }
+
+  /* «Editar perfil» como `EditProfileScreen`: la foto de 96 arriba, sola y
+     centrada sobre el fondo, con sus dos botones debajo. */
+  .card:has(> .photo) { padding: 4px 0 8px; background: none; }
+  .photo { flex-direction: column; gap: 10px; text-align: center; }
+  .photo__img, .photo__initials { width: 96px; height: 96px; }
+  .photo__body { align-items: center; }
+  .photo__body strong { display: none; }
+  .photo__actions { justify-content: center; margin-top: 6px; }
+
+  /* El formulario del sistema (`CupertinoFormSection`): la etiqueta es el
+     prefijo de la fila, el texto va a su lado sin marco y cada fila lleva su
+     separador. El título del bloque, fuera y encima. */
+  .card:has(> .fields) { padding: 0; background: none; }
+  .card:has(> .fields) > .card__title {
+    padding: 0 4px 6px;
+    font-family: var(--ff);
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+  }
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 0;
+    border-radius: 12px;
+    background: var(--clr-surface);
+    overflow: hidden;
+  }
+  .fields > .field {
+    position: relative;
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+    min-height: 48px;
+    padding: 0 14px;
+  }
+  .fields > .field + .field::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 14px;
+    height: 1px;
+    background: var(--clr-border);
+  }
+  .fields .field__label { padding: 0; font-size: 1rem; font-weight: 500; color: var(--clr-text); }
+  .fields .field__input { height: 46px; padding: 0; border-radius: 0; background: none; font-weight: 500; font-size: 1rem; }
+  .fields .field__input:focus { box-shadow: none; }
+  .fields .field__err { grid-column: 2; padding: 0 0 8px; }
+  .field__copy { color: var(--clr-text-2); }
+  .field__copy:hover { background: none; }
+
+  /* Dentro de un apartado: la barra de arriba ya tiene la flecha, así que
+     sobran el «← Ajustes» y la línea de debajo del título. */
+  .st__back, .pane__sub { display: none !important; }
+  .pane__head { margin-bottom: 14px; }
+  .pane__title { font-size: 1.75rem; letter-spacing: -.8px; }
+
+  /* La barra de arriba ya dice el nombre del apartado («Editar perfil»,
+     «Ayuda»…), como la AppBar de cada pantalla de la app: repetirlo en grande
+     debajo sobraba. Solo con la barra puesta (`has-mtop` en el body). */
+  :host-context(.has-mtop) .pane__head { display: none; }
+}

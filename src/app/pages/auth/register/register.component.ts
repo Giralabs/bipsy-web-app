@@ -13,7 +13,12 @@ import {
 } from '../../../core/social-auth.service';
 import { AuthRepository } from '../../../repositories/auth.repository';
 import { ButtonComponent } from '../../../components/button/button.component';
+import { DialogService } from '../../../core/dialog.service';
 import { isValidEmail } from '../../../shared/validation';
+import { confirmPhone } from '../../../shared/confirm-phone';
+import { newPasswordError } from '../../../shared/password-policy';
+import { PasswordRulesComponent } from '../../../shared/password-rules.component';
+import { AuthAsideComponent } from '../auth-aside.component';
 import { SocialButtonsComponent } from '../../../components/social-buttons/social-buttons.component';
 
 type Step = 'email' | 'code' | 'profile';
@@ -29,8 +34,9 @@ type Step = 'email' | 'code' | 'profile';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonComponent, SocialButtonsComponent],
+  imports: [AuthAsideComponent, CommonModule, FormsModule, RouterLink, ButtonComponent, SocialButtonsComponent, PasswordRulesComponent],
   templateUrl: './register.component.html',
+  styleUrl: '../auth-layout.css',
 })
 export class RegisterComponent implements OnInit, OnDestroy {
   private readonly auth = inject(AuthRepository);
@@ -38,6 +44,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private readonly social = inject(SocialAuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(DialogService);
 
   step: Step = 'email';
   loading = false;
@@ -75,6 +82,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const params = this.route.snapshot.queryParams;
     this.email = params['email'] ?? '';
     this.returnTo = params['returnTo'] ?? this.session.takeReturnTo() ?? '/';
+    // El enlace de invitación de un negocio (`/invitacion/<código>`) trae aquí
+    // su código ya puesto, como hace la app al abrir el alta desde el enlace:
+    // escribirlo a mano es donde se pierden las invitaciones.
+    const ref = params['ref'];
+    if (typeof ref === 'string') {
+      this.referralCode = ref.trim().slice(0, 32);
+    }
   }
 
   ngOnDestroy(): void {
@@ -118,6 +132,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.error = 'Introduce tu teléfono';
       return;
     }
+    // Esta pantalla existe justo para pedir el teléfono: no releerlo aquí
+    // sería peor que en el alta normal.
+    if (!(await confirmPhone(this.dialog, this.phone))) {
+      return;
+    }
     const provider = this.identity?.provider ?? 'google';
     this.socialLoading = provider;
     this.error = null;
@@ -153,19 +172,35 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
 
     await this.run(async () => {
+      // Antes de mandar el código: el 409 de `send-code` no dice si la cuenta
+      // es de Google, y a esa no se la puede mandar a escribir una contraseña
+      // que nunca eligió.
+      const status = await this.auth.signupEmailStatus(email);
+      if (status !== 'free') {
+        this.goToLogin(email, status === 'takenGoogle');
+        return;
+      }
       const res = await this.auth.sendSignupCode(email);
       this.email = email;
       this.startTimer(res.resendInSeconds);
       this.step = 'code';
     }, error => {
       // Ese correo ya tiene cuenta: se manda a entrar con él escrito, en vez
-      // de dejarle repitiendo un alta que nunca va a salir.
+      // de dejarle repitiendo un alta que nunca va a salir. Sigue haciendo
+      // falta aunque se pregunte antes: entre las dos llamadas puede crearse.
       if (error.isConflict) {
-        this.router.navigate(['/acceder'], { queryParams: { email, returnTo: this.returnTo } });
+        this.goToLogin(email, false);
         return null;
       }
       if (error.isTooManyRequests) return error.message;
       return 'No hemos podido enviarte el código. Inténtalo de nuevo.';
+    });
+  }
+
+  /** Con `google=1` el acceso avisa de que esa cuenta entra con Google. */
+  private goToLogin(email: string, withGoogle: boolean): void {
+    this.router.navigate(['/acceder'], {
+      queryParams: { email, returnTo: this.returnTo, ...(withGoogle ? { google: 1 } : {}) },
     });
   }
 
@@ -203,17 +238,26 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.step = 'email';
       return;
     }
-    if (this.name.trim().length < 2) {
+    if (!this.name.trim()) {
       this.error = 'Introduce tu nombre';
+      return;
+    }
+    if (this.name.trim().length < 2) {
+      this.error = 'Nombre demasiado corto';
       return;
     }
     if (this.phone.trim().length < 9) {
       this.error = 'Teléfono demasiado corto';
       return;
     }
-    const passwordError = validatePassword(this.password);
+    const passwordError = newPasswordError(this.password);
     if (passwordError) {
       this.error = passwordError;
+      return;
+    }
+    // Lo último antes de crear la cuenta: un número mal escrito no lo descubre
+    // nadie hasta que el negocio necesita llamar.
+    if (this.loading || !(await confirmPhone(this.dialog, this.phone))) {
       return;
     }
 
@@ -286,16 +330,4 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.timer = undefined;
     }
   }
-}
-
-/**
- * La misma regla que aplica el servidor (`@StrongPassword`). Sin esto el fallo
- * salía al final, al crear la cuenta, después de haber rellenado todo.
- */
-function validatePassword(value: string): string | null {
-  if (value.length < 8) return 'Mínimo 8 caracteres';
-  if (!/[a-zA-Z]/.test(value) || !/\d/.test(value)) {
-    return 'Añade al menos una letra y un número';
-  }
-  return null;
 }

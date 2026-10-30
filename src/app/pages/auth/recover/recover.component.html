@@ -1,3 +1,7 @@
+<!-- En escritorio, el panel a la izquierda (auth-layout.css); en el móvil,
+     solo el formulario, como la app. -->
+<div class="auth">
+<app-auth-aside title="Vuelve a entrar en tu cuenta" />
 <div class="flow anim-fade-up">
   <div class="flow__inner">
 
@@ -94,7 +98,7 @@
               </button>
             </div>
           </div>
-          <p class="form-group__footer">Al menos 8 caracteres, con letras y números.</p>
+          <app-password-rules [password]="password" />
         </div>
 
         @if (error) {
@@ -111,4 +115,5 @@
       </form>
     }
   </div>
+</div>
 </div>

@@ -1,10 +1,14 @@
+<!-- En escritorio, el panel a la izquierda (auth-layout.css); en el móvil,
+     solo el formulario, como la app. -->
+<div class="auth">
+<app-auth-aside title="Crea tu cuenta en un minuto" />
 <div class="flow anim-fade-up">
   <div class="flow__inner">
 
-    <img src="assets_bipsy/Combination Marks/combinationmark_mint_vertical_nobackground.webp"
-         alt="Bipsy" class="flow__logo theme-dark-only" />
-    <img src="assets_bipsy/Combination Marks/combinationmark_carbon_vertical_nobackground.webp"
-         alt="Bipsy" class="flow__logo theme-light-only" />
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-vertical-carbon.webp" />
+      <img src="assets_web/bipsy-vertical-mint.webp" alt="Bipsy" class="flow__logo" width="108" height="108" />
+    </picture>
 
     @if (needsPhone) {
 
@@ -193,7 +197,9 @@
               </button>
             </div>
           </div>
-          <p class="form-group__footer">Al menos 8 caracteres, con letras y números.</p>
+          <!-- Las reglas con su tick mientras se escribe, como la app: así se
+               ve qué falta sin tener que intentarlo y fallar. -->
+          <app-password-rules [password]="password" />
         </div>
 
         <div class="form-group">
@@ -229,4 +235,5 @@
       </form>
     }
   </div>
+</div>
 </div>

@@ -1,17 +1,7 @@
-/* Página de documento legal. Misma estética que el resto de la web:
-   aura ambiental, glass-card para el índice y tokens de src/styles.css. */
+/* Página de documento legal, con los tokens de src/styles.css. Sin aura de
+   fondo: la app pinta los textos legales sobre el fondo liso. */
 
-.legal-page { position: relative; min-height: 100vh; }
-
-.legal-orb {
-  position: fixed;
-  top: -120px; right: -120px;
-  width: 480px; height: 480px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, var(--clr-mint-dim) 0%, transparent 65%);
-  z-index: 0;
-}
+.legal-page { position: relative; }
 
 /* Barra lateral + documento. El ancho total da 240 + 48 + 760, que es lo que
    ocupaba antes el texto centrado más su margen: el documento no se mueve de

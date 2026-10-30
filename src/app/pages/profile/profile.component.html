@@ -1,44 +1,59 @@
 <div class="page settings anim-fade-up">
   <div class="page__inner">
 
-    @if (!isAuthenticated) {
+    @if (!isAuthenticated && status === 'unknown') {
 
-      <header class="phead">
-        <div>
-          <p class="phead__eyebrow">Tu cuenta</p>
-          <h1 class="phead__title">Ajustes</h1>
-          <p class="phead__sub">Con tu cuenta guardas tus citas, tus favoritos y tus reseñas.</p>
-          <div class="phead__actions">
-            <button type="button" class="pill-btn" (click)="goToLogin()">
-              <span class="material-symbols-rounded">login</span>Iniciar sesión
-            </button>
-            <button type="button" class="pill-btn pill-btn--soft" (click)="goToRegister()">Crear cuenta</button>
-          </div>
+      <!-- La sesión aún se está comprobando. Un esqueleto con la forma de los
+           ajustes y no la cabecera de «Iniciar sesión»: enseñarla medio
+           segundo a quien sí tiene sesión parecía que le habían echado. -->
+      <div class="st st--skel" aria-busy="true" aria-label="Cargando tus ajustes">
+        <aside class="st__side">
+          <div class="skel-me skeleton"></div>
+          <div class="skel-menu skeleton"></div>
+        </aside>
+        <div class="st__main">
+          <div class="skel-title skeleton"></div>
+          <div class="skel-card skeleton"></div>
         </div>
-        <span class="phead__art" aria-hidden="true">
-          <span class="material-symbols-rounded">account_circle</span>
-        </span>
-      </header>
+      </div>
 
     } @else {
-      <div class="st" [class.st--open]="mobileOpen">
+      <!-- Con y sin sesión, la misma pantalla: sin sesión, el bloque para entrar
+           en lugar de tu ficha y solo «General» (`ProfileScreen` con
+           `user == null`). -->
+      <div class="st" [class.st--open]="paneOpen" [class.st--guest]="!isAuthenticated">
 
         <!-- ══════════ MENÚ ══════════ -->
         <aside class="st__side">
+          @if (!isAuthenticated) {
+            <!-- `_SignInSection`: el círculo de la esquina de las otras
+                 pantallas, en el acento, y las dos puertas. -->
+            <section class="guest">
+              <span class="guest__avatar" aria-hidden="true">
+                <span class="material-symbols-rounded fill">person</span>
+              </span>
+              <h1 class="guest__title">Aún no has iniciado sesión</h1>
+              <p class="guest__text">Accede para reservar, guardar favoritos y ver tus citas.</p>
+              <div class="guest__actions">
+                <button type="button" class="pill-btn guest__btn" (click)="goToLogin()">Iniciar sesión</button>
+                <button type="button" class="pill-btn pill-btn--soft guest__btn" (click)="goToRegister()">Crear cuenta</button>
+              </div>
+            </section>
+          } @else {
           <section class="me">
-            <span class="me__banner" aria-hidden="true"><span class="me__disc"></span></span>
-
             <button type="button" class="me__avatar" (click)="selectSection('profile')" aria-label="Cambiar foto de perfil">
               @if (profile?.profileImageUrl) {
                 <img [src]="profile!.profileImageUrl" [alt]="profile!.name || ''" />
               } @else {
                 <span class="me__initials">{{ profile?.initials || 'U' }}</span>
               }
-              <span class="me__cam"><span class="material-symbols-rounded">photo_camera</span></span>
+              <span class="me__cam" aria-hidden="true"><span class="material-symbols-rounded">photo_camera</span></span>
             </button>
 
-            <h1 class="me__name">{{ profile?.name }}</h1>
-            <p class="me__line">{{ profile?.email }}</p>
+            <div class="me__who">
+              <h1 class="me__name">{{ profile?.name }}</h1>
+              <p class="me__line">{{ profile?.email }}</p>
+            </div>
 
             <div class="stats me__stats">
               <a class="stat" routerLink="/citas">
@@ -55,72 +70,90 @@
               </a>
             </div>
           </section>
+          }
 
-          <nav class="menu" aria-label="Apartados de los ajustes">
-            <p class="menu__label">Ajustes</p>
-            @for (item of sections; track item.id) {
-              <button
-                type="button"
-                class="menu__item"
-                [class.menu__item--on]="section === item.id"
-                [class.menu__item--danger]="item.id === 'account'"
-                [attr.aria-current]="section === item.id ? 'page' : null"
-                (click)="selectSection(item.id)"
-              >
-                <span class="menu__icon"><span class="material-symbols-rounded">{{ item.icon }}</span></span>
-                <span class="menu__text">
-                  <strong>{{ item.label }}</strong>
-                  <small>{{ item.hint }}</small>
-                </span>
-                <span class="material-symbols-rounded menu__chevron">chevron_right</span>
-              </button>
+          @for (group of menu; track $index) {
+            <nav class="menu" [attr.aria-label]="group.label || 'Cuenta'">
+              @if (group.label) {
+                <p class="menu__label">{{ group.label }}</p>
+              }
+              <!-- La caja de filas va aparte del título: en el móvil el título
+                   queda encima del bloque, como `SettingsSection`. -->
+              <div class="menu__box">
+              @for (id of group.sections; track id) {
+                @if (id === 'account') {
+                  <!-- En el móvil, las dos salidas centradas y en rojo, como el
+                       bloque final de `ProfileScreen`; en escritorio, un
+                       apartado más con las dos explicadas. -->
+                  <div class="menu__exits">
+                    <button type="button" class="menu__exit" (click)="logout()">Cerrar sesión</button>
+                    <button type="button" class="menu__exit" (click)="selectSection('account')">Eliminar cuenta</button>
+                  </div>
+                }
+                <button
+                  type="button"
+                  class="menu__item"
+                  [class.menu__item--on]="shownSection === id"
+                  [class.menu__item--danger]="id === 'account'"
+                  [class.menu__item--account]="id === 'account'"
+                  [attr.aria-current]="shownSection === id ? 'page' : null"
+                  (click)="selectSection(id)"
+                >
+                  <span class="material-symbols-rounded menu__icon" aria-hidden="true">{{ info(id).icon }}</span>
+                  <span class="menu__text">
+                    <strong>{{ info(id).label }}</strong>
+                    <small>{{ info(id).hint }}</small>
+                  </span>
+                  @if (id === 'profile' && profile?.name) {
+                    <span class="menu__value">{{ profile!.name }}</span>
+                  }
+                  <span class="material-symbols-rounded menu__chevron" aria-hidden="true">chevron_right</span>
+                </button>
+              }
+              <!-- Las que llevan a otra página: con la flecha de salida y no el
+                   galón, para que se sepa que se deja esta pantalla. -->
+              @for (item of group.links; track item.path) {
+                <a class="menu__item" [routerLink]="item.path">
+                  <span class="material-symbols-rounded menu__icon" aria-hidden="true">{{ item.icon }}</span>
+                  <span class="menu__text">
+                    <strong>{{ item.label }}</strong>
+                    <small>{{ item.hint }}</small>
+                  </span>
+                  <span class="material-symbols-rounded menu__chevron" aria-hidden="true">arrow_outward</span>
+                </a>
+              }
+              </div>
+            </nav>
+            @if (group.sections.includes('account')) {
+              <p class="menu__footer">Al eliminar la cuenta se borran tus datos y tus reservas. No se puede deshacer.</p>
             }
-          </nav>
-
-          <nav class="menu" aria-label="Accesos">
-            <p class="menu__label">Tu actividad</p>
-            @for (item of quickLinks; track item.path) {
-              <a class="menu__item" [routerLink]="item.path">
-                <span class="menu__icon menu__icon--soft"><span class="material-symbols-rounded">{{ item.icon }}</span></span>
-                <span class="menu__text">
-                  <strong>{{ item.label }}</strong>
-                  <small>{{ item.hint }}</small>
-                </span>
-                <span class="material-symbols-rounded menu__chevron">arrow_outward</span>
-              </a>
-            }
-          </nav>
+          }
         </aside>
 
         <!-- ══════════ CONTENIDO ══════════ -->
         <main class="st__main">
           <button type="button" class="flow__back st__back" (click)="backToMenu()">
-            <span class="material-symbols-rounded">arrow_back</span>
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
             Ajustes
           </button>
 
           <header class="pane__head">
-            <span class="pane__icon" [class.pane__icon--danger]="section === 'account'">
-              <span class="material-symbols-rounded">{{ currentSection.icon }}</span>
-            </span>
-            <div>
-              <h2 class="pane__title">{{ currentSection.label }}</h2>
-              <p class="pane__sub">{{ currentSection.hint }}</p>
-            </div>
+            <h2 class="pane__title">{{ currentSection.label }}</h2>
+            <p class="pane__sub">{{ currentSection.hint }}</p>
           </header>
 
           @if (notice) {
             <p class="st__notice" role="status">
-              <span class="material-symbols-rounded fill">check_circle</span>{{ notice }}
+              <span class="material-symbols-rounded fill" aria-hidden="true">check_circle</span>{{ notice }}
             </p>
           }
           @if (error) {
             <p class="flow__error st__error" role="alert">
-              <span class="material-symbols-rounded fill">error</span>{{ error }}
+              <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
             </p>
           }
 
-          @switch (section) {
+          @switch (shownSection) {
 
             <!-- ── Perfil ── -->
             @case ('profile') {
@@ -142,13 +175,13 @@
                     </small>
                     <div class="photo__actions">
                       <label class="chip-btn">
-                        <span class="material-symbols-rounded">upload</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">upload</span>
                         {{ shownPhoto ? 'Cambiar' : 'Subir foto' }}
                         <input type="file" accept="image/*" hidden (change)="onPhotoPicked($event)" [disabled]="saving" />
                       </label>
                       @if (canRemovePhoto) {
                         <button type="button" class="chip-btn chip-btn--bad" [disabled]="saving" (click)="markPhotoForRemoval()">
-                          <span class="material-symbols-rounded">delete</span>Quitar
+                          <span class="material-symbols-rounded" aria-hidden="true">delete</span>Quitar
                         </button>
                       }
                     </div>
@@ -157,29 +190,83 @@
               </section>
 
               <section class="card">
-                <h3 class="card__title">Datos personales</h3>
+                <h3 class="card__title">Tus datos</h3>
                 <div class="fields">
                   <label class="field">
                     <span class="field__label">Nombre</span>
                     <input class="field__input" type="text" [(ngModel)]="formName" name="name" maxlength="80"
-                           autocomplete="name" [disabled]="saving" />
+                           autocomplete="name" placeholder="Tu nombre" [disabled]="saving"
+                           [attr.aria-invalid]="nameError ? true : null"
+                           [attr.aria-describedby]="nameError ? 'pf-name-err' : null"
+                           (ngModelChange)="nameError = null" />
+                    @if (nameError) {
+                      <span class="field__err" id="pf-name-err">{{ nameError }}</span>
+                    }
                   </label>
                   <label class="field">
                     <span class="field__label">Teléfono</span>
                     <input class="field__input" type="tel" [(ngModel)]="formPhone" name="phone" maxlength="20"
-                           autocomplete="tel" [disabled]="saving" />
+                           autocomplete="tel" placeholder="Tu teléfono" [disabled]="saving"
+                           [attr.aria-invalid]="phoneError ? true : null"
+                           [attr.aria-describedby]="phoneError ? 'pf-phone-err' : null"
+                           (ngModelChange)="phoneError = null" />
+                    @if (phoneError) {
+                      <span class="field__err" id="pf-phone-err">{{ phoneError }}</span>
+                    }
                   </label>
-                  <label class="field field--wide">
-                    <span class="field__label">Correo electrónico</span>
-                    <input class="field__input" type="email" [(ngModel)]="formEmail" name="email" maxlength="120"
-                           autocomplete="email" [disabled]="saving" />
-                  </label>
+                  <!-- El correo no se edita: el servidor no lo acepta. Tocarlo lo
+                       copia, como `GipsiCopyableRow` en la app. -->
+                  <div class="field field--wide">
+                    <span class="field__label" id="pf-email-label">Email</span>
+                    <button type="button" class="field__input field__copy" (click)="copyEmail()"
+                            aria-labelledby="pf-email-label pf-email-value" title="Copiar">
+                      <span class="field__copy-value" id="pf-email-value">{{ profile?.email }}</span>
+                      <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+                    </button>
+                  </div>
                 </div>
+                <p class="pane__foot">El email no se cambia desde aquí.</p>
               </section>
+
+              <!-- ── Tu ubicación ── Port de `_LocationAccessBlock`. Concedida no
+                   hay nada que tocar: quitarla es cosa del navegador. -->
+              @if (locationAccess && locationAccess !== 'unsupported') {
+                <h3 class="group__head">Tu ubicación</h3>
+                <section class="card card--list">
+                  @if (locationAccess === 'prompt') {
+                    <button type="button" class="linkrow" [disabled]="locationAsking" (click)="activateLocation()">
+                      <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">location_off</span></span>
+                      <strong>Ubicación</strong>
+                      <span class="linkrow__value loc--off">{{ locationAsking ? 'Preguntando…' : 'Activar' }}</span>
+                      <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+                    </button>
+                  } @else {
+                    <div class="linkrow">
+                      <span class="card__icon" aria-hidden="true">
+                        <span class="material-symbols-rounded">{{ locationAccess === 'granted' ? 'location_on' : 'location_off' }}</span>
+                      </span>
+                      <strong>Ubicación</strong>
+                      <span class="linkrow__value">{{ locationAccess === 'granted' ? 'Activada' : 'Desactivada' }}</span>
+                    </div>
+                  }
+                </section>
+                <p class="pane__foot">
+                  @if (locationAccess === 'granted') {
+                    La usamos para recomendarte los negocios que tienes cerca. Solo mientras usas la web.
+                  } @else if (locationAccess === 'denied') {
+                    La usamos para recomendarte los negocios que tienes cerca. La bloqueaste para esta web:
+                    se cambia desde el candado de la barra de direcciones. Sin ella todo funciona igual, pero
+                    los resultados no salen ordenados por cercanía.
+                  } @else {
+                    La usamos para recomendarte los negocios que tienes cerca. Sin ella la web funciona igual,
+                    pero los resultados no salen ordenados por cercanía.
+                  }
+                </p>
+              }
 
               <div class="savebar" [class.savebar--on]="profileDirty">
                 <span class="savebar__text">
-                  <span class="material-symbols-rounded">{{ profileDirty ? 'edit_note' : 'check' }}</span>
+                  <span class="material-symbols-rounded" aria-hidden="true">{{ profileDirty ? 'edit_note' : 'check' }}</span>
                   {{ profileDirty ? 'Tienes cambios sin guardar' : 'Todo guardado' }}
                 </span>
                 <div class="savebar__actions">
@@ -189,6 +276,16 @@
                   </button>
                 </div>
               </div>
+            }
+
+            <!-- ── Mis direcciones ── -->
+            @case ('addresses') {
+              <app-profile-addresses />
+            }
+
+            <!-- ── Mis personas ── -->
+            @case ('people') {
+              <app-profile-people />
             }
 
             <!-- ── Seguridad ── -->
@@ -205,37 +302,65 @@
                 <div class="fields">
                   @if (profile?.hasPassword) {
                     <label class="field">
-                      <span class="field__label">Contraseña actual</span>
+                      <span class="field__label">Actual</span>
                       <input class="field__input" type="password" name="current-password" autocomplete="current-password"
-                             [(ngModel)]="currentPassword" [disabled]="saving" />
+                             placeholder="La de ahora" [(ngModel)]="currentPassword" [disabled]="saving" />
                     </label>
                   }
                   <label class="field">
-                    <span class="field__label">Nueva contraseña</span>
+                    <span class="field__label">Nueva</span>
                     <input class="field__input" type="password" name="new-password" autocomplete="new-password"
-                           [(ngModel)]="newPassword" [disabled]="saving" />
+                           placeholder="Nueva contraseña" [(ngModel)]="newPassword" [disabled]="saving" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">Repetir</span>
+                    <input class="field__input" type="password" name="repeat-password" autocomplete="new-password"
+                           placeholder="Otra vez" [(ngModel)]="repeatPassword" [disabled]="saving" />
                   </label>
                 </div>
-                <div class="rules">
-                  <span class="rule" [class.rule--ok]="newPassword.length >= 8">
-                    <span class="material-symbols-rounded">{{ newPassword.length >= 8 ? 'check_circle' : 'radio_button_unchecked' }}</span>8 caracteres
-                  </span>
-                  <span class="rule" [class.rule--ok]="hasLetter">
-                    <span class="material-symbols-rounded">{{ hasLetter ? 'check_circle' : 'radio_button_unchecked' }}</span>Una letra
-                  </span>
-                  <span class="rule" [class.rule--ok]="hasDigit">
-                    <span class="material-symbols-rounded">{{ hasDigit ? 'check_circle' : 'radio_button_unchecked' }}</span>Un número
-                  </span>
-                </div>
+                <!-- Las mismas reglas, con los mismos textos, que el alta y
+                     recuperar la contraseña (`shared/password-policy.ts`). -->
+                <app-password-rules [password]="newPassword" />
                 <div class="card__actions">
-                  <button type="button" class="pill-btn" [disabled]="saving || !newPassword" (click)="savePassword()">
-                    <span class="material-symbols-rounded">key</span>{{ passwordRowLabel }}
+                  <button type="button" class="pill-btn" [disabled]="saving || !newPassword || !repeatPassword" (click)="savePassword()">
+                    {{ passwordRowLabel }}
                   </button>
                 </div>
               </section>
 
+              <!-- Google: vinculada, o la opción de vincularla si el acceso con
+                   Google está configurado en esta web. Mientras /me no
+                   contesta, la tarjeta no se pinta. -->
+              @if (googleLinked === true) {
+                <section class="card card--row">
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">link</span></span>
+                  <div class="card__body">
+                    <h3 class="card__title">Cuenta de Google · Vinculada</h3>
+                    <p class="card__text">
+                      @if (profile?.hasPassword) {
+                        Puedes entrar con Google o con tu correo y tu contraseña.
+                      } @else {
+                        Es tu única forma de entrar. Crea una contraseña arriba para poder desvincularla.
+                      }
+                    </p>
+                  </div>
+                  @if (profile?.hasPassword) {
+                    <button type="button" class="pill-btn pill-btn--soft" [disabled]="saving" (click)="unlinkGoogle()">Desvincular</button>
+                  }
+                </section>
+              } @else if (googleLinked === false && canLinkGoogle) {
+                <section class="card card--row">
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">link</span></span>
+                  <div class="card__body">
+                    <h3 class="card__title">Vincular cuenta de Google</h3>
+                    <p class="card__text">Para entrar también con Google. Tiene que ser una cuenta con tu mismo correo.</p>
+                  </div>
+                  <button type="button" class="pill-btn pill-btn--soft" [disabled]="saving" (click)="linkGoogle()">Vincular</button>
+                </section>
+              }
+
               <section class="card card--row">
-                <span class="card__icon"><span class="material-symbols-rounded">devices</span></span>
+                <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">devices</span></span>
                 <div class="card__body">
                   <h3 class="card__title">Sesiones en otros dispositivos</h3>
                   <p class="card__text">¿Has entrado en un ordenador que no es tuyo? Ciérralas todas menos esta.</p>
@@ -244,43 +369,82 @@
               </section>
             }
 
-            <!-- ── Avisos ── -->
+            <!-- ── Avisos ──
+                 Partidos por canal, como en la app: lo que suena (en la cuenta
+                 y en este navegador) y lo que llega al correo. Cada bloque dice
+                 qué no se apaga nunca, que es la pregunta de verdad. -->
             @case ('notices') {
-              <section class="card card--list">
-                @if (pushAvailable) {
+              <h3 class="group__head">En el móvil y la web</h3>
+              @if (notifReady) {
+                <section class="card card--list">
+                  @for (row of notifRows; track row.key) {
+                    <label class="toggle">
+                      <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">{{ row.icon }}</span></span>
+                      <span class="toggle__text">
+                        <strong>{{ row.title }}</strong>
+                        <small>{{ row.subtitle }}</small>
+                      </span>
+                      <input type="checkbox" class="switch" role="switch" [checked]="notifOn(row.key)"
+                             [disabled]="notifBusy(row.key)" (change)="toggleNotif(row.key, $any($event.target).checked)" />
+                    </label>
+                  }
+                </section>
+                <p class="pane__foot">
+                  Da igual cómo lo dejes: si el negocio cancela o cambia tu cita, te lo decimos igualmente por correo.
+                  Esto solo decide si además te avisamos en el móvil y en el navegador.
+                </p>
+              } @else if (notifLoadError) {
+                <section class="card card--row">
+                  <div class="card__body"><p class="card__text">No hemos podido cargar tus avisos.</p></div>
+                  <button type="button" class="pill-btn pill-btn--soft" (click)="loadNotifPrefs()">Reintentar</button>
+                </section>
+              } @else {
+                <div class="skel-group skeleton" aria-busy="true" aria-label="Cargando tus avisos"></div>
+              }
+
+              @if (pushAvailable) {
+                <h3 class="group__head">En este navegador</h3>
+                <section class="card card--list">
                   <label class="toggle">
-                    <span class="card__icon"><span class="material-symbols-rounded">notifications_active</span></span>
+                    <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">notifications_active</span></span>
                     <span class="toggle__text">
                       <strong>Avisos en este navegador</strong>
                       <small>
                         @if (pushDenied) {
                           Bloqueados. Se cambia desde los ajustes del navegador.
                         } @else {
-                          Recordatorios de tus citas y mensajes del negocio.
+                          Que lo de arriba suene también aquí, no solo en el móvil.
                         }
                       </small>
                     </span>
-                    <input type="checkbox" class="switch" [checked]="pushOn" [disabled]="pushBusy || pushDenied" (change)="togglePush()" />
+                    <input type="checkbox" class="switch" role="switch" [checked]="pushOn" [disabled]="pushBusy || pushDenied" (change)="togglePush()" />
                   </label>
-                }
+                </section>
+              }
+
+              <h3 class="group__head">Por correo electrónico</h3>
+              <section class="card card--list">
                 <label class="toggle">
-                  <span class="card__icon"><span class="material-symbols-rounded">campaign</span></span>
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">mark_email_unread</span></span>
                   <span class="toggle__text">
                     <strong>Novedades de Bipsy</strong>
-                    <small>Funciones nuevas y sitios que acaban de llegar.</small>
+                    <small>Negocios nuevos y ofertas puntuales.</small>
                   </span>
-                  <input type="checkbox" class="switch" [(ngModel)]="newsletterBipsy" (ngModelChange)="savePrivacy()" [disabled]="saving" />
+                  <input type="checkbox" class="switch" role="switch" [(ngModel)]="newsletterBipsy" (ngModelChange)="savePrivacy()" [disabled]="saving" />
                 </label>
                 <label class="toggle">
-                  <span class="card__icon"><span class="material-symbols-rounded">mail</span></span>
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">campaign</span></span>
                   <span class="toggle__text">
                     <strong>Novedades de Giralabs</strong>
-                    <small>Lo que preparamos en el resto de nuestras apps.</small>
+                    <small>La empresa que está detrás de Bipsy.</small>
                   </span>
-                  <input type="checkbox" class="switch" [(ngModel)]="newsletterGiralabs" (ngModelChange)="savePrivacy()" [disabled]="saving" />
+                  <input type="checkbox" class="switch" role="switch" [(ngModel)]="newsletterGiralabs" (ngModelChange)="savePrivacy()" [disabled]="saving" />
                 </label>
               </section>
-              <p class="pane__foot">Los cambios se guardan al momento.</p>
+              <p class="pane__foot">
+                Solo promociones. Los correos que hacen falta para usar Bipsy —tu reserva, un cambio, un recibo— llegan siempre.
+                Los cambios se guardan al momento.
+              </p>
             }
 
             <!-- ── Ayuda ── -->
@@ -291,7 +455,7 @@
                     <button type="button" class="faq__q" [attr.aria-expanded]="openFaq === i"
                             (click)="openFaq = openFaq === i ? null : i">
                       {{ item.q }}
-                      <span class="material-symbols-rounded faq__chevron">expand_more</span>
+                      <span class="material-symbols-rounded faq__chevron" aria-hidden="true">expand_more</span>
                     </button>
                     @if (openFaq === i) {
                       <p class="faq__a">{{ item.a }}</p>
@@ -299,42 +463,84 @@
                   </div>
                 }
               </section>
-              <section class="card card--row card--tint">
-                <span class="card__icon"><span class="material-symbols-rounded">forum</span></span>
+              <section class="card card--row">
+                <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">forum</span></span>
                 <div class="card__body">
                   <h3 class="card__title">¿Algo de una cita concreta?</h3>
                   <p class="card__text">Lo más rápido es hablar con el negocio: tienes el chat en el detalle de la cita.</p>
                 </div>
                 <a class="pill-btn pill-btn--soft" routerLink="/mensajes">Ir al chat</a>
               </section>
+              <!-- Soporte: antes no había forma de escribirnos desde la web. -->
+              <section class="card card--list">
+                <a class="linkrow" routerLink="/soporte">
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">support_agent</span></span>
+                  <strong>Escribir a soporte</strong>
+                  <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+                </a>
+              </section>
+            }
+
+            <!-- ── Acerca de Bipsy ── Port de `AboutSheet`. -->
+            @case ('about') {
+              <section class="card about">
+                <picture>
+                  <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-symbol-carbon.webp" />
+                  <img class="about__logo" src="assets_web/bipsy-symbol-mint.webp" alt="" width="72" height="72" />
+                </picture>
+                <h3 class="card__title">Bipsy</h3>
+                <p class="about__version">Versión {{ appVersion }}</p>
+              </section>
+              <section class="card card--list">
+                <a class="linkrow" routerLink="/legal/privacidad">
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">privacy_tip</span></span>
+                  <strong>Política de privacidad</strong>
+                  <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+                </a>
+                <a class="linkrow" routerLink="/legal/terminos">
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">description</span></span>
+                  <strong>Términos de uso</strong>
+                  <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+                </a>
+                <a class="linkrow" routerLink="/soporte">
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">email</span></span>
+                  <strong>Escribir a soporte</strong>
+                  <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+                </a>
+              </section>
+              <p class="pane__foot">
+                Reservas de belleza y bienestar: encuentra negocios cerca, reserva en unos clics y lleva tus
+                citas desde un solo sitio.
+              </p>
+              <p class="pane__foot about__copy">© 2026 Bipsy · Giralabs</p>
             }
 
             <!-- ── Legal ── -->
             @case ('legal') {
               <section class="card card--list">
                 <a class="linkrow" routerLink="/legal/terminos">
-                  <span class="card__icon"><span class="material-symbols-rounded">description</span></span>
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">description</span></span>
                   <strong>Términos de uso</strong>
-                  <span class="material-symbols-rounded linkrow__go">chevron_right</span>
+                  <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
                 </a>
                 <a class="linkrow" routerLink="/legal/privacidad">
-                  <span class="card__icon"><span class="material-symbols-rounded">shield</span></span>
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">shield</span></span>
                   <strong>Política de privacidad</strong>
-                  <span class="material-symbols-rounded linkrow__go">chevron_right</span>
+                  <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
                 </a>
                 <a class="linkrow" routerLink="/legal/cookies">
-                  <span class="card__icon"><span class="material-symbols-rounded">cookie</span></span>
+                  <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">cookie</span></span>
                   <strong>Política de cookies</strong>
-                  <span class="material-symbols-rounded linkrow__go">chevron_right</span>
+                  <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
                 </a>
               </section>
-              <p class="pane__foot">Bipsy · Versión 0.1.0 Beta</p>
+              <p class="pane__foot">Bipsy · Versión {{ appVersion }}</p>
             }
 
             <!-- ── Cuenta ── -->
             @case ('account') {
               <section class="card card--row">
-                <span class="card__icon"><span class="material-symbols-rounded">logout</span></span>
+                <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">logout</span></span>
                 <div class="card__body">
                   <h3 class="card__title">Cerrar sesión</h3>
                   <p class="card__text">Sales de Bipsy en este navegador. Tus citas siguen en pie.</p>
@@ -344,7 +550,7 @@
 
               <section class="card card--danger">
                 <div class="card--row">
-                  <span class="card__icon card__icon--danger"><span class="material-symbols-rounded">delete_forever</span></span>
+                  <span class="card__icon card__icon--danger" aria-hidden="true"><span class="material-symbols-rounded">delete_forever</span></span>
                   <div class="card__body">
                     <h3 class="card__title">Eliminar cuenta</h3>
                     <p class="card__text">Tus reservas pasadas se conservan anonimizadas y las futuras se cancelan. No se puede deshacer.</p>

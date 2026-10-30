@@ -17,19 +17,7 @@
   background: var(--clr-surface);
 }
 
-/* Tres corazones en abanico: el mismo gesto que se pide, antes de leerlo. */
-.fav__hearts { position: relative; flex: 0 0 auto; width: 84px; height: 60px; }
-
-.fav__hearts .material-symbols-rounded {
-  position: absolute;
-  top: 10px;
-  font-size: 38px;
-  color: #E5484D;
-}
-
-.fav__hearts .material-symbols-rounded:nth-child(1) { left: 0; transform: rotate(-18deg) scale(.8); opacity: .45; }
-.fav__hearts .material-symbols-rounded:nth-child(2) { left: 22px; top: 2px; font-size: 46px; }
-.fav__hearts .material-symbols-rounded:nth-child(3) { left: 50px; transform: rotate(18deg) scale(.8); opacity: .45; }
+.fav__heart { flex: 0 0 auto; font-size: 44px; color: var(--clr-text-3); }
 
 .fav__empty-text { flex: 1; min-width: 0; }
 .fav__empty-text h3 { font-family: var(--ff-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -.4px; }
@@ -47,7 +35,6 @@
   letter-spacing: -.6px;
 }
 
-.fav__suggest-title .material-symbols-rounded { color: var(--clr-star); }
 .fav__suggest .fav__grid { margin-top: 14px; }
 
 @media (max-width: 640px) {

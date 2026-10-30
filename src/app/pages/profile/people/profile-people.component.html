@@ -1,0 +1,88 @@
+@if (loading && items.length === 0) {
+  <div class="list-skel" aria-busy="true" aria-label="Cargando tus personas">
+    <span class="skeleton"></span><span class="skeleton"></span>
+  </div>
+} @else if (loadError) {
+  <section class="card list-error">
+    <p class="card__text">No se han podido cargar tus personas.</p>
+    <button type="button" class="pill-btn pill-btn--soft" (click)="load()">Reintentar</button>
+  </section>
+} @else {
+  @if (items.length === 0) {
+    <!-- El vacío explica para qué sirve: nadie busca «personas» en su perfil
+         hasta que sabe que puede reservar para otro. -->
+    <section class="card empty-state list-empty">
+      <span class="material-symbols-rounded" aria-hidden="true">group</span>
+      <h3>Aún no has añadido a nadie</h3>
+      <p>Guarda a quien le pides citas y al reservar solo tendrás que elegirlo.</p>
+    </section>
+  } @else {
+    <section class="card card--list" aria-label="Tus personas">
+      @for (p of items; track p.id) {
+        <button type="button" class="linkrow" (click)="openSheet(p)" [attr.aria-label]="'Editar a ' + p.name">
+          <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">person</span></span>
+          <span class="toggle__text toggle__text--clip"><strong>{{ p.name }}</strong></span>
+          <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+        </button>
+      }
+    </section>
+    <p class="pane__foot">
+      @if (full) {
+        Has llegado al máximo de {{ max }}. Borra una para añadir otra.
+      } @else {
+        Al reservar podrás elegir para quién es la cita. La cita y el pago siguen siendo tuyos.
+      }
+    </p>
+  }
+
+  <div class="list-add">
+    <button type="button" class="pill-btn" [disabled]="full" (click)="openNew()">
+      <span class="material-symbols-rounded" aria-hidden="true">add</span>Añadir persona
+    </button>
+  </div>
+}
+
+@if (sheetOpen) {
+  <div class="sheet-backdrop" (click)="closeSheet()">
+    <div class="sheet sheet--form" role="dialog" aria-modal="true" aria-labelledby="person-sheet-title"
+         (click)="$event.stopPropagation()">
+      <header class="sheet__head">
+        <h2 class="sheet__title" id="person-sheet-title">{{ editing ? 'Editar persona' : 'Nueva persona' }}</h2>
+        <button type="button" class="sheet__close" aria-label="Cerrar sin guardar" [disabled]="busy" (click)="closeSheet()">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </header>
+
+      <form (ngSubmit)="save()">
+        <div class="form-group">
+          <div class="form-group__box">
+            <label class="form-row form-row--stack">
+              <span class="form-row__label">Nombre completo</span>
+              <input class="form-row__input" type="text" name="name" maxlength="120" required
+                     autocapitalize="words" autocomplete="off" placeholder="Ana María García"
+                     aria-describedby="person-name-help" [(ngModel)]="formName" [disabled]="busy" />
+            </label>
+          </div>
+          <p class="form-group__footer" id="person-name-help">Es el nombre que verá el negocio en su agenda.</p>
+        </div>
+
+        @if (sheetError) {
+          <p class="sheet__error" role="alert">{{ sheetError }}</p>
+        }
+
+        <div class="sheet__buttons">
+          <button type="submit" class="pill-btn" [disabled]="!canSave">{{ busy ? 'Guardando…' : 'Guardar' }}</button>
+          @if (editing) {
+            <button type="button" class="pill-btn pill-btn--danger" [disabled]="busy" (click)="remove()">Borrar</button>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (toast) {
+  <div class="toast" role="status">
+    <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>{{ toast }}
+  </div>
+}

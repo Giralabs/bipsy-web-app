@@ -1,0 +1,21 @@
+/* Entrar, Crear cuenta y Recuperar: en escritorio, la explicación a la
+   izquierda y el formulario a la derecha. Por debajo de 1025 px el panel no
+   existe y la pantalla es la de la app, el formulario solo. */
+.auth { display: block; }
+.auth > app-auth-aside { display: none; }
+
+@media (min-width: 1025px) {
+  .auth {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: stretch;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 40px 40px 64px;
+  }
+  .auth > app-auth-aside { display: contents; }
+  /* El formulario, centrado en su mitad: la misma columna de la app. */
+  .auth > .flow { display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0; }
+  .auth > .flow > .flow__inner { width: 100%; max-width: 440px; margin: 0; }
+}

@@ -1,0 +1,107 @@
+.flow__title,
+.flow__subtitle { text-align: left; }
+
+.support-skeleton { height: 64px; margin-top: 24px; border-radius: var(--r-sm); }
+
+/* Una fila de la lista agrupada: icono, texto y lo que vaya a la derecha. */
+.support-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 8px 8px 16px;
+  color: var(--clr-text);
+  text-decoration: none;
+}
+
+.support-row + .support-row { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+
+a.support-row:hover,
+.support-row--action:hover,
+.support-row__main:hover { background: var(--clr-surface-hover); }
+
+.support-row--action { cursor: pointer; }
+.support-row--action:focus-within { box-shadow: var(--focus-ring); }
+
+.support-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -8px 0 -8px -16px;
+  padding: 8px 0 8px 16px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+}
+
+.support-row__icon { font-size: 22px; color: var(--clr-text-2); flex-shrink: 0; }
+.support-row__icon--accent { color: var(--clr-mint); }
+
+.support-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+
+.support-row__text strong {
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.support-row__text small { font-size: 0.8125rem; font-weight: 500; color: var(--clr-text-2); }
+
+.support-row__go { color: var(--clr-text-3); padding-right: 8px; }
+
+.support-row__remove {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--clr-text-2);
+  cursor: pointer;
+}
+
+.support-row__remove:hover { background: var(--clr-field); color: var(--clr-text); }
+.support-row__remove .material-symbols-rounded { font-size: 20px; }
+
+.support-textarea {
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  padding: 14px 16px;
+  border: none;
+  background: none;
+  resize: vertical;
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.support-textarea::placeholder { color: var(--clr-text-3); }
+.support-textarea:focus-visible { outline-offset: -2px; }
+
+.support-contact { margin-top: 36px; }
+
+/* ── Gracias ── */
+.done { text-align: center; padding-top: 24px; }
+.done .flow__title, .done .flow__subtitle { text-align: center; }
+
+.done__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: var(--clr-mint-dim);
+  color: var(--clr-success);
+}
+
+.done__icon .material-symbols-rounded { font-size: 40px; }

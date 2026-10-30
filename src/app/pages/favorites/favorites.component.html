@@ -47,11 +47,9 @@
         </div>
       } @else {
         <div class="fav__empty">
-          <span class="fav__hearts" aria-hidden="true">
-            <span class="material-symbols-rounded fill">favorite</span>
-            <span class="material-symbols-rounded fill">favorite</span>
-            <span class="material-symbols-rounded fill">favorite</span>
-          </span>
+          <!-- Un corazón gris, como GipsiEmptyState: los tres en abanico eran
+               decoración. -->
+          <span class="material-symbols-rounded fav__heart" aria-hidden="true">favorite</span>
           <div class="fav__empty-text">
             <h3>Aún no has guardado ningún sitio</h3>
             <p>Pulsa el corazón en cualquier tarjeta o en la ficha de un negocio y aparecerá aquí.</p>
@@ -67,7 +65,6 @@
     @if (!isLoading && suggestions.length > 0 && (!isAuthenticated || businesses.length === 0)) {
       <section class="fav__suggest">
         <h2 class="fav__suggest-title">
-          <span class="material-symbols-rounded fill">auto_awesome</span>
           Te pueden gustar
         </h2>
         <div class="fav__grid">
