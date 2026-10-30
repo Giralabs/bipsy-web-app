@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,41 +6,85 @@ import { filter, firstValueFrom, take } from 'rxjs';
 import { ApiError } from '../../core/api-error';
 import { SessionService } from '../../core/session.service';
 import { BipsyService } from '../../services/bipsy.service';
-import { WaitlistRepository } from '../../repositories/waitlist.repository';
+import { ToastService } from '../../core/toast.service';
+import { WaitlistJoinSheetComponent } from '../../components/waitlist-join-sheet/waitlist-join-sheet.component';
 import {
   AvailabilitySlot,
+  BookingResponse,
   BusinessResponse,
-  ServiceResponse,
   WorkerResponse,
   chargesCancellation,
 } from '../../models/bipsy.models';
+import {
+  BookableService,
+  BusinessBookingExtras,
+  BookingAddress,
+  BookingPlace,
+  CreateBookingFullRequest,
+  CustomerContact,
+  addressOneLine,
+  hasVenue,
+  isAddressReady,
+  needsPlaceStep,
+  priceFor,
+  visitsCustomer,
+} from '../../models/booking-extras.models';
+import { stripOneLine } from '../../repositories/booking-extras.repository';
 import { ButtonComponent } from '../../components/button/button.component';
 import { AddCardSheetComponent } from '../../components/add-card-sheet/add-card-sheet.component';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
 import { LoginFormComponent } from '../../components/login-form/login-form.component';
+import { FlowHeaderComponent } from '../../components/booking-steps/flow-header.component';
+import { MonthCalendarComponent } from '../../components/booking-steps/month-calendar.component';
+import { SlotGridComponent } from '../../components/booking-steps/slot-grid.component';
 import { PaymentRepository } from '../../repositories/payment.repository';
-import { euros, isoDate, isoLocalDateTime, longDate, duration, relativeDate } from '../../shared/dates';
+import { BookingRepository } from '../../repositories/booking.repository';
+import { PayBookingSheetComponent } from '../../components/pay-booking-sheet/pay-booking-sheet.component';
+import { BookingQuote, cents, quoteIsHeld, quoteUsable } from '../../models/payments-extras.models';
+import {
+  duration,
+  euros,
+  isoDate,
+  isoLocalDateTime,
+  longDate,
+  parseLocal,
+  time,
+} from '../../shared/dates';
 import { businessIdFromParam, businessPath } from '../../shared/slug';
+import { fixImageUrl } from '../../shared/image-url';
+import { categoryIcon } from '../../shared/category-icons';
+import { primaryCategory } from '../../models/bipsy.models';
+import { BookingPlaceStepComponent } from './booking-place-step.component';
+import { AttendeeSheetComponent } from './attendee-sheet.component';
 
-type Step = 'service' | 'worker' | 'date' | 'time' | 'auth' | 'confirm' | 'done';
+/** Los pasos que cuentan en la barra de progreso. */
+type FlowStep = 'service' | 'place' | 'worker' | 'date' | 'time' | 'confirm';
+type Step = FlowStep | 'auth' | 'done';
 
 /**
- * Flujo de reserva. Port de `BookingFlowScreen` y sus cuatro pasos.
+ * Tope del cargo por cancelar, en céntimos. Replica
+ * `Business.MAX_CANCELLATION_FEE_CENTS`: aquí solo sirve para enseñar el mismo
+ * importe que se cobraría; el cálculo bueno es el del servidor.
+ */
+const MAX_FEE_CENTS = 10_000;
+
+/**
+ * Flujo de reserva. Port de `BookingFlowScreen`, sus pasos y `BookingResult`.
  *
- * El paso de profesional se salta cuando no hay nada que elegir —negocio
- * autónomo, o un servicio con un solo profesional—, pero el `workerId` se
- * rellena igualmente: sin él el `POST /bookings` falla.
+ * Los pasos, en el orden de la app: dónde, con quién, qué día, a qué hora y
+ * confirmar. Cada uno se salta cuando solo tiene una respuesta —el sitio si el
+ * servicio solo se presta en el local, el profesional si solo hay uno—, pero el
+ * dato se rellena igual: sin `workerId` el `POST /bookings` falla. Delante va
+ * el de elegir servicio, que la app no tiene porque allí se entra desde él;
+ * aquí se puede llegar con un enlace al negocio sin servicio elegido.
  *
- * **Elegir es público y entrar va al final.** Los cuatro pasos de elegir no
- * piden nada —el catálogo y la disponibilidad son públicos—, y la cuenta se pide
- * en un quinto paso, ya con la hora elegida. Antes esto era un muro: se echaba
- * al login antes de cargar nada, así que el enlace de un negocio no servía para
- * lo único que importa. Pedirlo al final cuesta lo mismo a quien ya tiene cuenta
- * y no espanta a quien todavía no sabe si hay hueco.
+ * **Elegir es público y entrar va al final.** Los pasos de elegir no piden
+ * nada —el catálogo y la disponibilidad son públicos—, y la cuenta se pide ya
+ * con la hora elegida. Pedirla antes era un muro: el enlace de un negocio no
+ * servía para lo único que importa.
  *
  * Ese paso no tiene formulario propio: monta `app-login-form`, el mismo de
- * `/acceder`. Y se queda DENTRO del flujo —en vez de navegar al acceso y
- * volver— porque así la hora elegida no se pierde.
+ * `/acceder`. Y se queda DENTRO del flujo para que la hora elegida no se pierda.
  */
 @Component({
   selector: 'app-booking-flow',
@@ -52,15 +96,24 @@ type Step = 'service' | 'worker' | 'date' | 'time' | 'auth' | 'confirm' | 'done'
     AddCardSheetComponent,
     AvatarComponent,
     LoginFormComponent,
+    FlowHeaderComponent,
+    MonthCalendarComponent,
+    SlotGridComponent,
+    BookingPlaceStepComponent,
+    AttendeeSheetComponent,
+    PayBookingSheetComponent,
+    WaitlistJoinSheetComponent,
   ],
   templateUrl: './booking-flow.component.html',
-  styleUrl: './booking-flow.component.css',
+  styleUrls: ['./booking-flow.component.css', './booking-confirm.css'],
 })
 export class BookingFlowComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly bipsy = inject(BipsyService);
   private readonly session = inject(SessionService);
-  private readonly waitlist = inject(WaitlistRepository);
+  private readonly toasts = inject(ToastService);
   private readonly payments = inject(PaymentRepository);
+  private readonly bookingRepo = inject(BookingRepository);
 
   @ViewChild(AddCardSheetComponent) cardSheet?: AddCardSheetComponent;
   private readonly route = inject(ActivatedRoute);
@@ -71,8 +124,7 @@ export class BookingFlowComponent implements OnInit {
    * Si se llegó aquí navegando dentro de la web.
    *
    * Se mira en la construcción porque `getCurrentNavigation()` solo existe
-   * mientras la navegación está en curso: después vale null y ya no hay forma
-   * de saber si había algo detrás.
+   * mientras la navegación está en curso: después vale null.
    */
   private readonly cameFromApp =
     this.router.getCurrentNavigation()?.previousNavigation != null;
@@ -83,26 +135,39 @@ export class BookingFlowComponent implements OnInit {
   error: string | null = null;
 
   business?: BusinessResponse;
-  services: ServiceResponse[] = [];
+  services: BookableService[] = [];
   workers: WorkerResponse[] = [];
+  workersLoading = false;
 
-  service?: ServiceResponse;
+  /** Se entró con el servicio ya elegido: no hay paso de servicio al que volver. */
+  private serviceFixed = false;
+
+  service?: BookableService;
+  /** Undefined = «Cualquiera disponible». */
   workerId?: number;
+  place: BookingPlace | null = null;
+  address: BookingAddress | null = null;
   day?: Date;
   slots: AvailabilitySlot[] = [];
   slotsLoading = false;
+  slotsError: string | null = null;
   startTime?: string;
+  /**
+   * Profesionales libres en la hora elegida, tal y como los da la
+   * disponibilidad. Solo sirve con «Cualquiera disponible»: el servidor exige
+   * un profesional concreto en cuanto hay a quién elegir.
+   */
+  slotWorkerIds: number[] = [];
   notes = '';
   acceptedPolicy = false;
+  /** Para quién es la cita. Null = «Mí», que es lo que vale casi siempre. */
+  attendee: CustomerContact | null = null;
+  attendeeSheetOpen = false;
 
-  bookingId?: number;
+  /** La cita ya hecha: la pantalla pasa a enseñar el resultado. */
+  booking?: BookingResponse;
 
   // ----- ENTRAR PARA RESERVAR --------------------
-  //
-  // Hace falta cuenta para reservar, y se pide en su propio paso DESPUÉS de
-  // elegir la hora, con el formulario de `/acceder` tal cual: `app-login-form`.
-  // Se decide una vez al cargar, cuando la sesión ya está resuelta, y se apaga
-  // en cuanto entra.
 
   /** No había sesión al entrar: hará falta pasar por el paso de entrada. */
   needsAuth = false;
@@ -110,43 +175,35 @@ export class BookingFlowComponent implements OnInit {
   // ----- TARJETA --------------------
   //
   // Un negocio puede exigir tarjeta guardada para aceptar reservas. Si no la
-  // hay, el servidor rechaza el POST con 402 y antes eso era un callejón: el
-  // mensaje decía que hacía falta una tarjeta y el único sitio para ponerla
-  // era Ajustes › Pagos, con la reserva a medias. Ahora se guarda aquí mismo,
-  // igual que `AddCardSheet` en la app.
+  // hay, el servidor rechaza el POST con 402; se guarda aquí mismo, igual que
+  // `AddCardSheet` en la app, en vez de mandar a Ajustes › Pagos a media cita.
   /** null mientras no se sabe: no se puede decidir el botón hasta saberlo. */
   hasCard: boolean | null = null;
   cardSheetOpen = false;
   stripeKey: string | null = null;
 
   // ----- LISTA DE ESPERA --------------------
-  //
-  // Sin hueco ese día, apuntarse es la única salida que no es "prueba otra
-  // fecha y suerte". Solo se ofrece si el negocio la tiene encendida.
   waitlistBusy = false;
   waitlistDone = false;
+  /** Pulsó «Avisadme» sin sesión: se apunta en cuanto entre. */
+  private pendingWaitlist = false;
+  /** La hoja de preferencias de la lista de espera. */
+  waitlistSheetOpen = false;
 
-  /** Los días que se ofrecen. El horizonte lo fija el negocio. */
-  days: Date[] = [];
+  /** Hoy y el último día que se puede reservar, según el negocio. */
+  firstDay = startOfToday();
+  lastDay = startOfToday();
 
   async ngOnInit(): Promise<void> {
     const businessId = businessIdFromParam(this.route.snapshot.paramMap.get('id'));
     const params = this.route.snapshot.queryParams;
 
-    // ⚠️ Hay que ESPERAR a que la sesión se resuelva antes de decidir.
-    //
-    // `restore()` es asíncrono: al entrar por enlace directo o al recargar,
-    // `status` todavía vale 'unknown' cuando corre este `ngOnInit`, y
-    // `requireAuth()` —que solo mira si vale 'authenticated'— devolvía false
-    // teniendo el usuario una sesión perfectamente válida. Resultado: recargar
-    // la pantalla de reserva te echaba al login. El resto de páginas con sesión
-    // ya se suscriben a `status$`; esta era la única que preguntaba en seco.
+    // ⚠️ Hay que ESPERAR a que la sesión se resuelva antes de decidir: al
+    // entrar por enlace directo `status` todavía vale 'unknown' aquí, y
+    // preguntarlo en seco echaba al login a quien tenía sesión.
     const status = await firstValueFrom(
       this.session.status$.pipe(filter(value => value !== 'unknown'), take(1)),
     );
-    // Sin sesión NO se echa al login, que era el muro que dejaba el enlace
-    // público de un negocio sin servir para lo único que importa. Se deja mirar
-    // y elegir, y entrar se pide en su paso, con la hora ya elegida.
     this.needsAuth = status !== 'authenticated';
 
     try {
@@ -155,15 +212,15 @@ export class BookingFlowComponent implements OnInit {
         this.bipsy.getBusinessServices(businessId!),
       ]);
       this.business = business;
-      this.services = services.filter(s => s.active);
-      this.buildDays(business.availabilityHorizonDays ?? 60);
+      this.services = (services as BookableService[]).filter(s => s.active);
+      this.buildHorizon();
 
       // "Volver a reservar" entra con el servicio (y a veces el profesional)
-      // de la última cita. Si ese servicio ya no está en el catálogo, se cae a
-      // elegirlo a mano en vez de arrancar un flujo vacío.
+      // de la última cita. Si ese servicio ya no está, se elige a mano.
       const preselected = Number(params['serviceId']);
       const found = this.services.find(s => s.id === preselected);
       if (found) {
+        this.serviceFixed = true;
         await this.chooseService(found, Number(params['workerId']) || undefined);
       }
     } catch (raw) {
@@ -173,112 +230,439 @@ export class BookingFlowComponent implements OnInit {
     }
   }
 
-  // ----- PASOS --------------------
+  // ----- PASOS Y CABECERA --------------------
 
-  async chooseService(service: ServiceResponse, preselectedWorkerId?: number): Promise<void> {
-    this.service = service;
-    this.workerId = preselectedWorkerId;
+  /**
+   * Los pasos de esta reserva, en orden. Se calcula con lo elegido: el sitio y
+   * el profesional existen o no según el servicio.
+   */
+  get steps(): FlowStep[] {
+    const list: FlowStep[] = [];
+    if (!this.serviceFixed) list.push('service');
+    if (this.service && needsPlaceStep(this.service)) list.push('place');
+    if (this.service && this.showWorkerStep) list.push('worker');
+    list.push('date', 'time', 'confirm');
+    return list;
+  }
 
-    const workerIds = service.workerIds ?? [];
-    const skipWorker = !!this.business?.autonomous || workerIds.length <= 1;
+  /** Dónde está el paso actual en la lista. Entrar cuenta como confirmar. */
+  private get stepIndex(): number {
+    const s = this.step === 'auth' || this.step === 'done' ? 'confirm' : this.step;
+    return Math.max(0, this.steps.indexOf(s));
+  }
 
-    if (skipWorker) {
-      // Con un solo profesional no hay nada que elegir, pero el id hace falta
-      // igual: sin él el POST falla por `workerId` nulo.
-      this.workerId = this.workerId ?? workerIds[0];
-      this.step = 'date';
+  get progress(): number {
+    return (this.stepIndex + 1) / this.steps.length;
+  }
+
+  get atStart(): boolean {
+    return this.stepIndex === 0 && this.step !== 'auth';
+  }
+
+  /**
+   * El título es la PREGUNTA del paso: quien mira la pantalla sabe qué se
+   * espera de él sin leer nada más.
+   */
+  get stepTitle(): string {
+    switch (this.step) {
+      case 'service': return '¿Qué te hacemos?';
+      case 'place': return '¿Dónde te atendemos?';
+      case 'worker': return '¿Con quién?';
+      case 'date': return '¿Qué día?';
+      case 'time': return '¿A qué hora?';
+      case 'auth': return 'Entra para reservar';
+      default: return 'Confirma tu reserva';
+    }
+  }
+
+  private goTo(step: Step): void {
+    this.error = null;
+    this.step = step;
+    // Cada paso empieza arriba: al cambiar de contenido sin cambiar de URL,
+    // el navegador deja el scroll donde estaba el paso anterior.
+    window.scrollTo({ top: 0 });
+  }
+
+  /** El paso siguiente en la lista, o el de entrar si toca. */
+  private advanceFrom(step: FlowStep): void {
+    const list = this.steps;
+    const next = list[list.indexOf(step) + 1];
+    if (next === 'confirm' && this.needsAuth) {
+      this.goTo('auth');
       return;
     }
+    if (next === 'date') {
+      this.ensureDay();
+    }
+    if (next === 'time') {
+      void this.loadSlots();
+    }
+    if (next === 'confirm') {
+      this.enterConfirm();
+    }
+    this.goTo(next ?? 'confirm');
+  }
 
-    if (this.workers.length === 0 && this.business) {
-      try {
-        this.workers = await this.bipsy.getBusinessWorkers(this.business.id);
-      } catch {
-        // Sin la lista de profesionales se sigue: el servidor asignará uno
-        // disponible. Peor sería quedarse sin poder reservar.
-        this.workers = [];
-      }
+  back(): void {
+    if (this.step === 'auth') {
+      this.pendingWaitlist = false;
+      this.goTo('time');
+      return;
+    }
+    const list = this.steps;
+    const i = list.indexOf(this.step as FlowStep);
+    if (i > 0) {
+      this.goTo(list[i - 1]);
+      return;
+    }
+    // ⚠️ VOLVER, no navegar a la ficha. Navegar EMPUJABA una ficha nueva
+    // encima de la reserva, y la ficha vuelve con `location.back()`: se
+    // quedaba rebotando entre las dos. Sin historial propio —enlace directo—
+    // no hay a dónde volver y ahí sí toca navegar.
+    this.exit();
+  }
+
+  private exit(): void {
+    if (this.cameFromApp) {
+      this.location.back();
+    } else if (this.business) {
+      this.router.navigate(businessPath(this.business));
+    }
+  }
+
+  // ----- 1. SERVICIO --------------------
+
+  async chooseService(service: BookableService, preselectedWorkerId?: number): Promise<void> {
+    const changed = this.service?.id !== service.id;
+    this.service = service;
+    if (changed) {
+      this.workerId = preselectedWorkerId;
+      this.place = null;
+      this.address = null;
+      this.startTime = undefined;
+      this.slotWorkerIds = [];
     }
 
-    this.step = this.workerId ? 'date' : 'worker';
+    const workerIds = service.workerIds ?? [];
+    if (workerIds.length === 1) {
+      // Con un solo profesional no hay nada que elegir, pero el id hace falta
+      // igual: sin él el POST falla por `workerId` nulo.
+      this.workerId = workerIds[0];
+    }
+    if (this.showWorkerStep) {
+      void this.loadWorkers();
+    }
+
+    // Con profesional ya elegido —"volver a reservar"— se arranca en la fecha,
+    // salvo que haya que decidir el sitio: la dirección no viene con él y sin
+    // ella la reserva moriría en el último paso con un 400.
+    if (this.serviceFixed && preselectedWorkerId && !needsPlaceStep(service)) {
+      this.ensureDay();
+      this.goTo('date');
+      return;
+    }
+    if (this.serviceFixed) {
+      this.goTo(this.steps[0]);
+      if (this.step === 'date') this.ensureDay();
+      return;
+    }
+    this.advanceFrom('service');
   }
 
+  // ----- 2. SITIO --------------------
+
+  onPlaceChange(place: BookingPlace): void {
+    this.place = place;
+  }
+
+  onAddressChange(address: BookingAddress | null): void {
+    this.address = address;
+  }
+
+  onPlaceNext(): void {
+    this.advanceFrom('place');
+  }
+
+  /** Dónde se atiende de verdad: lo elegido, o lo único posible. */
+  get placeForBooking(): BookingPlace {
+    if (this.place) return this.place;
+    return visitsCustomer(this.service) && !hasVenue(this.service) ? 'AT_CUSTOMER' : 'AT_BUSINESS';
+  }
+
+  // ----- 3. PROFESIONAL --------------------
+
+  get showWorkerStep(): boolean {
+    return !this.business?.autonomous && (this.service?.workerIds?.length ?? 0) > 1;
+  }
+
+  /** Solo los que prestan ESTE servicio. */
+  get eligibleWorkers(): WorkerResponse[] {
+    const ids = this.service?.workerIds ?? [];
+    const matching = this.workers.filter(w => ids.includes(w.id));
+    return matching.length > 0 ? matching : this.workers;
+  }
+
+  private async loadWorkers(): Promise<void> {
+    if (this.workers.length > 0 || !this.business || this.workersLoading) {
+      return;
+    }
+    this.workersLoading = true;
+    try {
+      this.workers = await this.bipsy.getBusinessWorkers(this.business.id);
+    } catch {
+      // Sin la lista se sigue con «Cualquiera disponible»: peor sería quedarse
+      // sin poder reservar.
+      this.workers = [];
+    } finally {
+      this.workersLoading = false;
+    }
+  }
+
+  /**
+   * Elegir MARCA, y el paso lo da «Siguiente». Avanzar en el mismo clic no
+   * dejaba ver qué se había elegido (lo cuenta `StepWorker` en la app).
+   */
   chooseWorker(workerId?: number): void {
+    if (this.workerId !== workerId) {
+      this.startTime = undefined;
+      this.slotWorkerIds = [];
+    }
     this.workerId = workerId;
-    this.step = 'date';
   }
 
-  async chooseDay(day: Date): Promise<void> {
+  onWorkerNext(): void {
+    this.advanceFrom('worker');
+  }
+
+  // ----- 4. DÍA --------------------
+
+  /**
+   * Sin día elegido queda elegido HOY: un calendario con hoy resaltado y el
+   * botón de seguir apagado decía dos cosas distintas a la vez.
+   */
+  private ensureDay(): void {
+    if (!this.day) {
+      this.day = new Date(this.firstDay);
+    }
+  }
+
+  chooseDay(day: Date): void {
+    if (this.day && day.getTime() === this.day.getTime()) {
+      return;
+    }
     this.day = day;
     this.startTime = undefined;
-    this.step = 'time';
-    await this.loadSlots();
+    this.slotWorkerIds = [];
+    this.waitlistDone = false;
   }
+
+  onDateNext(): void {
+    this.advanceFrom('date');
+  }
+
+  get horizonDays(): number {
+    return this.business?.availabilityHorizonDays || 30;
+  }
+
+  // ----- 5. HORA --------------------
 
   async loadSlots(): Promise<void> {
     if (!this.service || !this.day) {
       return;
     }
+    // Cada carga lleva su número: si se vuelve atrás y se elige otro día antes
+    // de que llegue la respuesta, la lenta del día anterior no debe pisar a la
+    // buena y enseñar horas de un día que ya no es el elegido.
+    const seq = ++this.slotsSeq;
     this.slotsLoading = true;
-    this.error = null;
+    this.slotsError = null;
+    this.slots = [];
     try {
       const res = await this.bipsy.getAvailability(this.service.id, isoDate(this.day), this.workerId);
+      if (seq !== this.slotsSeq) return;
       this.slots = res.slots ?? [];
     } catch (raw) {
-      this.error = ApiError.from(raw).message;
+      if (seq !== this.slotsSeq) return;
+      this.slotsError = ApiError.from(raw).message;
       this.slots = [];
     } finally {
-      this.slotsLoading = false;
+      if (seq === this.slotsSeq) this.slotsLoading = false;
     }
   }
 
+  private slotsSeq = 0;
+
+  /** Sin ninguna hora libre no hay «Siguiente» que ofrecer: mandan las salidas del vacío. */
+  get hasFreeSlots(): boolean {
+    return this.slots.some(s => s.available);
+  }
+
   chooseSlot(slot: AvailabilitySlot): void {
-    if (!slot.available) {
+    this.startTime = slot.start;
+    this.slotWorkerIds = slot.availableWorkerIds ?? [];
+  }
+
+  onTimeNext(): void {
+    if (this.startTime) {
+      this.advanceFrom('time');
+    }
+  }
+
+  changeDay(): void {
+    this.goTo('date');
+  }
+
+  get canJoinWaitlist(): boolean {
+    return !!this.business?.waitlistEnabled && !!this.service;
+  }
+
+  /**
+   * Apuntarse a la lista de espera: abre la hoja de preferencias
+   * (`app-waitlist-join-sheet`). Sin sesión se pide entrar primero y la hoja
+   * se abre al volver, sin repetir el clic.
+   */
+  async joinWaitlist(): Promise<void> {
+    if (!this.service || this.waitlistBusy) {
       return;
     }
-    this.startTime = slot.start;
-    // Entrar va DESPUÉS de elegir la hora, no antes: pedírselo a quien todavía
-    // no sabe si hay hueco es perder gente por nada, y es el mismo criterio con
-    // el que la app pide la tarjeta al final.
-    this.step = this.needsAuth ? 'auth' : 'confirm';
-    // Se mira al entrar en el resumen y no antes: solo hace falta aquí, y
-    // preguntarlo en cada paso serían tres llamadas para nada.
-    if (!this.needsAuth) {
-      void this.checkCard();
+    if (this.needsAuth) {
+      this.pendingWaitlist = true;
+      this.goTo('auth');
+      return;
     }
+    // Las preferencias (días, franjas, con quién, nota) se piden en la hoja,
+    // con valores por defecto que ya sirven. Antes se apuntaba en seco del día
+    // elegido a una semana después, sin dejar afinar nada.
+    this.error = null;
+    this.waitlistSheetOpen = true;
+  }
+
+  /**
+   * Ya está en la lista. Como en la app, se cierra el flujo —aquí no queda
+   * nada que hacer— y se dice en un aviso. Quien cierra la hoja sin apuntarse
+   * se queda donde estaba.
+   */
+  onWaitlistJoined(): void {
+    this.waitlistSheetOpen = false;
+    this.toasts.success('Estás en la lista de espera. Te avisamos si se libera un hueco.');
+    this.exit();
   }
 
   // ----- ENTRAR PARA RESERVAR --------------------
 
-  /**
-   * A dónde volver si acaba creando cuenta: a esta misma reserva.
-   *
-   * Es lo que `app-login-form` pone en el enlace del alta. La URL lleva el
-   * negocio y el servicio elegido, así que al volver el flujo se rearma.
-   */
+  /** A dónde volver si acaba creando cuenta: a esta misma reserva. */
   get returnToHere(): string {
     return this.router.url;
   }
 
   /**
-   * Ya hay sesión, venga del correo, de Google o de Apple.
-   *
-   * Entrar no recarga la página —el popup del proveedor tampoco—, así que el
-   * servicio y la hora elegidos siguen ahí y se sigue en el resumen.
+   * Ya hay sesión. Entrar no recarga la página, así que lo elegido sigue ahí
+   * y se sigue en el resumen —o en las horas, si venía a apuntarse—.
    */
   onSignedIn(): void {
     this.needsAuth = false;
-    this.step = 'confirm';
-    // Se mira al entrar en el resumen y no antes: solo hace falta aquí.
+    if (this.pendingWaitlist) {
+      this.pendingWaitlist = false;
+      this.goTo('time');
+      void this.joinWaitlist();
+      return;
+    }
+    this.enterConfirm();
+    this.goTo('confirm');
+  }
+
+  // ----- 6. CONFIRMAR --------------------
+
+  private enterConfirm(): void {
+    // Se mira al llegar aquí y no antes: solo hace falta aquí.
     void this.checkCard();
+    // El nombre de quien atiende, aunque el paso de profesional se saltara.
+    if (this.hasTeam) {
+      void this.loadWorkers();
+    }
+  }
+
+  /**
+   * El profesional con el que se manda la reserva: el elegido o, con
+   * «Cualquiera disponible», el primero libre en esa hora.
+   */
+  get workerIdForBooking(): number | undefined {
+    return this.workerId ?? this.slotWorkerIds[0];
+  }
+
+  /** Lo ha puesto el sistema y no el cliente: hay que decírselo. */
+  get workerWasAutoAssigned(): boolean {
+    return this.workerId === undefined && this.workerIdForBooking !== undefined;
+  }
+
+  /**
+   * Hay equipo y por tanto profesional que resumir. En un negocio de una sola
+   * persona la fila diría el nombre del propio negocio. Sin el campo —backend
+   * anterior— se cae a `autonomous`.
+   */
+  get hasTeam(): boolean {
+    const team = (this.business as (BusinessResponse & BusinessBookingExtras) | undefined)?.teamEnabled;
+    return team ?? !this.business?.autonomous;
+  }
+
+  get workerName(): string {
+    const id = this.workerIdForBooking;
+    if (id === undefined) {
+      return 'Cualquiera disponible';
+    }
+    return this.workers.find(w => w.id === id)?.name ?? `Profesional #${id}`;
+  }
+
+  get chargesHomeSurcharge(): boolean {
+    return this.placeForBooking === 'AT_CUSTOMER' && (this.service?.homeSurchargeCents ?? 0) > 0;
+  }
+
+  get totalPrice(): number {
+    return this.service ? priceFor(this.service, this.placeForBooking) : 0;
+  }
+
+  get whereLabel(): string {
+    return this.placeForBooking === 'AT_CUSTOMER'
+      ? (addressOneLine(this.address) || 'A domicilio')
+      : 'En el local';
+  }
+
+  get timeLabel(): string {
+    return this.service ? `${this.startTime ?? '—'} · ${duration(this.service.duration)}` : '';
+  }
+
+  get needsPolicyAcceptance(): boolean {
+    return !!this.business && chargesCancellation(this.business);
+  }
+
+  /**
+   * Lo que costaría cancelar tarde, ya calculado: al cliente le importa
+   * cuánto, no el porcentaje. Sobre el precio CON desplazamiento, que es el
+   * que congela el servidor y sobre el que cobra.
+   */
+  get feeLabel(): string {
+    const percent = this.business?.cancellationFeePercent ?? 0;
+    const cents = Math.round(this.totalPrice * percent);
+    return euros(Math.min(cents, MAX_FEE_CENTS) / 100);
+  }
+
+  openAttendeeSheet(): void {
+    if (!this.submitting) {
+      this.attendeeSheetOpen = true;
+    }
+  }
+
+  onAttendeePicked(contact: CustomerContact | null): void {
+    this.attendee = contact;
+    this.attendeeSheetOpen = false;
   }
 
   /**
    * ¿Hay tarjeta guardada? Solo se pregunta si el negocio la exige.
    *
    * Si la consulta falla se deja en `false`: el botón dirá «Añadir tarjeta y
-   * continuar», que como mucho enseña una hoja de más. Suponer que sí la hay
-   * llevaría a un 402 al confirmar, que es el callejón que se venía a quitar.
+   * continuar», que como mucho enseña una hoja de más. Suponer que sí llevaría
+   * a un 402 al confirmar.
    */
   private async checkCard(): Promise<void> {
     if (!this.business?.requiresCard) {
@@ -297,18 +681,24 @@ export class BookingFlowComponent implements OnInit {
     }
   }
 
-  /** True cuando falta la tarjeta que el negocio exige. */
   get needsCard(): boolean {
     return !!this.business?.requiresCard && this.hasCard === false;
   }
 
-  /** El botón del resumen cambia de texto y de acción según falte o no. */
   get confirmLabel(): string {
     return this.needsCard ? 'Añadir tarjeta y continuar' : 'Confirmar reserva';
   }
 
   get confirmIcon(): string {
     return this.needsCard ? 'credit_card' : 'check_circle';
+  }
+
+  /**
+   * Sin aceptar la política no se deja confirmar: es más honesto que dejar
+   * pulsar y devolver un error por algo que está a la vista.
+   */
+  get confirmBlocked(): boolean {
+    return this.needsPolicyAcceptance && !this.acceptedPolicy && !this.needsCard;
   }
 
   async openCardSheet(): Promise<void> {
@@ -322,6 +712,11 @@ export class BookingFlowComponent implements OnInit {
     // La hoja se pinta primero y se prepara después: `open()` necesita que su
     // hueco exista para montar el formulario de Stripe.
     setTimeout(async () => {
+      // `eventCoalescing` (app.config) deja la detección de cambios del clic
+      // para el siguiente fotograma, y este setTimeout llega antes: el `@if`
+      // aún no había pintado la hoja, `cardSheet` era undefined y salía «No
+      // hemos podido abrir la pasarela de pago». Se pinta aquí, a la fuerza.
+      this.cdr.detectChanges();
       const ok = await this.cardSheet?.open();
       if (!ok) {
         this.cardSheetOpen = false;
@@ -341,7 +736,6 @@ export class BookingFlowComponent implements OnInit {
     this.cardSheetOpen = false;
   }
 
-  /** Lo que hace el botón grande del resumen. */
   confirmOrAddCard(): void {
     if (this.needsCard) {
       void this.openCardSheet();
@@ -358,19 +752,40 @@ export class BookingFlowComponent implements OnInit {
       this.error = 'Tienes que aceptar la política de cancelación para reservar.';
       return;
     }
+    const atCustomer = this.placeForBooking === 'AT_CUSTOMER';
+    if (atCustomer && !isAddressReady(this.address)) {
+      this.error = 'Falta la dirección: vuelve al primer paso y dinos a dónde ir.';
+      return;
+    }
 
     this.submitting = true;
     this.error = null;
+    const req: CreateBookingFullRequest = {
+      serviceId: this.service.id,
+      workerId: this.workerIdForBooking,
+      startDateTime: isoLocalDateTime(this.day, this.startTime),
+      notes: this.notes.trim() || undefined,
+      acceptedPolicy: this.acceptedPolicy,
+      // El sitio solo viaja si el servicio deja elegir o va a casa; si no, el
+      // servidor lo deduce y mandarlo no añade nada.
+      servicePlace: needsPlaceStep(this.service) ? this.placeForBooking : undefined,
+      address: atCustomer && this.address ? stripOneLine(this.address) : undefined,
+      attendeeContactId: this.attendee?.id,
+    };
     try {
-      const booking = await this.bipsy.createBooking({
-        serviceId: this.service.id,
-        workerId: this.workerId,
-        startDateTime: isoLocalDateTime(this.day, this.startTime),
-        notes: this.notes.trim() || undefined,
-        acceptedPolicy: this.acceptedPolicy,
-      });
-      this.bookingId = booking.id;
+      const booking = await this.bipsy.createBooking(req);
+      // El pago va DESPUÉS de crear la cita porque hace falta su id para
+      // cobrar. Con el negocio en modo obligatorio eso abre una ventana: una
+      // cita reservada y sin pagar. Se cierra aquí mismo —o paga, o se cancela
+      // ahora— en vez de dejársela al job, que tardaría 15 minutos y el cliente
+      // no entendería por qué se le ha caído la cita.
+      if (!(await this.chargeIfRequired(booking))) {
+        return;
+      }
+      this.booking = booking;
       this.step = 'done';
+      window.scrollTo({ top: 0 });
+      void this.loadResultQuote();
     } catch (raw) {
       const error = ApiError.from(raw);
       // El servidor dice que falta la tarjeta: se corrige el estado para que
@@ -385,130 +800,198 @@ export class BookingFlowComponent implements OnInit {
     }
   }
 
-  /** El profesional elegido, o undefined si lo asigna el negocio. */
-  get chosenWorker(): WorkerResponse | undefined {
-    return this.workers.find(w => w.id === this.workerId);
+  // ----- PAGO DE LA CITA --------------------
+
+  /** La hoja de pago abierta, con lo que necesita. Null si no hay ninguna. */
+  paySheet: { quote: BookingQuote; concept: string; retiene: boolean } | null = null;
+  private payResolve?: (paid: boolean) => void;
+
+  /** Lo que queda por pagar de la cita recién hecha, para el resultado. */
+  resultQuote: BookingQuote | null = null;
+
+  /** Abre la hoja de pago y resuelve si el dinero llegó a salir. */
+  private openPaySheet(quote: BookingQuote, retiene: boolean): Promise<boolean> {
+    return new Promise(resolve => {
+      this.payResolve = resolve;
+      this.paySheet = {
+        quote,
+        concept: this.service?.name ?? this.booking?.serviceName ?? 'Cita',
+        retiene,
+      };
+    });
   }
 
-  get canJoinWaitlist(): boolean {
-    return !!this.business?.waitlistEnabled && !!this.service && !this.waitlistDone;
+  onPaySheetClosed(paid: boolean): void {
+    this.paySheet = null;
+    const resolve = this.payResolve;
+    this.payResolve = undefined;
+    resolve?.(paid);
   }
 
   /**
-   * Apuntarse a la lista de espera de ese día.
+   * Cobra la cita si el negocio no admite tenerla sin pagar.
    *
-   * El rango va del día elegido a una semana después: apuntarse "solo para
-   * hoy" casi nunca casa, y el negocio necesita margen para encontrar hueco.
+   * Devuelve false si la cita ya no existe —no pagó y se ha cancelado—, y
+   * entonces no se sigue al resultado: enseñar «Reserva confirmada» de algo que
+   * acabamos de cancelar sería mentirle.
+   *
+   * Con la cita por aceptar el dinero se RETIENE en vez de cobrarse; de eso se
+   * encarga el servidor, aquí solo cambia lo que se le dice. En modo opcional
+   * no hace nada: pagar se ofrece en el resultado, sin bloquear.
    */
-  async joinWaitlist(): Promise<void> {
-    if (!this.service || !this.day || this.waitlistBusy) {
-      return;
-    }
-    const until = new Date(this.day);
-    until.setDate(until.getDate() + 7);
-
-    this.waitlistBusy = true;
-    this.error = null;
+  private async chargeIfRequired(booking: BookingResponse): Promise<boolean> {
+    let quote: BookingQuote;
     try {
-      await this.waitlist.join({
-        serviceId: this.service.id,
-        workerId: this.workerId,
-        dateFrom: isoDate(this.day),
-        dateTo: isoDate(until),
-      });
-      this.waitlistDone = true;
-    } catch (raw) {
-      this.error = ApiError.from(raw).message;
-    } finally {
-      this.waitlistBusy = false;
+      quote = await this.payments.bookingQuote(booking.id);
+    } catch {
+      // Si no se puede ni preguntar, se sigue: la cita está hecha y podrá
+      // pagarla desde su ficha. El servidor la cancelará si no lo hace.
+      return true;
+    }
+    if (!quote.required || !quoteUsable(quote)) {
+      return true;
+    }
+
+    const paid = await this.openPaySheet(quote, booking.status === 'PENDING');
+    if (paid) {
+      return true;
+    }
+
+    // No pagó: se suelta el hueco en el momento y se le dice por qué.
+    try {
+      await this.bookingRepo.cancel(booking.id);
+    } catch {
+      // Si falla, lo hará el job en 15 minutos. No se le cuenta: para él la
+      // cita no ha llegado a existir.
+    }
+    this.error = 'Este negocio necesita el pago para guardar la cita. No se ha completado, '
+      + 'así que la hora vuelve a estar libre.';
+    return false;
+  }
+
+  /** Se pide de nuevo al llegar al resultado: si acaba de pagar, ya no debe nada. */
+  private async loadResultQuote(): Promise<void> {
+    if (!this.booking) return;
+    try {
+      this.resultQuote = await this.payments.bookingQuote(this.booking.id);
+    } catch {
+      this.resultQuote = null;
     }
   }
 
-  back(): void {
-    this.error = null;
-    switch (this.step) {
-      case 'worker': this.step = 'service'; break;
-      case 'date': this.step = this.showWorkerStep ? 'worker' : 'service'; break;
-      case 'time': this.step = 'date'; break;
-      case 'auth': this.step = 'time'; break;
-      // Al volver desde el resumen no se pasa por el paso de entrar: ya hay
-      // sesión, así que enseñarlo otra vez sería un paso que no lleva a nada.
-      case 'confirm': this.step = 'time'; break;
-      default:
-        // ⚠️ VOLVER, no navegar a la ficha.
-        //
-        // Navegar EMPUJABA una ficha nueva encima de la reserva, y la ficha
-        // vuelve con `location.back()`: se quedaba rebotando entre las dos
-        // para siempre. Con historial propio se retrocede de verdad; sin él
-        // —entrando por enlace directo— no hay a dónde volver y ahí sí toca
-        // navegar, o se saldría del sitio.
-        if (this.cameFromApp) {
-          this.location.back();
-        } else if (this.business) {
-          this.router.navigate(businessPath(this.business));
-        }
-    }
+  /**
+   * Pagar desde el resultado. Con la cita aún por aceptar no se ofrece: el
+   * texto de arriba acaba de decirle que se lo pediremos cuando el negocio la
+   * acepte, y un botón de pagar justo debajo lo desmentiría.
+   */
+  get canPayFromResult(): boolean {
+    return quoteUsable(this.resultQuote) && this.resultQuote.dueCents > 0 && !this.resultPending;
+  }
+
+  get resultPayLabel(): string {
+    return `Pagar ${cents(this.resultQuote?.dueCents)}`;
+  }
+
+  /** El importe ya reservado: hay que decirlo o buscará un cargo que no existe. */
+  get resultHeld(): boolean {
+    return this.resultPending && quoteIsHeld(this.resultQuote);
+  }
+
+  async payFromResult(): Promise<void> {
+    if (!this.resultQuote || this.paySheet) return;
+    await this.openPaySheet(this.resultQuote, false);
+    await this.loadResultQuote();
+  }
+
+  // ----- RESULTADO --------------------
+
+  /** Pendiente de que el negocio la acepte. */
+  get resultPending(): boolean {
+    return this.booking?.status === 'PENDING';
+  }
+
+  get resultDay(): string {
+    return this.booking ? longDate(parseLocal(this.booking.startDateTime)) : '';
+  }
+
+  get resultTime(): string {
+    return this.booking ? time(parseLocal(this.booking.startDateTime)) : '';
+  }
+
+  goToBookings(): void {
+    this.router.navigate(['/citas']);
+  }
+
+  /** «Hecho»: de vuelta a la ficha del negocio, que es de donde se vino. */
+  done(): void {
+    this.exit();
   }
 
   // ----- VISTA --------------------
-
-  get showWorkerStep(): boolean {
-    const workerIds = this.service?.workerIds ?? [];
-    return !this.business?.autonomous && workerIds.length > 1;
-  }
-
-  get availableSlots(): AvailabilitySlot[] {
-    return this.slots.filter(s => s.available);
-  }
-
-  get needsPolicyAcceptance(): boolean {
-    return !!this.business && chargesCancellation(this.business);
-  }
-
-  get workerName(): string {
-    if (!this.workerId) {
-      return 'Cualquiera disponible';
-    }
-    return this.workers.find(w => w.id === this.workerId)?.name ?? `Profesional #${this.workerId}`;
-  }
 
   get dayLabel(): string {
     return this.day ? longDate(this.day) : '';
   }
 
-  price(service: ServiceResponse): string {
+  price(service: BookableService): string {
     return euros(service.price);
   }
 
-  durationLabel(service: ServiceResponse): string {
+  durationLabel(service: BookableService): string {
     return duration(service.duration);
   }
 
-  dayShort(day: Date): string {
-    return relativeDate(day);
+  money(value: number): string {
+    return euros(value);
   }
 
-  goToBooking(): void {
-    this.router.navigate(['/citas']);
+  /** La foto del servicio, como en la tarjeta de servicio de la ficha de la app. */
+  serviceImage(service: BookableService): string | null {
+    return fixImageUrl(service.imageUrl);
   }
 
+  /** Sin foto, el icono de la categoría del negocio, como en la ficha. */
+  get categoryIconName(): string {
+    return categoryIcon(this.business ? primaryCategory(this.business)?.code : null);
+  }
 
+  /** Portada del negocio para el resumen lateral del escritorio. */
+  get coverUrl(): string | null {
+    return fixImageUrl(this.business?.coverImageUrl);
+  }
 
   /**
-   * Los días que se pueden elegir, desde hoy hasta el horizonte del negocio.
-   * Un horizonte de 0 no significa "ninguno": significa que no lo ha
-   * configurado, así que se usa el mes por defecto.
+   * El profesional en el resumen lateral, solo cuando hay a quién elegir y ya
+   * se ha pasado por ese paso: antes de elegir, «Cualquiera disponible» se
+   * leería como una decisión tomada por el cliente.
    */
-  private buildDays(horizon: number): void {
-    const total = Math.min(horizon > 0 ? horizon : 30, 60);
-    const today = new Date();
-    this.days = Array.from({ length: total }, (_, i) => {
-      const day = new Date(today);
-      day.setDate(today.getDate() + i);
-      day.setHours(0, 0, 0, 0);
-      return day;
-    });
+  get asideWorker(): string | null {
+    if (!this.hasTeam || !this.showWorkerStep) return null;
+    return this.steps.indexOf('worker') < this.stepIndexForAside ? this.workerName : null;
   }
+
+  /** El paso actual contado como en la barra; para saber qué ya está elegido. */
+  get stepIndexForAside(): number {
+    const s = this.step === 'auth' || this.step === 'done' ? 'confirm' : this.step;
+    return Math.max(0, this.steps.indexOf(s));
+  }
+
+  /**
+   * Desde hoy hasta el horizonte del negocio. Un horizonte de 0 no significa
+   * "ninguno": significa que no lo ha configurado, y se usa el mes por defecto.
+   */
+  private buildHorizon(): void {
+    const today = startOfToday();
+    const last = new Date(today);
+    last.setDate(today.getDate() + this.horizonDays - 1);
+    this.firstDay = today;
+    this.lastDay = last;
+  }
+}
+
+function startOfToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
 /** El fallo al reservar dicho en cristiano, no con el código HTTP. */
@@ -518,14 +1001,9 @@ function bookingErrorMessage(error: ApiError): string {
   // token, y lo que el cliente necesita saber es que vuelva a entrar.
   if (error.isUnauthorized) return 'Tu sesión ha caducado. Inicia sesión de nuevo.';
 
-  // ⚠️ El mensaje del SERVIDOR manda cuando lo hay.
-  //
-  // Esta función se escribió para `POST /bookings`, donde el único conflicto
-  // posible era el hueco ocupado, así que traducía cualquier 409 a «Ese horario
-  // ya no está disponible». En cuanto hubo otro 409 posible —lo destapó el
-  // camino sin cuenta, con «ese correo ya tiene cuenta»— eso mandaba a mirar
-  // donde no era y no dejaba arreglarlo. El servidor sabe qué ha pasado; esta
-  // función solo pone palabras donde no las hay.
+  // ⚠️ El mensaje del SERVIDOR manda cuando lo hay: sabe qué ha pasado, y un
+  // 409 ya no es solo «hueco ocupado». Esta función solo pone palabras donde
+  // no las hay.
   if (error.message?.trim()) return error.message;
 
   if (error.isPaymentRequired) return 'Este negocio pide una tarjeta guardada para reservar.';

@@ -1,0 +1,88 @@
+<div class="sheet-backdrop" (click)="close()">
+  <div
+    #panel
+    class="sheet sheet--filters"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="attendee-title"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="sheet__head">
+      <h2 class="sheet__title" id="attendee-title">
+        {{ adding ? 'Añadir persona' : '¿Para quién es la cita?' }}
+      </h2>
+      <button type="button" class="sheet__done" (click)="close()" aria-label="Cerrar">
+        <span class="material-symbols-rounded" aria-hidden="true">check</span>
+      </button>
+    </header>
+
+    @if (adding) {
+      <form (ngSubmit)="save()">
+        <div class="form-group__box">
+          <div class="form-row">
+            <label class="form-row__label" for="attendee-name">Nombre</label>
+            <input
+              #nameInput
+              id="attendee-name"
+              name="name"
+              class="form-row__input"
+              type="text"
+              autocomplete="off"
+              maxlength="120"
+              placeholder="Ej. Lucía"
+              [(ngModel)]="newName"
+            />
+          </div>
+        </div>
+        <p class="form-group__footer">Solo el nombre: es lo que verá el negocio en su agenda.</p>
+        @if (error) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+          </p>
+        }
+        <div class="sheet__actions">
+          <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="saving" [disabled]="!newName.trim()">
+            Guardar y elegir
+          </app-button>
+          <app-button variant="text" [fullWidth]="true" (onClick)="cancelAdding()">Volver</app-button>
+        </div>
+      </form>
+    } @else {
+      <div class="at__box" role="group" aria-label="Personas">
+        @if (contacts === null) {
+          <div class="at__skel"><div class="skeleton at__skel-line"></div></div>
+          <div class="at__skel"><div class="skeleton at__skel-line"></div></div>
+        } @else {
+          <button type="button" class="at__row" [attr.aria-pressed]="!current" (click)="choose(null)">
+            <span class="at__name">Mí</span>
+            <span class="material-symbols-rounded at__tick" aria-hidden="true">{{ !current ? 'check' : '' }}</span>
+          </button>
+          @for (c of contacts; track c.id) {
+            <button
+              type="button"
+              class="at__row"
+              [attr.aria-pressed]="current?.id === c.id"
+              (click)="choose(c)"
+            >
+              <span class="at__name">{{ c.name }}</span>
+              <span class="material-symbols-rounded at__tick" aria-hidden="true">{{ current?.id === c.id ? 'check' : '' }}</span>
+            </button>
+          }
+          <button type="button" class="at__row at__row--action" (click)="startAdding()">
+            <span class="at__name">Añadir persona</span>
+          </button>
+        }
+      </div>
+      <!-- El pie dice la consecuencia, que es lo único que no se deduce de la
+           lista: elegir a otra persona no cambia de quién es la cita. -->
+      <p class="at__foot">
+        @if (loadFailed) {
+          No se han podido cargar tus personas.
+        } @else {
+          La reserva, el pago y los avisos siguen siendo tuyos. El negocio verá para quién es la cita.
+        }
+      </p>
+    }
+  </div>
+</div>

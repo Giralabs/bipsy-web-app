@@ -11,20 +11,48 @@ import {
   CancellationFee,
 } from '../../models/bipsy.models';
 import { ButtonComponent } from '../../components/button/button.component';
-import { euros, isoDate, isoLocalDateTime, longDate, relativeDate, time } from '../../shared/dates';
+import { FlowHeaderComponent } from '../../components/booking-steps/flow-header.component';
+import { MonthCalendarComponent } from '../../components/booking-steps/month-calendar.component';
+import { SlotGridComponent } from '../../components/booking-steps/slot-grid.component';
+import {
+  BookingChargeOutcome,
+  BookingChargeSheetComponent,
+} from '../../components/booking-charge-sheet/booking-charge-sheet.component';
+import {
+  euros,
+  isoDate,
+  isoLocalDateTime,
+  longDate,
+  parseLocal,
+  time,
+} from '../../shared/dates';
+
+type Step = 'date' | 'time' | 'confirm';
 
 /**
  * Cambiar el día o la hora de una cita. Port de `RescheduleScreen`.
  *
- * Repite la validación completa de disponibilidad —es una reserva nueva en
- * todo salvo en el id— y **se penaliza igual que cancelar**, calculando sobre
- * la hora original. Por eso la tarifa se enseña ANTES de elegir hueco: cambiar
- * de día dentro de la ventana cuesta lo mismo que echarse atrás.
+ * Reutiliza el calendario y la rejilla de horas del flujo de reserva: la
+ * disponibilidad se pinta exactamente igual que al reservar y no hay dos
+ * versiones de la misma pantalla.
+ *
+ * Repite la validación completa —es una reserva nueva en todo salvo en el id—
+ * y **se penaliza igual que cancelar**, calculando sobre la hora original. El
+ * importe se enseña en el paso final, en el mismo sitio que el botón que lo
+ * acepta: antes era un diálogo encima de la rejilla, y el aviso se leía como
+ * una interrupción y no como lo que es, el precio del cambio.
  */
 @Component({
   selector: 'app-reschedule',
   standalone: true,
-  imports: [CommonModule, ButtonComponent],
+  imports: [
+    CommonModule,
+    ButtonComponent,
+    FlowHeaderComponent,
+    MonthCalendarComponent,
+    SlotGridComponent,
+    BookingChargeSheetComponent,
+  ],
   templateUrl: './reschedule.component.html',
   styleUrl: './reschedule.component.css',
 })
@@ -38,11 +66,20 @@ export class RescheduleComponent implements OnInit {
   booking?: BookingResponse;
   business?: BusinessResponse;
   fee: CancellationFee | null = null;
+  feeLoading = true;
 
-  days: Date[] = [];
+  step: Step = 'date';
+  firstDay = startOfToday();
+  lastDay = startOfToday();
+  horizonDays = 30;
+
   day?: Date;
   slots: AvailabilitySlot[] = [];
   slotsLoading = false;
+  slotsError: string | null = null;
+  startTime?: string;
+  /** Libres en la hora elegida, por si la cita no tenía profesional. */
+  private slotWorkerIds: number[] = [];
 
   isLoading = true;
   saving = false;
@@ -59,7 +96,6 @@ export class RescheduleComponent implements OnInit {
       this.isLoading = false;
       return;
     }
-    this.isLoading = false;
 
     const [business, fee] = await Promise.allSettled([
       this.catalog.business(this.booking.businessId),
@@ -67,14 +103,125 @@ export class RescheduleComponent implements OnInit {
     ]);
     if (business.status === 'fulfilled') {
       this.business = business.value;
-      this.buildDays(this.business.availabilityHorizonDays ?? 30);
-    } else {
-      this.buildDays(30);
     }
+    this.buildHorizon(this.business?.availabilityHorizonDays || 30);
+    // Sin día elegido queda elegido hoy, como al reservar: un calendario con
+    // hoy resaltado y el botón apagado decía dos cosas a la vez.
+    this.day = new Date(this.firstDay);
     if (fee.status === 'fulfilled') {
       this.fee = fee.value;
     }
+    this.feeLoading = false;
+    this.isLoading = false;
   }
+
+  // ----- CABECERA --------------------
+
+  get stepTitle(): string {
+    switch (this.step) {
+      case 'date': return '¿Qué día?';
+      case 'time': return '¿A qué hora?';
+      default: return 'Confirma el cambio';
+    }
+  }
+
+  get progress(): number {
+    return (['date', 'time', 'confirm'].indexOf(this.step) + 1) / 3;
+  }
+
+  back(): void {
+    this.error = null;
+    if (this.step === 'confirm') {
+      this.step = 'time';
+    } else if (this.step === 'time') {
+      this.step = 'date';
+    } else {
+      this.location.back();
+    }
+  }
+
+  // ----- PASOS --------------------
+
+  chooseDay(day: Date): void {
+    if (this.day && day.getTime() === this.day.getTime()) {
+      return;
+    }
+    this.day = day;
+    this.startTime = undefined;
+    this.slotWorkerIds = [];
+  }
+
+  toTime(): void {
+    this.step = 'time';
+    window.scrollTo({ top: 0 });
+    void this.loadSlots();
+  }
+
+  async loadSlots(): Promise<void> {
+    if (!this.booking || !this.day) {
+      return;
+    }
+    // Como al reservar: si llega tarde la respuesta de un día que ya no es el
+    // elegido, no debe pisar las horas del día bueno.
+    const seq = ++this.slotsSeq;
+    this.slotsLoading = true;
+    this.slotsError = null;
+    this.slots = [];
+    try {
+      const res = await this.catalog.availability(
+        this.booking.serviceId,
+        isoDate(this.day),
+        this.booking.workerId,
+      );
+      if (seq !== this.slotsSeq) return;
+      this.slots = res.slots ?? [];
+    } catch (raw) {
+      if (seq !== this.slotsSeq) return;
+      this.slotsError = ApiError.from(raw).message;
+      this.slots = [];
+    } finally {
+      if (seq === this.slotsSeq) this.slotsLoading = false;
+    }
+  }
+
+  private slotsSeq = 0;
+
+  chooseSlot(slot: AvailabilitySlot): void {
+    this.startTime = slot.start;
+    this.slotWorkerIds = slot.availableWorkerIds ?? [];
+  }
+
+  get hasFreeSlots(): boolean {
+    return this.slots.some(s => s.available);
+  }
+
+  toConfirm(): void {
+    if (this.startTime) {
+      this.error = null;
+      this.step = 'confirm';
+      window.scrollTo({ top: 0 });
+      void this.refreshFee();
+    }
+  }
+
+  /**
+   * El importe se vuelve a pedir al llegar al resumen: el de la carga puede ser
+   * de antes de entrar en la ventana —elegir día y hora lleva su rato— y el
+   * servidor cobra con la hora de AHORA. Si falla, se queda el que había.
+   */
+  private async refreshFee(): Promise<void> {
+    if (!this.booking) return;
+    this.feeLoading = true;
+    try {
+      this.fee = await this.bookings.cancellationFee(this.booking.id);
+    } catch {
+      // Se sigue con el de la carga.
+    } finally {
+      this.feeLoading = false;
+    }
+  }
+
+  // ----- CONFIRMAR --------------------
 
   get willCharge(): boolean {
     return !!this.fee?.willCharge;
@@ -84,90 +231,116 @@ export class RescheduleComponent implements OnInit {
     return euros((this.fee?.amountCents ?? 0) / 100);
   }
 
+  get confirmLabel(): string {
+    return this.willCharge ? `Cambiar y pagar ${this.feeAmount}` : 'Confirmar cambio';
+  }
+
+  /** "Viernes, 30 de octubre · 10:30". */
   get currentWhen(): string {
     if (!this.booking) {
       return '';
     }
-    const start = new Date(this.booking.startDateTime);
-    return `${longDate(start)} a las ${time(start)}`;
+    const start = parseLocal(this.booking.startDateTime);
+    return `${longDate(start)} · ${time(start)}`;
   }
 
-  get availableSlots(): AvailabilitySlot[] {
-    return this.slots.filter(s => s.available);
+  get dayLabel(): string {
+    return this.day ? longDate(this.day) : '';
   }
 
-  dayShort(day: Date): string {
-    return relativeDate(day);
+  get newWhen(): string {
+    return this.day && this.startTime ? `${longDate(this.day)} · ${this.startTime}` : '';
   }
 
-  async chooseDay(day: Date): Promise<void> {
-    if (!this.booking) {
+  /** La hoja de cobro abierta: cambiar dentro de la ventana cuesta dinero. */
+  chargeSheetOpen = false;
+  /**
+   * El cambio pasó por la hoja de cobro: ella ya ha dicho cómo acabó el cargo
+   * de verdad, y el resultado no debe repetir «se ha cobrado» a ciegas.
+   */
+  chargedViaSheet = false;
+
+  /**
+   * Sin cargo no hay segunda confirmación: un aviso extra que no avisa de nada
+   * solo enseña a ignorarlos. Con cargo va por la hoja de cobro, como en la
+   * app: enseña la tarjeta y cómo quedó el cargo, en vez de darlo por bueno
+   * antes de saber si el banco lo ha aceptado.
+   */
+  confirmOrCharge(): void {
+    if (this.saving || !this.day || !this.startTime) return;
+    if (this.willCharge) {
+      this.error = null;
+      this.chargeSheetOpen = true;
       return;
     }
-    this.day = day;
-    this.slotsLoading = true;
-    this.error = null;
-    try {
-      const res = await this.catalog.availability(
-        this.booking.serviceId,
-        isoDate(day),
-        this.booking.workerId,
-      );
-      this.slots = res.slots ?? [];
-    } catch (raw) {
-      this.error = ApiError.from(raw).message;
-      this.slots = [];
-    } finally {
-      this.slotsLoading = false;
+    void this.confirm();
+  }
+
+  readonly rescheduleForCharge = async (): Promise<void> => {
+    this.booking = await this.bookings.reschedule(this.booking!.id, this.rescheduleRequest());
+  };
+
+  get chargeConcept(): string {
+    return `Cambio de cita · ${this.booking?.serviceName ?? ''}`;
+  }
+
+  onChargeClosed(outcome: BookingChargeOutcome): void {
+    this.chargeSheetOpen = false;
+    if (!outcome.done) return;
+    this.chargedViaSheet = true;
+    this.done = true;
+    window.scrollTo({ top: 0 });
+    if (outcome.openPayments) {
+      this.router.navigate(['/pagos']);
     }
   }
 
-  async confirm(slot: AvailabilitySlot): Promise<void> {
-    if (!this.booking || !this.day || this.saving) {
-      return;
-    }
-    const message = this.willCharge
-      ? `Cambiar la cita ahora cuesta ${this.feeAmount} (${this.fee!.feePercent} % del servicio), ` +
-        `porque quedan menos de ${this.fee!.windowHours} h. ¿Seguimos?`
-      : `¿Movemos tu cita al ${longDate(this.day)} a las ${slot.start}?`;
-    if (!confirm(message)) {
-      return;
-    }
+  private rescheduleRequest() {
+    return {
+      startDateTime: isoLocalDateTime(this.day!, this.startTime!),
+      // Se mantiene el profesional de la cita. Si no tenía —y el servidor
+      // exige uno—, el primero libre en el hueco nuevo, igual que al crear.
+      workerId: this.booking!.workerId ?? this.slotWorkerIds[0],
+    };
+  }
 
+  async confirm(): Promise<void> {
+    if (!this.booking || !this.day || !this.startTime || this.saving) {
+      return;
+    }
     this.saving = true;
     this.error = null;
     try {
-      this.booking = await this.bookings.reschedule(this.booking.id, {
-        startDateTime: isoLocalDateTime(this.day, slot.start),
-        workerId: this.booking.workerId,
-      });
+      this.booking = await this.bookings.reschedule(this.booking.id, this.rescheduleRequest());
       this.done = true;
+      window.scrollTo({ top: 0 });
     } catch (raw) {
       const error = ApiError.from(raw);
-      this.error = error.isConflict
-        ? 'Ese hueco acaba de ocuparse. Elige otro.'
-        : error.message;
+      if (error.isConflict) {
+        this.error = 'Ese hueco acaba de ocuparse. Elige otro.';
+      } else if (error.networkError) {
+        this.error = 'Sin conexión. Comprueba tu red.';
+      } else {
+        this.error = error.message || 'No hemos podido cambiar la cita.';
+      }
     } finally {
       this.saving = false;
     }
-  }
-
-  goBack(): void {
-    this.location.back();
   }
 
   goToDetail(): void {
     this.router.navigate(['/citas', this.booking!.id]);
   }
 
-  private buildDays(horizon: number): void {
-    const total = Math.min(horizon > 0 ? horizon : 30, 60);
-    const today = new Date();
-    this.days = Array.from({ length: total }, (_, i) => {
-      const day = new Date(today);
-      day.setDate(today.getDate() + i);
-      day.setHours(0, 0, 0, 0);
-      return day;
-    });
+  private buildHorizon(horizon: number): void {
+    this.horizonDays = horizon > 0 ? horizon : 30;
+    const last = new Date(this.firstDay);
+    last.setDate(this.firstDay.getDate() + this.horizonDays - 1);
+    this.lastDay = last;
   }
+}
+
+function startOfToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }

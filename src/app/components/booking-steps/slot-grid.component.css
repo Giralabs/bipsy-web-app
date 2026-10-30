@@ -1,0 +1,109 @@
+:host { display: block; }
+
+.sg { display: flex; flex-direction: column; gap: 20px; }
+
+.sg__group { display: flex; flex-direction: column; gap: 8px; }
+
+/* Encabezado de tramo: pequeño y en mayúsculas, el mismo que el de las listas
+   agrupadas. Con más separación las letras se desparramaban. */
+.sg__head {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-text-2);
+}
+
+/* Cuatro por fila en el móvil, como la app; en escritorio sobra sitio y con
+   seis se ve la mañana entera sin bajar. */
+.sg__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .sg__grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+/* Una hora: plana. Libre es una superficie, elegida se rellena, ocupada se
+   apaga —sin tachar, que el gris ya lo dice—. */
+.sg__slot {
+  height: 44px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.sg__slot:hover:not(:disabled):not(.sg__slot--on) { background: var(--clr-surface-hover); }
+.sg__slot:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+
+.sg__slot--on {
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-weight: 700;
+}
+
+.sg__slot:disabled {
+  background: var(--clr-field);
+  color: var(--clr-text-3);
+  cursor: not-allowed;
+}
+
+/* Móvil: la pastilla de la app —cuatro por fila, proporción 2,2 y radio 20—.
+   Con 44 de alto fijo salían más gordas que en el teléfono. */
+@media (max-width: 767px) {
+  .sg__slot { height: auto; aspect-ratio: 2.2; border-radius: 20px; }
+  .sg .sg__skel { height: auto; aspect-ratio: 2.2; border-radius: 20px; }
+}
+
+/* Esqueleto con la misma forma que lo que viene. */
+.sg__skel-head { width: 64px; height: 12px; border-radius: 6px; }
+.sg__skel { height: 44px; border-radius: var(--r-pill); }
+
+/* Lista de espera: una línea con su botón, encima de las horas. Una sola
+   línea y no un bloque: lo que se ha venido a hacer aquí es elegir hora. */
+.sg__wait {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px 10px 14px;
+  border-radius: var(--r-sm);
+  /* `primary` al 8 %, el `GipsiCard` del aviso en la app. */
+  background: color-mix(in srgb, var(--clr-mint) 8%, var(--clr-base));
+}
+
+.sg__wait-icon { flex-shrink: 0; font-size: 20px; color: var(--clr-mint); }
+
+.sg__wait-text {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--clr-text);
+  line-height: 1.4;
+}
+
+.sg__exits {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sg__done {
+  flex-basis: 100%;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--clr-success);
+}

@@ -1,0 +1,51 @@
+<div class="cal">
+  <div class="cal__head">
+    <button
+      type="button"
+      class="cal__nav"
+      [disabled]="!canPrev"
+      aria-label="Mes anterior"
+      (click)="prev()"
+    >
+      <span class="material-symbols-rounded" aria-hidden="true">chevron_left</span>
+    </button>
+    <p class="cal__month" aria-live="polite">{{ title }}</p>
+    <button
+      type="button"
+      class="cal__nav"
+      [disabled]="!canNext"
+      aria-label="Mes siguiente"
+      (click)="next()"
+    >
+      <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+    </button>
+  </div>
+
+  <div class="cal__grid" role="group" [attr.aria-label]="title">
+    @for (w of weekdays; track $index) {
+      <abbr class="cal__wd" [attr.title]="weekdayNames[$index]">{{ w }}</abbr>
+    }
+    @for (cell of cells; track $index) {
+      @if (cell) {
+        <button
+          type="button"
+          class="cal__day"
+          [class.cal__day--today]="cell.today"
+          [class.cal__day--on]="isSelected(cell)"
+          [disabled]="!cell.enabled"
+          [attr.aria-pressed]="isSelected(cell)"
+          [attr.aria-current]="cell.today ? 'date' : null"
+          [attr.aria-label]="label(cell)"
+          [attr.data-key]="cell.key"
+          [tabIndex]="tabIndex(cell)"
+          (click)="pick(cell)"
+          (keydown)="onKey($event, cell)"
+        >
+          {{ cell.date.getDate() }}
+        </button>
+      } @else {
+        <span class="cal__gap" aria-hidden="true"></span>
+      }
+    }
+  </div>
+</div>

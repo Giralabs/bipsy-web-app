@@ -1,0 +1,150 @@
+/* La hoja es una columna: cabecera arriba, lo que se rellena en medio con su
+   propio scroll, y el botón fijo abajo. Sin esto el scroll era de la hoja
+   entera y el botón quedaba bajo el pliegue. */
+.wj {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px 0 20px;
+}
+
+/* La hoja recibe el foco al abrirse para que el tabulador empiece dentro,
+   pero no es un control: sin anillo. */
+.wj:focus,
+.wj:focus-visible { outline: none; box-shadow: var(--shadow-float); }
+
+.wj__head { padding: 0 20px; margin-bottom: 8px; align-items: flex-start; }
+.wj__titles { flex: 1; min-width: 0; }
+.wj__head .sheet__title { text-align: left; }
+
+.wj__sub {
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cerrar sin apuntarse no es «hecho»: un aspa neutra, no el tick de acento. */
+.wj__close {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--clr-field);
+  color: var(--clr-text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.wj__close:hover:not(:disabled) { color: var(--clr-text); }
+.wj__close:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+.wj__close .material-symbols-rounded { font-size: 20px; }
+
+.wj__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 20px 4px;
+}
+
+.wj__section { margin-top: 20px; }
+
+.wj__header {
+  padding: 0 4px 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-text-2);
+}
+
+/* Sobre la superficie de la hoja, el bloque va en el relleno de campo: blanco
+   sobre blanco no se distinguía. */
+.wj__box {
+  background: var(--clr-field);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.wj__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--ff);
+  color: var(--clr-text);
+  cursor: pointer;
+}
+
+.wj__box > * + * { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+.wj__row:hover { background: var(--clr-surface-hover); }
+.wj__row:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: -2px; }
+
+.wj__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.wj__row-title { font-size: 0.9375rem; font-weight: 600; }
+.wj__row-grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.wj__row-sub { font-size: 0.75rem; font-weight: 500; color: var(--clr-text-2); }
+
+/* El valor elegido a la derecha, como en las filas de ajustes del sistema. */
+.wj__row-value {
+  flex: 1;
+  text-align: right;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+}
+
+.wj__chev { font-size: 20px; color: var(--clr-text-3); transition: transform .2s ease; }
+.wj__chev--open { transform: rotate(90deg); }
+
+/* El hueco del tick se reserva siempre, para que las filas no bailen. */
+.wj__tick { width: 20px; font-size: 20px; color: var(--clr-mint); flex-shrink: 0; }
+
+.wj__cal { padding: 4px 0; }
+
+.wj__notes {
+  display: block;
+  width: 100%;
+  min-height: 84px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  resize: vertical;
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--clr-text);
+}
+.wj__notes::placeholder { color: var(--clr-text-3); }
+.wj__notes:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: -2px; border-radius: var(--r-md); }
+
+.wj__foot {
+  padding: 16px 20px 0;
+  box-shadow: inset 0 0.5px 0 var(--clr-border);
+}
+
+.wj__foot .flow__error { margin: 0 0 12px; }
+
+.wj__fine {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--clr-text-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wj__chev { transition: none; }
+}

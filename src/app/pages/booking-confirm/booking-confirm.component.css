@@ -1,0 +1,54 @@
+/* Lo primero de la columna: el hueco de arriba ya lo pone el armazón. */
+.bc__countdown { display: block; margin-top: 8px; }
+
+/* El valor a la derecha y en varias líneas si hace falta: «Miércoles, 3 de
+   septiembre a las 10:30» no cabe entero en un móvil, y cortarlo con puntos
+   suspensivos escondería justo la hora. */
+.bc__value {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 0;
+  text-align: right;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--clr-text-2);
+  overflow-wrap: anywhere;
+}
+
+.bc__text {
+  padding: 14px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text-2);
+  white-space: pre-line;
+}
+
+/* La casilla dentro del mismo bloque que la política, con su separador: es
+   la respuesta a ese texto, no un ajuste suelto. */
+.bc__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  box-shadow: inset 0 0.5px 0 var(--clr-border);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--clr-text);
+}
+
+.bc__check input {
+  margin-top: 1px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--clr-mint);
+  flex-shrink: 0;
+}
+
+.bc__card-note { margin-top: 16px; }
+
+.bc__skeleton { height: 220px; margin-top: 24px; }
+.bc__skeleton--short { height: 72px; }

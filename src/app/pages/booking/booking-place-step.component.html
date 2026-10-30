@@ -1,0 +1,67 @@
+<p class="ps__intro">
+  @if (choosesPlace) {
+    Este servicio se presta en el local y también a domicilio.
+  } @else {
+    Este servicio es a domicilio: dinos dónde quieres que te atendamos.
+  }
+</p>
+
+@if (choosesPlace) {
+  <div class="ps__box" role="group" aria-label="Dónde te atendemos">
+    <button
+      type="button"
+      class="ps__row"
+      [attr.aria-pressed]="place === 'AT_BUSINESS'"
+      (click)="choosePlace('AT_BUSINESS')"
+    >
+      <span class="ps__row-main">
+        <span class="ps__row-title">En el local</span>
+        @if (venueLabel) {
+          <span class="ps__row-sub">{{ venueLabel }}</span>
+        }
+      </span>
+      <span class="material-symbols-rounded ps__tick" aria-hidden="true">
+        {{ place === 'AT_BUSINESS' ? 'check' : '' }}
+      </span>
+    </button>
+    <button
+      type="button"
+      class="ps__row"
+      [attr.aria-pressed]="place === 'AT_CUSTOMER'"
+      (click)="choosePlace('AT_CUSTOMER')"
+    >
+      <span class="ps__row-main">
+        <span class="ps__row-title">A domicilio</span>
+        <span class="ps__row-sub">{{ homeSubtitle }}</span>
+      </span>
+      <span class="material-symbols-rounded ps__tick" aria-hidden="true">
+        {{ place === 'AT_CUSTOMER' ? 'check' : '' }}
+      </span>
+    </button>
+  </div>
+}
+
+@if (asksAddress) {
+  <div class="ps__address">
+    <app-address-picker
+      [address]="address"
+      [signedIn]="signedIn"
+      [area]="area"
+      [businessName]="business.name"
+      verb="reservar"
+      (addressChange)="addressChange.emit($event)"
+    />
+
+    <div class="flow__actions">
+      <app-button
+        variant="primary"
+        size="large"
+        [fullWidth]="true"
+        trailingIcon="arrow_forward"
+        [disabled]="!ready"
+        [loading]="continuing"
+        (onClick)="continue()"
+      >Continuar</app-button>
+    </div>
+  </div>
+}

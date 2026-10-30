@@ -1,0 +1,132 @@
+:host { display: block; }
+
+.ap__header {
+  padding: 0 6px 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--clr-text-2);
+}
+
+/* Lista agrupada con el tick a la derecha, como las hojas de ajustes del
+   sistema. Sin iconos a la izquierda: el texto ya dice qué es cada fila. */
+.ap__box {
+  background: var(--clr-surface);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.ap__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--ff);
+  color: var(--clr-text);
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+
+.ap__row + .ap__row { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+.ap__row:hover:not(:disabled) { background: var(--clr-surface-hover); }
+.ap__row:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: -2px; }
+.ap__row:disabled { opacity: .5; cursor: default; }
+
+.ap__row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ap__row-title { font-size: 0.9375rem; font-weight: 600; }
+
+.ap__row-sub {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--clr-text-2);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ap__row--action .ap__row-title { color: var(--clr-mint); }
+
+/* El hueco del tick se reserva siempre, para que las filas no bailen. */
+.ap__tick { width: 20px; font-size: 20px; color: var(--clr-mint); flex-shrink: 0; }
+.ap__chev { font-size: 18px; color: var(--clr-text-3); flex-shrink: 0; }
+
+/* Esqueleto de la libreta. */
+.ap__skel { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; }
+.ap__skel + .ap__skel { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+.ap__skel-line { height: 12px; width: 40%; border-radius: 6px; background: var(--clr-field); }
+.ap__skel-line--short { width: 70%; }
+
+.ap__form { margin-top: 0; }
+
+/* «Código postal» pasa por poco del ancho común de etiqueta (108): partida en
+   dos líneas, la fila crecía y desalineaba el bloque. Cabe en el hueco. */
+.ap__nowrap { white-space: nowrap; }
+
+/* Los avisos en el color del texto y no en ámbar: `--clr-warn` es un color de
+   relleno y, como texto sobre blanco, no se lee. */
+.ap__warn { color: var(--clr-text); }
+
+.ap__notice {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: var(--r-sm);
+  background: var(--clr-surface);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--clr-text);
+}
+
+.ap__back { margin-top: 8px; }
+
+/* Interruptor de guardar: la fila entera es la etiqueta, así que se pulsa en
+   cualquier punto. */
+.ap__switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  background: var(--clr-surface);
+  cursor: pointer;
+}
+
+.ap__switch-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+
+/* Un interruptor de verdad, dibujado sobre el checkbox nativo: sigue siendo un
+   input, con su foco y su teclado. */
+.ap__switch-input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border-radius: var(--r-pill);
+  background: var(--clr-subtle);
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+
+.ap__switch-input::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .2s ease;
+}
+
+.ap__switch-input:checked { background: var(--clr-mint); }
+.ap__switch-input:checked::after { transform: translateX(18px); background: var(--clr-mint-text); }
+.ap__switch-input:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }

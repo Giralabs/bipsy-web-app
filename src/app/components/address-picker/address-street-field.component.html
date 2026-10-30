@@ -1,0 +1,41 @@
+<div class="form-row" [class.asf--stack]="stacked">
+  <label class="form-row__label" [for]="inputId">{{ label }}</label>
+  <input
+    class="form-row__input"
+    type="text"
+    autocomplete="street-address"
+    maxlength="255"
+    role="combobox"
+    aria-autocomplete="list"
+    [id]="inputId"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    [attr.aria-expanded]="expanded"
+    [attr.aria-controls]="listboxId"
+    [attr.aria-activedescendant]="active >= 0 ? optionId(active) : null"
+    [ngModel]="value"
+    (ngModelChange)="onInput($event)"
+    (keydown)="onKey($event)"
+    (blur)="onBlur()"
+  />
+</div>
+<!-- El listbox existe siempre (vacío y oculto) para que `aria-controls`
+     apunte a algo real también antes de la primera búsqueda. -->
+<ul class="asf__list" role="listbox" aria-label="Sugerencias" [id]="listboxId" [hidden]="!expanded">
+  @for (s of suggestions; track s.placeId; let i = $index) {
+    <li
+      role="option"
+      class="asf__item"
+      [id]="optionId(i)"
+      [class.asf__item--on]="i === active"
+      [attr.aria-selected]="i === active"
+      (mousedown)="$event.preventDefault()"
+      (click)="pick(s)"
+    >
+      <span class="asf__main">{{ s.mainText }}</span>
+      @if (s.secondaryText) {
+        <span class="asf__sub">{{ s.secondaryText }}</span>
+      }
+    </li>
+  }
+</ul>

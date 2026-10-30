@@ -1,0 +1,203 @@
+<!-- Móvil: la `AppBar` de la app, de borde a borde. En escritorio va la
+     cabecera de la columna (abajo, `.cf__desk`). -->
+<header class="cf__bar">
+  <button type="button" class="cf__bar-back" (click)="goBack()" aria-label="Volver">
+    <span class="material-symbols-rounded" aria-hidden="true">arrow_back_ios_new</span>
+  </button>
+  <h1 class="cf__bar-title">Confirma tu cita</h1>
+  <span aria-hidden="true"></span>
+</header>
+
+<div class="flow cf anim-fade-up">
+  <div class="cf__inner">
+
+    <div class="cf__head cf__desk">
+      <button type="button" class="flow__back" (click)="goBack()">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        Volver
+      </button>
+      <!-- Quién te la da; «Te han dado cita» ya lo dice el plazo de debajo. -->
+      @if (booking) {
+        <p class="cf__eyebrow">{{ businessLabel }}</p>
+      }
+      <h2 class="cf__title">Confirma tu cita</h2>
+    </div>
+
+    @if (isLoading && !booking) {
+      <div class="skeleton bc__skeleton bc__skeleton--short"></div>
+      <div class="skeleton bc__skeleton"></div>
+      <div class="skeleton bc__skeleton bc__skeleton--short"></div>
+    } @else if (loadError || !booking) {
+      <div class="empty-state">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ loadError?.networkError ? 'wifi_off' : 'event_busy' }}</span>
+        <h3>{{ loadError?.networkError ? 'Sin conexión' : 'No se ha podido cargar la cita' }}</h3>
+        @if (loadError?.message) {
+          <p>{{ loadError?.message }}</p>
+        }
+        <app-button variant="secondary" icon="refresh" (onClick)="load()">Reintentar</app-button>
+      </div>
+    } @else if (!isOpen) {
+
+      <!-- ══════════ YA RESUELTA ══════════ -->
+      <div class="empty-state">
+        <span class="material-symbols-rounded" aria-hidden="true">{{ booking.status === 'CONFIRMED' ? 'event_available' : 'event_busy' }}</span>
+        <h3>{{ resolved.title }}</h3>
+        <p>{{ resolved.message }}</p>
+      </div>
+      <div class="cf__actions cf__actions--inline">
+        @if (canOpenBooking) {
+          <app-button variant="primary" size="large" [fullWidth]="true" (onClick)="openBooking()">
+            Ver la cita
+          </app-button>
+        }
+        <app-button variant="secondary" size="large" [fullWidth]="true" (onClick)="goToBookings()">
+          Ir a Mis citas
+        </app-button>
+      </div>
+
+    } @else {
+
+      <!-- ══════════ ESPERA RESPUESTA ══════════ -->
+      <div class="cf__grid">
+        <div class="cf__main">
+          <app-deadline-countdown
+            class="bc__countdown"
+            [expiresAt]="booking.confirmExpiresAt!"
+            title="Te han dado cita"
+            before="Te quedan"
+            after="para confirmarla"
+            [urgentUnderMs]="180000"
+            (expired)="onExpired()"
+          />
+          <!-- Tres minutos y no la hora del aviso de hueco: todo el plazo son diez
+               minutos, y con aquel umbral saldría en rojo desde el primer segundo.
+               Un color que está siempre puesto no avisa de nada. -->
+
+          <!-- En el móvil los datos van aquí, en la lista agrupada de la app; en
+               escritorio, en la tarjeta de la derecha. Una sola vez cada uno. -->
+          @if (!desktop()) {
+            <div class="form-group">
+              <div class="form-group__box">
+                <div class="form-row">
+                  <span class="form-row__label">Negocio</span>
+                  <span class="bc__value">{{ businessLabel }}</span>
+                </div>
+                <div class="form-row">
+                  <span class="form-row__label">Servicio</span>
+                  <span class="bc__value">{{ booking.serviceName }}</span>
+                </div>
+                <div class="form-row">
+                  <span class="form-row__label">Cuándo</span>
+                  <span class="bc__value">{{ whenLabel }}</span>
+                </div>
+                @if (booking.workerName) {
+                  <div class="form-row">
+                    <span class="form-row__label">Profesional</span>
+                    <span class="bc__value">{{ booking.workerName }}</span>
+                  </div>
+                }
+                @if (priceLabel) {
+                  <div class="form-row">
+                    <span class="form-row__label">Precio</span>
+                    <span class="bc__value">{{ priceLabel }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (booking.notes) {
+            <div class="form-group">
+              <p class="form-group__header">Nota del negocio</p>
+              <div class="form-group__box">
+                <p class="bc__text">{{ booking.notes }}</p>
+              </div>
+            </div>
+          }
+
+          <!-- La política es lo que sostiene el acuerdo: sin aceptarla aquí, un
+               cargo posterior no tendría base. -->
+          @if (needsPolicy) {
+            <div class="form-group">
+              <p class="form-group__header">Política de cancelación</p>
+              <div class="form-group__box">
+                <p class="bc__text">{{ booking.policyText }}</p>
+                <label class="bc__check">
+                  <input type="checkbox" [(ngModel)]="acceptedPolicy" [disabled]="sending" />
+                  <span>Acepto la política de cancelación</span>
+                </label>
+              </div>
+            </div>
+          }
+
+          <!-- Falta la tarjeta que pide el negocio: se avisa antes de que el botón
+               cambie de texto, para que el cambio no sorprenda. -->
+          @if (needsCard) {
+            <p class="form-group__footer bc__card-note">
+              Este negocio pide una tarjeta guardada para confirmar. La guardas aquí en un paso:
+              no se te cobra nada ahora.
+            </p>
+          }
+
+          @if (error) {
+            <p class="flow__error" role="alert">
+              <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+            </p>
+          }
+
+          <div class="cf__actions">
+            <app-button
+              variant="primary"
+              size="large"
+              [fullWidth]="true"
+              [loading]="sending"
+              [disabled]="!canAccept"
+              [icon]="needsCard ? 'credit_card' : ''"
+              (onClick)="confirmOrAddCard()"
+            >
+              {{ needsCard ? 'Añadir tarjeta y continuar' : 'Confirmar cita' }}
+            </app-button>
+            <app-button variant="text" [fullWidth]="true" [disabled]="sending" (onClick)="decline()">
+              No me viene bien
+            </app-button>
+          </div>
+
+          <p class="flow__subtitle cf__fineprint">
+            Rechazarla no te cuesta nada y el hueco vuelve a quedar libre.
+            Si se te pasa el plazo, la cita se cancela sola.
+          </p>
+        </div>
+
+        @if (desktop()) {
+          <aside class="cf__side" aria-label="Tu cita">
+            <div class="cf__card">
+              <div class="cf__card-head">
+                <h3 class="cf__card-service">{{ booking.serviceName }}</h3>
+                <p class="cf__card-business">{{ businessLabel }}</p>
+              </div>
+              <dl class="cf__card-list">
+                <div class="cf__card-row"><dt>Cuándo</dt><dd>{{ whenLabel }}</dd></div>
+                @if (booking.workerName) {
+                  <div class="cf__card-row"><dt>Profesional</dt><dd>{{ booking.workerName }}</dd></div>
+                }
+                @if (priceLabel) {
+                  <div class="cf__card-row"><dt>Precio</dt><dd>{{ priceLabel }}</dd></div>
+                }
+              </dl>
+            </div>
+          </aside>
+        }
+      </div>
+    }
+
+    <!-- La hoja de tarjeta, la misma que en el flujo de reserva. -->
+    @if (cardSheetOpen) {
+      <app-add-card-sheet
+        [publishableKey]="stripeKey"
+        reason="Se usa para cobrar la tarifa solo si cancelas tarde o no acudes. Ahora no se te cobra nada."
+        (saved)="onCardSaved()"
+        (closed)="onCardSheetClosed()"
+      ></app-add-card-sheet>
+    }
+  </div>
+</div>

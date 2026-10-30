@@ -1,0 +1,52 @@
+/* Sobre la superficie de la hoja, el bloque va en el relleno de campo: blanco
+   sobre blanco no se distinguía. */
+.at__box {
+  background: var(--clr-field);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.at__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: var(--ff);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  cursor: pointer;
+}
+
+.at__row + .at__row { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+.at__row:hover { background: var(--clr-surface-hover); }
+.at__row:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: -2px; }
+.at__row--action { color: var(--clr-mint); }
+
+.at__name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.at__tick { width: 20px; font-size: 20px; color: var(--clr-mint); flex-shrink: 0; }
+
+.at__foot {
+  padding: 10px 4px 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--clr-text-2);
+}
+
+.at__skel { padding: 18px 16px; }
+.at__skel + .at__skel { box-shadow: inset 0 0.5px 0 var(--clr-border); }
+.at__skel-line { width: 45%; height: 12px; border-radius: 6px; background: var(--clr-surface-hover); }
+
+/* La hoja recibe el foco al abrirse para que el tabulador empiece dentro,
+   pero no es un control: sin anillo, que la marcaría como si lo fuera. */
+.sheet:focus,
+.sheet:focus-visible { outline: none; box-shadow: var(--shadow-float); }
+
+/* Dentro de la hoja el bloque del formulario también va en relleno de campo. */
+.form-group__box { background: var(--clr-field); }

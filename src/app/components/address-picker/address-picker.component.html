@@ -1,0 +1,127 @@
+<!-- No invita a escribir al negocio: el chat exige una cita, y quien lee esto
+     todavía no tiene ninguna. «Contacta» cubre el teléfono de la ficha. -->
+@if (outOfArea) {
+  <p class="ap__notice" role="status">
+    Esa dirección parece quedar fuera de la zona a la que se desplaza {{ businessName }}{{ radiusLabel }}.
+    Prueba con otra o contacta con ellos antes de {{ verb }}.
+  </p>
+}
+
+@if (saved === null) {
+  <!-- La libreta cargando: dos filas grises con la forma de lo que viene. -->
+  <p class="ap__header">Tus direcciones</p>
+  <div class="ap__box" aria-busy="true" aria-label="Cargando tus direcciones">
+    <div class="ap__skel"><div class="skeleton ap__skel-line"></div><div class="skeleton ap__skel-line ap__skel-line--short"></div></div>
+    <div class="ap__skel"><div class="skeleton ap__skel-line"></div><div class="skeleton ap__skel-line ap__skel-line--short"></div></div>
+  </div>
+} @else if (showList) {
+  <p class="ap__header" [id]="'ap-saved-' + uid">Tus direcciones</p>
+  <div class="ap__box" role="group" [attr.aria-labelledby]="'ap-saved-' + uid">
+    @for (a of saved; track a.id) {
+      <button
+        type="button"
+        class="ap__row"
+        [disabled]="disabled"
+        [attr.aria-pressed]="isChosen(a)"
+        (click)="chooseSaved(a)"
+      >
+        <span class="ap__row-main">
+          <span class="ap__row-title">{{ title(a) }}</span>
+          <span class="ap__row-sub">{{ oneLine(a) }}</span>
+        </span>
+        <span class="material-symbols-rounded ap__tick" aria-hidden="true">{{ isChosen(a) ? 'check' : '' }}</span>
+      </button>
+    }
+    <button type="button" class="ap__row ap__row--action" [disabled]="disabled" (click)="writeOther()">
+      <span class="ap__row-main"><span class="ap__row-title">Usar otra dirección</span></span>
+      <span class="material-symbols-rounded ap__chev" aria-hidden="true">chevron_right</span>
+    </button>
+  </div>
+} @else {
+  <!-- Escribir una que no está guardada. -->
+  <div class="form-group ap__form">
+    <div class="form-group__box">
+      <app-address-street-field
+        [inputId]="'ap-street-' + uid"
+        [value]="street"
+        [disabled]="disabled"
+        [searchEnabled]="signedIn"
+        (valueChange)="onStreetChange($event)"
+        (resolved)="onResolved($event)"
+      />
+      <div class="form-row">
+        <label class="form-row__label" [for]="'ap-city-' + uid">Ciudad</label>
+        <input
+          class="form-row__input"
+          type="text"
+          autocomplete="address-level2"
+          placeholder="Ej. Sevilla"
+          maxlength="100"
+          [id]="'ap-city-' + uid"
+          [disabled]="disabled"
+          [(ngModel)]="city"
+          (ngModelChange)="onFieldInput()"
+        />
+      </div>
+      <div class="form-row">
+        <label class="form-row__label" [for]="'ap-details-' + uid">Piso, puerta</label>
+        <input
+          class="form-row__input"
+          type="text"
+          autocomplete="address-line2"
+          placeholder="Ej. 3º B, timbre Ruiz"
+          maxlength="120"
+          [id]="'ap-details-' + uid"
+          [attr.aria-describedby]="'ap-details-help-' + uid"
+          [disabled]="disabled"
+          [(ngModel)]="details"
+          (ngModelChange)="onFieldInput()"
+        />
+      </div>
+      <div class="form-row">
+        <label class="form-row__label ap__nowrap" [for]="'ap-postal-' + uid">Código postal</label>
+        <input
+          class="form-row__input"
+          type="text"
+          autocomplete="postal-code"
+          inputmode="numeric"
+          placeholder="Opcional"
+          maxlength="10"
+          [id]="'ap-postal-' + uid"
+          [disabled]="disabled"
+          [(ngModel)]="postalCode"
+          (ngModelChange)="onFieldInput()"
+        />
+      </div>
+    </div>
+    @if (missingNumber) {
+      <p class="form-group__footer ap__warn" role="status">
+        Esa dirección no lleva número. Añádelo para que sepamos a qué puerta llamar.
+      </p>
+    }
+    <p class="form-group__footer" [id]="'ap-details-help-' + uid">
+      Piso, puerta y timbre los verá solo el negocio que te atiende.
+    </p>
+    @if (!ready && street.trim()) {
+      <p class="form-group__footer ap__warn">Hace falta la calle y la ciudad para que el negocio sepa a dónde ir.</p>
+    }
+  </div>
+
+  <!-- Guardarla para la próxima, sin pasar por el perfil. Solo cuando hay algo
+       que guardar y dónde: sin sesión no hay libreta. -->
+  @if (allowSave && signedIn && ready) {
+    <label class="ap__switch">
+      <span class="ap__switch-text">
+        <span class="ap__row-title">Guardar en mis direcciones</span>
+        <span class="ap__row-sub">Para no escribirla la próxima vez</span>
+      </span>
+      <input type="checkbox" role="switch" class="ap__switch-input" [disabled]="disabled" [(ngModel)]="saveToBook" />
+    </label>
+  }
+
+  @if (saved && saved.length > 0) {
+    <div class="ap__back">
+      <app-button variant="text" [fullWidth]="true" [disabled]="disabled" (onClick)="backToList()">Elegir una guardada</app-button>
+    </div>
+  }
+}
