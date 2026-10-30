@@ -1,59 +1,78 @@
 <div class="detail anim-fade-up">
 
   @if (isLoading) {
-    <div class="loading-state" style="min-height:60vh">
-      <div class="spinner"></div>
-      <span>Cargando negocio…</span>
+    <!-- Esqueleto con la forma de la ficha, como GipsiSkeleton en la app: un
+         spinner suelto en mitad de la pantalla es lo que más parece de demo. -->
+    <div class="detail-skeleton" role="status" aria-label="Cargando negocio">
+      <div class="skeleton detail-skeleton__cover"></div>
+      <div class="detail-skeleton__body">
+        <div class="detail-skeleton__main">
+          <div class="skeleton detail-skeleton__line"></div>
+          <div class="skeleton detail-skeleton__line detail-skeleton__line--short"></div>
+          <div class="skeleton detail-skeleton__card"></div>
+          <div class="skeleton detail-skeleton__card"></div>
+        </div>
+        <div class="skeleton detail-skeleton__aside"></div>
+      </div>
     </div>
   } @else if (loadError || !business) {
     <div class="empty-state" style="min-height:60vh">
-      <span class="material-symbols-rounded">{{ loadError?.networkError ? 'wifi_off' : 'storefront' }}</span>
+      <span class="material-symbols-rounded" aria-hidden="true">{{ loadError?.networkError ? 'wifi_off' : 'storefront' }}</span>
       <h3>{{ loadError?.networkError ? 'Sin conexión' : 'No hemos encontrado este negocio' }}</h3>
       <p>{{ loadError?.message }}</p>
       <app-button variant="secondary" icon="arrow_back" (onClick)="goBack()">Volver</app-button>
     </div>
   } @else {
 
-    <!-- ══════════ PORTADA ══════════ -->
-    <div class="cover">
-      <img class="cover__img" [src]="coverUrl()" [alt]="business.name" />
-      <div class="cover__veil"></div>
-
-      <div class="cover__bar">
-        <button type="button" class="cover__btn" (click)="goBack()">
-          <span class="material-symbols-rounded">arrow_back</span>
-          Volver
+    <!-- ══════════ PORTADA ══════════
+         16:9 como `GipsiImageRatios.businessCover`: a sangre en el móvil, y
+         en escritorio dentro de la columna, con radio y tope de alto. -->
+    <!-- Los botones flotan por encima de todo y siguen a la vista al bajar,
+         como los de la app: cada uno trae su círculo translúcido, así que se
+         leen igual sobre la foto que sobre el texto que pasa debajo. Van FUERA
+         de la portada: un `sticky` solo se pega dentro de su padre, y dentro de
+         ella se iban con la foto. -->
+    <div class="cover__bar">
+        <button type="button" class="cover__btn" aria-label="Volver" title="Volver" (click)="goBack()">
+          <span class="material-symbols-rounded" aria-hidden="true">arrow_back_ios_new</span>
         </button>
+        <span class="cover__tools">
+          <button
+            type="button"
+            class="cover__btn"
+            [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+            [attr.aria-pressed]="isFavorite"
+            [title]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+            [disabled]="favoriteBusy"
+            (click)="toggleFavorite()"
+          >
+            <span class="material-symbols-rounded cover__heart" [class.fill]="isFavorite"
+                  [class.cover__heart--on]="isFavorite" aria-hidden="true">favorite</span>
+          </button>
+          <!-- Reportar: solo clientes, como en la app. Sin sesión sí sale, y
+               al pulsar se pide entrar. -->
+          @if (canReport) {
+            <button type="button" class="cover__btn" aria-label="Reportar este negocio" title="Reportar"
+                    aria-haspopup="dialog" (click)="openReport()">
+              <span class="material-symbols-rounded fill" aria-hidden="true">flag</span>
+            </button>
+          }
+          <button type="button" class="cover__btn" aria-label="Compartir este negocio" title="Compartir"
+                  (click)="share()">
+            <span class="material-symbols-rounded" aria-hidden="true">share</span>
+          </button>
+        </span>
+    </div>
 
-        <button
-          type="button"
-          class="cover__btn cover__btn--icon"
-          [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
-          [disabled]="favoriteBusy"
-          (click)="toggleFavorite()"
-        >
-          <span class="material-symbols-rounded" [class.fill]="isFavorite"
-                [style.color]="isFavorite ? '#E67676' : ''">favorite</span>
-        </button>
-      </div>
-
-      <div class="cover__info">
-        <h1 class="cover__title">{{ business.name }}</h1>
-        <div class="cover__meta">
-          <span class="badge badge--photo">
-            <span class="material-symbols-rounded cover__meta-icon">location_on</span>
-            {{ locationDisplay }}
+    <div class="hero">
+      <div class="cover" [class.cover--empty]="!coverUrl()">
+        @if (coverUrl(); as src) {
+          <img class="cover__img" [src]="src" alt="" fetchpriority="high" />
+        } @else {
+          <span class="cover__img img-placeholder" aria-hidden="true">
+            <span class="material-symbols-rounded">storefront</span>
           </span>
-          @if (hasRating) {
-            <span class="badge badge--photo">
-              <span class="material-symbols-rounded fill cover__meta-icon" style="color: var(--clr-warn);">star</span>
-              {{ ratingDisplay }} ({{ business.reviewCount }})
-            </span>
-          }
-          @if (categoryName) {
-            <span class="badge badge--photo">{{ categoryName }}</span>
-          }
-        </div>
+        }
       </div>
     </div>
 
@@ -61,30 +80,314 @@
     <div class="detail__body">
       <div class="detail__main">
 
-        @if (business.description) {
-          <section class="card">
-            <h2 class="card__title">
-              <span class="material-symbols-rounded card__title-icon">info</span>
-              Acerca del negocio
-            </h2>
-            <p class="card__text">{{ business.description }}</p>
-            @if (business.phone) {
-              <p class="card__meta">
-                <span class="material-symbols-rounded card__meta-icon">phone</span>
-                {{ business.phone }}
-              </p>
+        <!-- ── Cabecera: `_NameRow`, valoración y dirección, descripción,
+             `_InfoActions` y `_SocialRow`, en ese orden. ── -->
+        <header class="head">
+          <div class="head__name">
+            @if (logoUrl(); as logo) {
+              <img class="head__logo" [src]="logo" alt="" width="52" height="52" />
             }
-          </section>
+            <div class="head__titles">
+              @if (categoryName) {
+                <p class="head__cat">{{ categoryName }}</p>
+              }
+              <h1 class="head__title">{{ business.name }}</h1>
+            </div>
+          </div>
+
+          <p class="head__meta">
+            @if (hasRating) {
+              <span class="rating" [attr.aria-label]="ratingDisplay + ' de 5, ' + business.reviewCount + ' reseñas'">
+                <span class="material-symbols-rounded fill rating__star" aria-hidden="true">star</span>
+                <strong aria-hidden="true">{{ ratingDisplay }}</strong>
+                <span class="rating__count" aria-hidden="true">({{ business.reviewCount }})</span>
+              </span>
+            } @else {
+              <span class="rating__empty">Sin valoraciones</span>
+            }
+            @if (locationDisplay) {
+              <span class="head__dot" aria-hidden="true"></span>
+              <!-- La dirección ENTERA y en el acento cuando lleva al mapa,
+                   como `_AddressLink`. A domicilio no hay adónde ir. -->
+              @if (hasPlace) {
+                <a class="head__loc head__loc--link" [href]="mapsSearchUrl" target="_blank" rel="noopener"
+                   [attr.aria-label]="'Abrir ' + locationDisplay + ' en Google Maps (pestaña nueva)'">
+                  <span class="material-symbols-rounded fill" aria-hidden="true">location_on</span>
+                  <span class="head__loc-text">{{ locationDisplay }}</span>
+                </a>
+              } @else {
+                <span class="head__loc">
+                  <span class="material-symbols-rounded fill" aria-hidden="true">location_on</span>
+                  <span class="head__loc-text">{{ locationDisplay }}</span>
+                </span>
+              }
+            }
+          </p>
+
+          @if (business.description) {
+            <p class="head__desc">{{ business.description }}</p>
+          }
+
+          <!-- `_InfoActions`: solo iconos, del mismo ancho y con tope, en este
+               orden. En escritorio están en la barra lateral, con su texto. -->
+          @if (business.phone || hasPlace || hasSchedule || canWrite) {
+            <nav class="info-actions" aria-label="Contacto y ubicación">
+              @if (business.phone) {
+                <a class="info-action" [href]="'tel:' + business.phone" (click)="callPhone($event)"
+                   [attr.aria-label]="'Llamar al ' + business.phone" title="Llamar">
+                  <span class="material-symbols-rounded fill" aria-hidden="true">call</span>
+                </a>
+              }
+              @if (hasPlace) {
+                <a class="info-action" [href]="directionsUrl" target="_blank" rel="noopener"
+                   aria-label="Cómo llegar (abre Google Maps en una pestaña nueva)" title="Cómo llegar">
+                  <span class="material-symbols-rounded fill" aria-hidden="true">location_on</span>
+                </a>
+              }
+              @if (hasSchedule) {
+                <button type="button" class="info-action" aria-label="Ver horario" title="Horario"
+                        aria-haspopup="dialog" (click)="scheduleSheetOpen = true">
+                  <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                </button>
+              }
+              @if (canWrite) {
+                <button type="button" class="info-action" aria-label="Escribir al negocio" title="Escribir"
+                        [disabled]="chatBusy" (click)="openChat()">
+                  <span class="material-symbols-rounded fill" aria-hidden="true">chat_bubble</span>
+                </button>
+              }
+            </nav>
+          }
+
+          <!-- Dónde encontrar al negocio FUERA de Bipsy, en un solo color. -->
+          @if (socialLinks.length > 0) {
+            <ul class="social" aria-label="Redes y web del negocio">
+              @for (link of socialLinks; track link.network) {
+                <li>
+                  <a class="social__btn" [href]="link.url" target="_blank" rel="noopener"
+                     [attr.aria-label]="link.label + ' (pestaña nueva)'" [title]="link.label">
+                    @switch (link.network) {
+                      @case ('website') {
+                        <span class="material-symbols-rounded" aria-hidden="true">language</span>
+                      }
+                      @case ('instagram') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="3" y="3" width="18" height="18" rx="5" />
+                          <circle cx="12" cy="12" r="4" />
+                          <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
+                        </svg>
+                      }
+                      @case ('facebook') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                          <path d="M14 8.5h3V4.6c-.5-.1-1.9-.2-3.3-.2-3.2 0-5.2 1.9-5.2 5.4v2.6H5v4.2h3.5V22h4.3v-5.4h3.4l.5-4.2h-3.9v-2.2c0-1.2.3-1.7 1.2-1.7z" />
+                        </svg>
+                      }
+                      @case ('x') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                          <path d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.36 5.77L17.75 3zm-1.08 16.2h1.7L7.4 4.73H5.57l11.1 14.47z" />
+                        </svg>
+                      }
+                      @case ('tiktok') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                          <path d="M16.6 2.5c.3 2.3 1.7 3.9 4 4.1v3.3c-1.5.1-2.9-.4-4-1.2v6.4c0 3.6-2.7 6.4-6.2 6.4S4.2 18.8 4.2 15.3c0-3.6 2.9-6.3 6.6-6.1v3.4a2.9 2.9 0 0 0-.9-.1c-1.6 0-2.8 1.2-2.8 2.8s1.2 2.9 2.7 2.9c1.6 0 2.9-1.2 2.9-3.1V2.5h3.9z" />
+                        </svg>
+                      }
+                      @case ('whatsapp') {
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                          <path fill="currentColor" d="M8.9 8.3c.2-.4.4-.4.7-.4h.5c.2 0 .4 0 .5.4l.7 1.6c.1.2 0 .4-.1.6l-.5.6c-.1.1-.1.3 0 .4.6 1 1.4 1.8 2.4 2.4.1.1.3.1.4 0l.6-.6c.2-.2.4-.2.6-.1l1.6.7c.3.1.4.3.4.5v.5c0 .3 0 .5-.4.7-.5.3-1.2.5-1.9.4-2.6-.5-4.8-2.7-5.3-5.3-.1-.7.1-1.4.4-1.9z" />
+                        </svg>
+                      }
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+
+          <!-- Sin barra lateral (móvil y tableta), el aviso de cancelación baja
+               aquí, antes de los servicios por los que se entra a reservar. -->
+          @if (chargesCancellation) {
+            <p class="head__fee">
+              <span class="material-symbols-rounded" aria-hidden="true">credit_card</span>
+              Cobra el {{ business.cancellationFeePercent }} % si cancelas con menos de
+              {{ business.cancellationWindowHours }} h de antelación.
+            </p>
+          }
+        </header>
+
+        <!-- Galería, servicios y valoraciones, en el orden que haya elegido el
+             negocio, con un filo entre cada una (`_SectionDivider`). -->
+        @for (section of sectionOrder; track section) {
+          @switch (section) {
+            @case ('GALLERY') {
+              <!-- Sin fotos no se pinta: un hueco con «sin fotos» no aporta nada. -->
+              @if (portfolio.length > 0) {
+                <section class="sec" aria-labelledby="sec-gallery">
+                  <!-- Todo el titular abre la galería entera, como `_SectionHeader`
+                       con `onOpenAll`: apuntar a una flecha pide puntería. -->
+                  <h2 class="sec__title" id="sec-gallery">
+                    <button type="button" class="sec__open" aria-haspopup="dialog"
+                            [attr.aria-label]="'Ver las ' + portfolio.length + ' fotos de la galería'"
+                            (click)="galleryOpen = true">
+                      Galería
+                      <span class="material-symbols-rounded" aria-hidden="true">arrow_forward_ios</span>
+                    </button>
+                  </h2>
+                  <div class="gallery">
+                    @for (item of galleryPreview; track item.id; let i = $index) {
+                      <button type="button" class="gallery__item" (click)="openViewer(i)" aria-haspopup="dialog"
+                              [attr.aria-label]="'Ampliar foto ' + (i + 1) + (item.caption ? ': ' + item.caption : '')">
+                        <img class="gallery__img" [src]="portfolioUrl(item)" alt="" loading="lazy"
+                             (error)="onPortfolioError(item)" />
+                      </button>
+                    }
+                  </div>
+                </section>
+              }
+            }
+
+            @case ('SERVICES') {
+              <section class="sec" aria-labelledby="sec-services">
+                <h2 class="sec__title" id="sec-services">Servicios</h2>
+
+                @if (extrasLoading) {
+                  <div class="services" aria-busy="true" aria-label="Cargando servicios">
+                    @for (i of [1, 2]; track i) {
+                      <div class="skeleton service-skel"></div>
+                    }
+                  </div>
+                } @else if (services.length === 0) {
+                  <div class="sec__empty">
+                    <span class="material-symbols-rounded" aria-hidden="true">content_cut</span>
+                    <strong>Sin servicios aún</strong>
+                    <p>Este negocio todavía no ha publicado su catálogo.</p>
+                  </div>
+                } @else {
+                  <!-- `GipsiServiceRow`: la tarjeta entera reserva; foto
+                       cuadrada a sangre por la izquierda y el galón de iOS. -->
+                  <ul class="services">
+                    @for (srv of services; track srv.id) {
+                      <li>
+                        <button type="button" class="service" (click)="book(srv)"
+                                [attr.aria-label]="'Reservar ' + srv.name + ', ' + durationLabel(srv) + ', ' + price(srv)">
+                          @if (serviceImage(srv); as img) {
+                            <img class="service__thumb" [src]="img" alt="" loading="lazy" />
+                          } @else {
+                            <span class="service__thumb service__thumb--icon" aria-hidden="true">
+                              <span class="material-symbols-rounded">{{ categoryIconName }}</span>
+                            </span>
+                          }
+                          <span class="service__info">
+                            <span class="service__name">{{ srv.name }}</span>
+                            @if (srv.description) {
+                              <span class="service__desc">{{ srv.description }}</span>
+                            }
+                            <span class="service__meta">
+                              <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                              {{ durationLabel(srv) }}
+                              <span class="service__price">{{ price(srv) }}</span>
+                            </span>
+                            @if (placeNote(srv); as note) {
+                              <span class="service__place">
+                                <span class="material-symbols-rounded" aria-hidden="true">directions_car</span>{{ note }}
+                              </span>
+                            }
+                          </span>
+                          <span class="service__go" aria-hidden="true">
+                            <span class="service__go-label">Reservar</span>
+                            <span class="material-symbols-rounded">arrow_forward_ios</span>
+                          </span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
+
+            @case ('REVIEWS') {
+              <section class="sec" aria-labelledby="sec-reviews">
+                <h2 class="sec__title sec__title--split" id="sec-reviews">
+                  Valoraciones
+                  @if (hasRating) {
+                    <span class="rating rating--md" [attr.aria-label]="ratingDisplay + ' de 5'">
+                      <span class="material-symbols-rounded fill rating__star" aria-hidden="true">star</span>
+                      <strong aria-hidden="true">{{ ratingDisplay }}</strong>
+                      <span class="rating__count" aria-hidden="true">({{ business.reviewCount }})</span>
+                    </span>
+                  }
+                </h2>
+
+                @if (extrasLoading) {
+                  <div class="skeleton review-skel" aria-busy="true" aria-label="Cargando valoraciones"></div>
+                } @else if (reviews.length === 0) {
+                  <div class="sec__empty">
+                    <span class="material-symbols-rounded fill" aria-hidden="true">rate_review</span>
+                    <strong>Sin valoraciones</strong>
+                    <p>Sé tú el primero en opinar tras tu cita.</p>
+                  </div>
+                } @else {
+                  <div class="reviews">
+                    @for (review of reviews; track review.id) {
+                      <!-- `GipsiReviewCard`: arriba el cliente; si el negocio
+                           contestó, la tarjeta se parte con otro tono. -->
+                      <article class="review">
+                        <div class="review__body">
+                          <header class="review__head">
+                            @if (reviewPhoto(review); as photo) {
+                              <img class="review__avatar" [src]="photo" alt="" loading="lazy" />
+                            } @else {
+                              <span class="review__avatar" aria-hidden="true">{{ reviewInitials(review) }}</span>
+                            }
+                            <span class="review__who">
+                              <strong>{{ review.customerName || 'Cliente' }}</strong>
+                              <span class="review__stars" role="img" [attr.aria-label]="review.rating + ' de 5 estrellas'">
+                                @for (filled of stars(review.rating); track $index) {
+                                  <span class="material-symbols-rounded fill review__star" [class.review__star--on]="filled"
+                                        aria-hidden="true">star</span>
+                                }
+                              </span>
+                            </span>
+                            <span class="review__date">{{ reviewDate(review) }}</span>
+                          </header>
+                          @if (review.comment?.trim()) {
+                            <p class="review__text">{{ review.comment }}</p>
+                          }
+                        </div>
+                        @if (review.reply?.trim()) {
+                          <div class="review__reply">
+                            <strong>Respuesta del negocio</strong>
+                            <p>{{ review.reply }}</p>
+                          </div>
+                        }
+                      </article>
+                    }
+                  </div>
+
+                  <!-- La paginación de la app: «Ver más (n restantes)». -->
+                  @if (remainingReviews > 0) {
+                    <button type="button" class="sec__more" [disabled]="loadingMoreReviews"
+                            [attr.aria-busy]="loadingMoreReviews" (click)="loadMoreReviews()">
+                      @if (loadingMoreReviews) {
+                        <span class="reviews__spinner" aria-hidden="true"></span>
+                        Cargando…
+                      } @else {
+                        <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
+                        Ver más ({{ remainingReviews }} restantes)
+                      }
+                    </button>
+                  }
+                }
+              </section>
+            }
+          }
         }
 
-        <!-- Políticas: posición fija, antes que el escaparate. Es lo que el
-             cliente necesita para decidir. -->
+        <!-- Políticas y normas: AL FINAL y en posición fija, como en la app. -->
         @if (totalPolicies > 0) {
-          <section class="card">
-            <h2 class="card__title">
-              <span class="material-symbols-rounded card__title-icon">rule</span>
-              Antes de reservar
-            </h2>
+          <section class="sec" aria-labelledby="sec-policies">
+            <h2 class="sec__title" id="sec-policies">Políticas y normas</h2>
             @for (group of visiblePolicies; track group.categoryId) {
               @if (group.policies.length > 0) {
                 <p class="policy__group">{{ group.name }}</p>
@@ -96,176 +399,179 @@
               }
             }
             @if (totalPolicies > 5) {
-              <button type="button" class="card__more" (click)="allPoliciesOpen = !allPoliciesOpen">
+              <button type="button" class="sec__more" [attr.aria-expanded]="allPoliciesOpen"
+                      (click)="allPoliciesOpen = !allPoliciesOpen">
                 {{ allPoliciesOpen ? 'Ver menos' : 'Ver las ' + totalPolicies + ' normas' }}
               </button>
             }
           </section>
         }
-
-        <!-- Galería -->
-        @if (portfolio.length > 0) {
-          <section class="card">
-            <h2 class="card__title">
-              <span class="material-symbols-rounded card__title-icon">photo_library</span>
-              Trabajos
-            </h2>
-            <div class="gallery">
-              @for (item of portfolio; track item.id) {
-                <img
-                  class="gallery__img"
-                  [src]="portfolioUrl(item)"
-                  [alt]="item.caption || business.name"
-                  loading="lazy"
-                  (error)="onPortfolioError(item)"
-                />
-              }
-            </div>
-          </section>
-        }
-
-        <!-- Servicios -->
-        <section class="card">
-          <h2 class="card__title">
-            <span class="material-symbols-rounded card__title-icon">content_cut</span>
-            Servicios
-          </h2>
-
-          @if (services.length === 0) {
-            <p class="card__text">Este negocio todavía no ha publicado su catálogo.</p>
-          } @else {
-            <div class="services">
-              @for (srv of services; track srv.id) {
-                <div class="service">
-                  <div class="service__info">
-                    <p class="service__name">{{ srv.name }}</p>
-                    @if (srv.description) {
-                      <p class="service__desc">{{ srv.description }}</p>
-                    }
-                    <p class="service__meta">
-                      <span class="material-symbols-rounded service__meta-icon">schedule</span>
-                      {{ durationLabel(srv) }}
-                    </p>
-                  </div>
-                  <div class="service__right">
-                    <span class="service__price">{{ price(srv) }}</span>
-                    <app-button variant="primary" size="small" [overCard]="true" (onClick)="book(srv)">
-                      Reservar
-                    </app-button>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        </section>
-
-        <!-- Reseñas -->
-        @if (reviews.length > 0) {
-          <section class="card">
-            <h2 class="card__title">
-              <span class="material-symbols-rounded card__title-icon">reviews</span>
-              Reseñas
-            </h2>
-            <div class="reviews">
-              @for (review of reviews; track review.id) {
-                <article class="review">
-                  <header class="review__head">
-                    <span class="review__avatar">{{ (review.customerName || review.authorName || '?')[0] }}</span>
-                    <span class="review__who">
-                      <strong>{{ review.customerName || review.authorName || 'Cliente' }}</strong>
-                      <span class="review__stars">
-                        @for (filled of stars(review.rating); track $index) {
-                          <span class="material-symbols-rounded review__star" [class.fill]="filled">star</span>
-                        }
-                      </span>
-                    </span>
-                  </header>
-                  @if (review.comment) {
-                    <p class="review__text">{{ review.comment }}</p>
-                  }
-                  @if (review.reply) {
-                    <p class="review__reply">
-                      <strong>Respuesta del negocio:</strong> {{ review.reply }}
-                    </p>
-                  }
-                </article>
-              }
-            </div>
-          </section>
-        }
       </div>
 
-      <!-- ══════════ LATERAL ══════════ -->
-      <aside class="detail__aside">
-        <div class="card card--sticky">
-          <h2 class="card__title">Reservar</h2>
-          <p class="card__text">Elige un servicio y te enseñamos los huecos libres.</p>
-
-          <app-button
-            variant="primary"
-            size="large"
-            [fullWidth]="true"
-            icon="event_available"
-            [overCard]="true"
-            (onClick)="book()"
-          >
-            Pedir cita
-          </app-button>
-
-          @if (chargesCancellation) {
-            <p class="card__note">
-              <span class="material-symbols-rounded card__meta-icon">credit_card</span>
-              Este negocio cobra el {{ business.cancellationFeePercent }} % si cancelas con menos de
-              {{ business.cancellationWindowHours }} h de antelación.
-            </p>
-          }
-
-          <!-- Las acciones de apoyo van como filas: apiladas con el mismo peso
-               que "Pedir cita", la columna entera parecía tres llamadas a la
-               acción y ninguna destacaba. -->
-          <div class="side-actions">
-            @if (business.chatEnabled !== false) {
-              <button type="button" class="side-action" [disabled]="chatBusy" (click)="openChat()">
-                <span class="material-symbols-rounded side-action__icon">forum</span>
-                Escribir al negocio
-              </button>
-            }
-
-            @if (business.phone) {
-              <a class="side-action" [href]="'tel:' + business.phone">
-                <span class="material-symbols-rounded side-action__icon">phone</span>
-                Llamar
-              </a>
-            }
-
-            @if (scheduleRows.length > 0) {
-              <button type="button" class="side-action" (click)="scheduleOpen = !scheduleOpen">
-                <span class="material-symbols-rounded side-action__icon">schedule</span>
-                Horario
-                <span class="material-symbols-rounded side-action__chevron">
-                  {{ scheduleOpen ? 'expand_less' : 'expand_more' }}
-                </span>
-              </button>
-              @if (scheduleOpen) {
-                <ul class="schedule">
-                  @for (row of scheduleRows; track row.day) {
-                    <li class="schedule__row" [class.schedule__row--closed]="row.closed">
-                      <span>{{ row.day }}</span>
-                      <span>{{ row.hours }}</span>
-                    </li>
-                  }
-                </ul>
+      <!-- ══════════ LATERAL (escritorio) ══════════
+           Reservar arriba, y debajo lo que en el móvil son las píldoras —con
+           su texto, que aquí cabe— y el horario a la vista, con hoy marcado. -->
+      <aside class="detail__aside" aria-label="Reservar y contacto">
+        <div class="side">
+          <div class="side__book">
+            <p class="side__eyebrow">Reserva en un minuto</p>
+            <p class="side__lead">
+              @if (services.length > 0) {
+                {{ services.length }} {{ services.length === 1 ? 'servicio' : 'servicios' }} · desde {{ fromPrice }}
+              } @else {
+                Elige servicio, día y hora.
               }
+            </p>
+            <app-button variant="primary" size="large" [fullWidth]="true" icon="event_available"
+                        [overCard]="true" (onClick)="book()">
+              Pedir cita
+            </app-button>
+            @if (chargesCancellation) {
+              <p class="side__note">
+                <span class="material-symbols-rounded" aria-hidden="true">credit_card</span>
+                Cobra el {{ business.cancellationFeePercent }} % si cancelas con menos de
+                {{ business.cancellationWindowHours }} h de antelación.
+              </p>
             }
           </div>
 
-          @if (chatError) {
-            <p class="flow__error">
-              <span class="material-symbols-rounded fill">error</span>{{ chatError }}
-            </p>
+          @if (canWrite || business.phone || hasPlace) {
+            <div class="side__group">
+              @if (canWrite) {
+                <button type="button" class="side-action" [disabled]="chatBusy" (click)="openChat()">
+                  <span class="material-symbols-rounded fill side-action__icon" aria-hidden="true">chat_bubble</span>
+                  <span class="side-action__label">Escribir al negocio</span>
+                  <span class="material-symbols-rounded side-action__chevron" aria-hidden="true">arrow_forward_ios</span>
+                </button>
+              }
+              @if (business.phone) {
+                <!-- El número a la vista: en escritorio `tel:` no siempre marca. -->
+                <a class="side-action" [href]="'tel:' + business.phone" (click)="callPhone($event)">
+                  <span class="material-symbols-rounded fill side-action__icon" aria-hidden="true">call</span>
+                  <span class="side-action__label">Llamar</span>
+                  <span class="side-action__value">{{ business.phone }}</span>
+                </a>
+              }
+              @if (hasPlace) {
+                <a class="side-action" [href]="directionsUrl" target="_blank" rel="noopener"
+                   [attr.aria-label]="'Cómo llegar, ' + locationDisplay + ' (abre Google Maps en una pestaña nueva)'">
+                  <span class="material-symbols-rounded fill side-action__icon" aria-hidden="true">location_on</span>
+                  <span class="side-action__label">
+                    Cómo llegar
+                    <small>{{ locationDisplay }}</small>
+                  </span>
+                  <span class="material-symbols-rounded side-action__chevron" aria-hidden="true">open_in_new</span>
+                </a>
+              }
+            </div>
+          }
+
+          @if (hasSchedule) {
+            <div class="side__group side__hours">
+              <h2 class="side__title">
+                <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+                Horario
+              </h2>
+              <ul class="schedule">
+                @for (row of scheduleRows; track row.day) {
+                  <li class="schedule__row" [class.schedule__row--closed]="row.closed"
+                      [class.schedule__row--today]="row.day === todayLabel">
+                    <span>{{ row.day }}@if (row.day === todayLabel) {<em> · hoy</em>}</span>
+                    <span>{{ row.hours }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
           }
         </div>
       </aside>
     </div>
   }
 </div>
+
+<!-- Lo que va fijo en pantalla, FUERA de `.detail`: su animación de entrada
+     deja puesto un `transform`, y un `position: fixed` dentro de un padre con
+     transform se fija a ese padre y no a la ventana. -->
+@if (!isLoading && !loadError && business) {
+    <!-- ══════════ BARRA DE RESERVA (móvil y tableta) ══════════ -->
+    <div class="bookbar">
+      <app-button variant="primary" size="large" [fullWidth]="true" icon="event_available" (onClick)="book()">
+        Pedir cita
+      </app-button>
+    </div>
+
+    <!-- ══════════ HOJA DEL HORARIO (móvil y tableta) ══════════ -->
+    @if (scheduleSheetOpen) {
+      <div class="sheet-backdrop" (click)="scheduleSheetOpen = false">
+        <div #scheduleSheet class="sheet hours" role="dialog" aria-modal="true" aria-labelledby="hours-title"
+             tabindex="-1" (click)="$event.stopPropagation()" (keydown)="onScheduleSheetKey($event)">
+          <div class="hours__head">
+            <h2 class="sheet__title hours__title" id="hours-title">Horario</h2>
+            <button type="button" class="hours__close" aria-label="Cerrar" (click)="scheduleSheetOpen = false">
+              <span class="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
+          </div>
+          <ul class="schedule hours__list">
+            @for (row of scheduleRows; track row.day) {
+              <li class="schedule__row" [class.schedule__row--closed]="row.closed"
+                  [class.schedule__row--today]="row.day === todayLabel">
+                <span>{{ row.day }}</span>
+                <span>{{ row.hours }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+    }
+
+    <!-- ══════════ TODA LA GALERÍA ══════════
+         `showGipsiPortfolioSheet`: todas en rejilla; tocar una la amplía. -->
+    @if (galleryOpen) {
+      <div class="sheet-backdrop" (click)="galleryOpen = false">
+        <div #gallerySheet class="sheet gsheet" role="dialog" aria-modal="true" aria-labelledby="gsheet-title"
+             tabindex="-1" (click)="$event.stopPropagation()" (keydown)="onGallerySheetKey($event)">
+          <div class="hours__head">
+            <h2 class="sheet__title hours__title" id="gsheet-title">Galería · {{ portfolio.length }}</h2>
+            <button type="button" class="hours__close" aria-label="Cerrar" (click)="galleryOpen = false">
+              <span class="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
+          </div>
+          <div class="gsheet__grid">
+            @for (item of portfolio; track item.id; let i = $index) {
+              <button type="button" class="gallery__item" aria-haspopup="dialog"
+                      [attr.aria-label]="'Ampliar foto ' + (i + 1) + (item.caption ? ': ' + item.caption : '')"
+                      (click)="openFromGallery(i)">
+                <img class="gallery__img" [src]="portfolioUrl(item)" alt="" loading="lazy"
+                     (error)="onPortfolioError(item)" />
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (viewerIndex !== null && portfolio.length > 0) {
+      <app-portfolio-viewer
+        [images]="viewerImages"
+        [initialIndex]="viewerIndex"
+        [businessName]="business.name"
+        (closed)="viewerIndex = null"
+      />
+    }
+
+    @if (reportOpen) {
+      <app-report-sheet
+        [businessId]="business.id"
+        [businessName]="business.name"
+        (closed)="reportOpen = false"
+        (sent)="onReportSent()"
+      />
+    }
+}
+
+@if (toast) {
+  <div class="toast detail__toast" [class.detail__toast--error]="toastIsError"
+       [attr.role]="toastIsError ? 'alert' : 'status'">
+    <span class="material-symbols-rounded fill" aria-hidden="true">{{ toastIsError ? 'error' : 'check_circle' }}</span>{{ toast }}
+  </div>
+}

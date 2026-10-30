@@ -1,436 +1,612 @@
-.detail { min-height: 100vh; }
+/* Ficha de un negocio. Port de `GipsiBusinessDetailBody` (gipsi_shared_ui).
+
+   Móvil y tableta: la app tal cual. Portada 16:9 a sangre, botones redondos
+   que flotan, cabecera, y secciones separadas por un filo y no metidas en
+   cajas (`_SectionDivider` + `_SectionHeader`). Las medidas son las de los
+   tokens Gipsi: margen de pantalla 20, huecos 8/12/16/20, radios 24/28.
+
+   Escritorio (≥ 1025): la misma ficha en una columna de lectura y, al lado, una
+   barra fija con lo que en el móvil son la barra de reserva y las píldoras. */
 
 /* ══════════ PORTADA ══════════ */
-/* A sangre, pero lo que va ENCIMA se alinea con el contenido de debajo: el
-   título pegado al canto de un monitor ancho no lo lee nadie, y quedaba
-   descolgado respecto a las tarjetas. */
-.cover { position: relative; height: 340px; overflow: hidden; }
+.hero { position: relative; }
 
+.cover {
+  aspect-ratio: 16 / 9;
+  background: var(--clr-surface);
+  overflow: hidden;
+}
 .cover__img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* El degradado solo por abajo, que es donde va el texto. Encima de la foto
-   entera la apagaría sin necesidad. */
-.cover__veil {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgba(35,40,46,.45) 0%, transparent 30%, transparent 42%, rgba(35,40,46,.94) 100%);
-  pointer-events: none;
-}
-
-.cover__bar,
-.cover__info {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1160px, 100% - 48px);
-}
-
+/* Los botones van en una franja de alto cero y `sticky`: salen sobre la
+   portada y, al bajar, se quedan arriba como en la app, sin barra detrás. */
 .cover__bar {
-  top: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 0;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  padding: 0 8px;
 }
+.cover__tools { display: flex; }
 
-/* Los botones sobre la foto conservan el cristal: desenfocar una imagen sí
-   desenfoca algo. Es el único sitio donde el modo plano lo mantiene. */
+/* `GipsiCoverIconButton`: círculo de 40, negro al 35 % con desenfoque y un
+   filo blanco al 25 %. El hueco de 8 alrededor es el `Padding` de cada uno. */
 .cover__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  border: none;
-  border-radius: var(--r-pill);
-  background: rgba(46, 52, 59, 0.72);
+  width: 40px;
+  height: 40px;
+  margin: calc(8px + env(safe-area-inset-top, 0px)) 8px 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(0, 0, 0, .35);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: #fff;
-  font-family: var(--ff);
-  font-size: 0.8125rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: background-color .2s ease;
 }
+.cover__btn:hover { background: rgba(0, 0, 0, .5); }
+.cover__btn .material-symbols-rounded { font-size: 20px; }
+.cover__heart--on { color: #E67676; }
 
-.cover__btn:hover { background: rgba(46, 52, 59, 0.9); }
-.cover__btn .material-symbols-rounded { font-size: 18px; }
+/* ══════════ CABECERA ══════════ */
+.detail__body { padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)); }
+.detail__main { min-width: 0; }
 
-.cover__btn--icon {
-  width: 42px;
-  height: 42px;
-  padding: 0;
+.head { padding: 20px 20px 12px; }
+
+.head__name { display: flex; align-items: center; gap: 12px; }
+.head__titles { min-width: 0; }
+.head__logo {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  justify-content: center;
-}
-
-.cover__info { bottom: 28px; }
-
-.cover__title {
-  font-family: var(--ff-display);
-  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -1.2px;
-  color: #fff;
-  margin-bottom: 12px;
-}
-
-.cover__meta { display: flex; flex-wrap: wrap; gap: 8px; }
-.cover__meta-icon { font-size: 14px; }
-
-/* ══════════ CUERPO ══════════ */
-.detail__body {
-  width: min(1160px, 100% - 48px);
-  margin: 0 auto;
-  padding: 28px 0 96px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 20px;
-  align-items: start;
-}
-
-.detail__main { display: flex; flex-direction: column; gap: 16px; }
-
-/* Superficie plana: más clara que el suelo y nada más. */
-.card {
+  object-fit: cover;
   background: var(--clr-surface);
-  border-radius: var(--r-lg);
-  padding: 22px;
 }
 
-.card--sticky { position: sticky; top: 100px; }
+/* La categoría no está en la ficha de la app; en escritorio sí (ver abajo). */
+.head__cat { display: none; }
 
-/* El botón principal, separado del texto que lo presenta.
-   Antes ese aire lo ponía sin querer el hueco de línea de `app-button`, que
-   es un elemento inline; al arreglar eso, la separación se quedó en cero y el
-   texto acabó pegado al botón. Ahora se declara. */
-.card__text + app-button { margin-top: 18px; }
+/* headlineMedium: 24, 700, -0,6. */
+.head__title {
+  font-family: var(--ff-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.6px;
+  overflow-wrap: anywhere;
+}
 
-.card__title {
+.head__meta {
+  margin-top: 8px;
   display: flex;
   align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: .875rem;
+  font-weight: 500;
+}
+
+/* `GipsiRating` grande: estrella de 20, cifra a 15 y 800, total a 14. */
+.rating { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; font-size: .9375rem; }
+.rating strong { font-weight: 800; }
+.rating__star { font-size: 20px; color: var(--clr-star); }
+.rating__count { font-size: .875rem; color: var(--clr-text-2); }
+.rating--md { font-size: .8125rem; }
+.rating--md .rating__star { font-size: 16px; }
+.rating__empty { flex: 0 0 auto; font-size: .9375rem; color: var(--clr-text-2); }
+
+.head__dot { flex: 0 0 auto; width: 3px; height: 3px; border-radius: 50%; background: var(--clr-text-2); }
+
+/* `_AddressLink`: una línea, y en el acento cuando lleva al mapa. */
+.head__loc { display: inline-flex; align-items: center; gap: 2px; min-width: 0; color: var(--clr-text); }
+.head__loc .material-symbols-rounded { flex: 0 0 auto; font-size: 15px; }
+.head__loc-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.head__loc--link { color: var(--clr-mint); text-decoration: none; }
+
+/* bodyLarge: 16, 500, 1,5. */
+.head__desc {
+  margin-top: 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+/* `_InfoActions`: del mismo ancho, con tope de 120, y centrados. */
+.info-actions { margin-top: 16px; display: flex; justify-content: center; gap: 8px; }
+.info-action {
+  flex: 0 1 120px;
+  min-height: 46px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-surface);
+  color: var(--clr-mint);
+  text-decoration: none;
+  cursor: pointer;
+}
+.info-action:hover { background: var(--clr-surface-hover); }
+.info-action .material-symbols-rounded { font-size: 22px; }
+
+/* `_SocialRow`: más pequeñas que las acciones, centradas. */
+.social { list-style: none; margin-top: 16px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.social__btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--clr-surface);
+  color: var(--clr-mint);
+  text-decoration: none;
+}
+.social__btn:hover { background: var(--clr-surface-hover); }
+.social__btn svg { width: 18px; height: 18px; }
+.social__btn .material-symbols-rounded { font-size: 20px; }
+
+.head__fee,
+.side__note {
+  display: flex;
   gap: 8px;
+  margin-top: 16px;
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--clr-text-2);
+}
+.head__fee .material-symbols-rounded,
+.side__note .material-symbols-rounded { font-size: 18px; color: var(--clr-text-3); }
+
+/* ══════════ SECCIONES ══════════ */
+/* Un filo de 1 px a 20 del borde, y la sección debajo. */
+.sec {
+  margin: 16px 20px 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--clr-border);
+}
+.sec + .sec { margin-top: 20px; }
+
+/* headlineSmall: 20, 700, -0,4. */
+.sec__title {
   font-family: var(--ff-display);
   font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: -0.4px;
-  margin-bottom: 14px;
+  line-height: 1.2;
+  letter-spacing: -.4px;
 }
+.sec__title--split { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
-.card__title-icon { font-size: 20px; color: var(--clr-mint); }
-
-.card__text {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  line-height: 1.6;
-  color: var(--clr-text-2);
-}
-
-.card__meta,
-.card__note {
+/* El titular entero abre la galería, con el galón pegado al borde. */
+.sec__open {
+  width: 100%;
+  padding: 8px 0;
+  margin: -8px 0;
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 12px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.5;
-  color: var(--clr-text-2);
-}
-
-.card__meta-icon { font-size: 16px; flex-shrink: 0; }
-
-.card__more {
-  margin-top: 12px;
+  align-items: center;
+  justify-content: space-between;
   border: none;
   background: none;
-  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sec__open .material-symbols-rounded { font-size: 16px; color: var(--clr-text-2); }
+
+.sec__empty { padding: 28px 20px; display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .875rem; color: var(--clr-text-2); }
+.sec__empty .material-symbols-rounded { font-size: 40px; color: var(--clr-text-3); }
+.sec__empty strong { font-size: 1rem; color: var(--clr-text); }
+
+.sec__more {
+  margin: 16px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: none;
   color: var(--clr-mint);
   font-family: var(--ff);
-  font-size: 0.875rem;
+  font-size: .9375rem;
   font-weight: 700;
   cursor: pointer;
 }
-.card__more:hover { text-decoration: underline; }
+.sec__more:disabled { opacity: .6; cursor: default; }
 
-/* ── Acciones de apoyo ──
-   Filas y no botones: apiladas con el mismo peso que "Pedir cita", la columna
-   entera parecía tres llamadas a la acción y ninguna destacaba.
-
-   Sangran hasta el borde de la tarjeta (`margin` negativo) para que su texto
-   arranque EXACTAMENTE donde arranca el título: con su propio relleno encima
-   del de la tarjeta, empezaban 14 px más adentro que todo lo demás. */
-.side-actions {
-  margin: 12px -10px 0;
+/* ── Galería: `GipsiPortfolioStrip`, cuadrados de 140 con radio 24. ── */
+.gallery {
+  margin: 12px -20px 0;
+  padding: 0 20px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
 }
+.gallery::-webkit-scrollbar { display: none; }
 
-.side-action {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 11px 10px;
+.gallery__item {
+  flex: 0 0 140px;
+  height: 140px;
+  padding: 0;
   border: none;
-  border-radius: var(--r-xs);
-  background: transparent;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--clr-surface);
+  scroll-snap-align: start;
+  cursor: zoom-in;
+}
+.gallery__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ── Servicios: `GipsiServiceRow`, 104 de alto y foto cuadrada a sangre. ── */
+.services { list-style: none; margin-top: 12px; display: grid; gap: 12px; }
+
+.service {
+  width: 100%;
+  height: 104px;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  border: none;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--clr-surface);
   color: var(--clr-text);
   font-family: var(--ff);
-  font-size: 0.875rem;
-  font-weight: 600;
   text-align: left;
-  text-decoration: none;
   cursor: pointer;
-  transition: background-color .2s ease;
 }
+.service:hover { background: var(--clr-surface-hover); }
 
-.side-action:hover { background: var(--clr-field); }
-.side-action:disabled { opacity: .5; cursor: not-allowed; }
-.side-action__icon { font-size: 18px; color: var(--clr-text-2); flex-shrink: 0; }
-.side-action__chevron { margin-left: auto; font-size: 18px; color: var(--clr-text-3); }
+.service__thumb { flex: 0 0 104px; width: 104px; height: 100%; object-fit: cover; display: block; }
+.service__thumb--icon { display: grid; place-items: center; background: var(--clr-field); color: var(--clr-mint); }
+.service__thumb--icon .material-symbols-rounded { font-size: 32px; }
+
+.service__info {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+/* titleSmall: 14, 600. Una línea: todas las filas miden lo mismo. */
+.service__name { font-size: .875rem; font-weight: 600; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* La descripción no va en la fila de la app; en escritorio, sí (abajo). */
+.service__desc { display: none; }
+
+.service__meta { display: flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 500; color: var(--clr-text-2); }
+.service__price { margin-left: 8px; font-size: .875rem; font-weight: 700; color: var(--clr-mint); white-space: nowrap; }
+
+.service__place { display: flex; align-items: center; gap: 4px; margin-top: -6px; font-size: .75rem; font-weight: 500; color: var(--clr-text-2); }
+/* Iconos de 12, como en GipsiServiceRow. */
+.service__meta .material-symbols-rounded,
+.service__place .material-symbols-rounded { font-size: 12px; }
+
+.service__go { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding-right: 12px; color: var(--clr-text-3); }
+.service__go .material-symbols-rounded { font-size: 14px; }
+.service__go-label { display: none; }
+
+/* ── Valoraciones: `GipsiReviewCard`. ── */
+.reviews { margin-top: 12px; display: grid; gap: 12px; }
+
+.review { border-radius: var(--r-xl); overflow: hidden; background: var(--clr-surface); }
+.review__body { padding: 16px; }
+.review__head { display: flex; align-items: flex-start; gap: 12px; }
+
+.review__avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  background: var(--clr-mint-dim);
+  color: var(--clr-mint);
+  font-size: .875rem;
+  font-weight: 700;
+}
+.review__who { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.review__who strong { font-size: .875rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.review__stars { display: flex; }
+.review__star { font-size: 14px; color: var(--clr-text-3); opacity: .5; }
+.review__star--on { color: var(--clr-star); opacity: 1; }
+.review__date { flex: 0 0 auto; font-size: .75rem; font-weight: 500; color: var(--clr-text-3); }
+
+.review__text { margin-top: 12px; font-size: .875rem; font-weight: 500; line-height: 1.55; white-space: pre-line; }
+
+/* La respuesta, media tarjeta propia con otro tono y un filo fino encima. */
+.review__reply {
+  padding: 16px;
+  border-top: .5px solid var(--clr-border);
+  background: color-mix(in srgb, var(--clr-surface), #fff 5%);
+}
+.review__reply strong { display: block; font-size: .6875rem; font-weight: 700; letter-spacing: .6px; color: var(--clr-mint); }
+.review__reply p { margin-top: 8px; font-size: .875rem; font-weight: 500; line-height: 1.55; }
+
+.reviews__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: detail-spin .8s linear infinite;
+}
+@keyframes detail-spin { to { transform: rotate(360deg); } }
 
 /* ── Políticas ── */
 .policy__group {
   margin-top: 12px;
-  font-size: 0.6875rem;
+  font-size: .6875rem;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: .6px;
   text-transform: uppercase;
   color: var(--clr-text-3);
 }
-
 .policy__list { list-style: none; margin-top: 6px; display: grid; gap: 6px; }
-
-.policy__list li {
-  position: relative;
-  padding-left: 18px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.55;
-  color: var(--clr-text-2);
-}
-
+.policy__list li { position: relative; padding-left: 18px; font-size: .875rem; font-weight: 500; line-height: 1.55; color: var(--clr-text-2); }
 .policy__list li::before {
   content: '';
   position: absolute;
   left: 4px;
-  top: 0.62em;
+  top: .62em;
   width: 5px;
   height: 5px;
   border-radius: 50%;
   background: var(--clr-mint);
 }
 
-/* ── Galería ── */
-.gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 8px;
-}
-
-.gallery__img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: var(--r-xs);
-  display: block;
-}
-
-/* ── Servicios ── */
-.services { display: flex; flex-direction: column; }
-
-.service {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 0;
-}
-
-.service + .service { box-shadow: inset 0 0.5px 0 var(--clr-border); }
-
-.service__info { flex: 1; min-width: 0; }
-.service__name { font-size: 1rem; font-weight: 600; letter-spacing: -0.1px; }
-
-.service__desc {
-  margin-top: 3px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--clr-text-2);
-}
-
-.service__meta {
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--clr-text-2);
-}
-
-.service__meta-icon { font-size: 14px; }
-
-.service__right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.service__price { font-size: 1.125rem; font-weight: 800; }
-
-/* ── Reseñas ── */
-.reviews { display: flex; flex-direction: column; }
-.review { padding: 16px 0; }
-.review + .review { box-shadow: inset 0 0.5px 0 var(--clr-border); }
-
-.review__head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-
-.review__avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--clr-field);
-  color: var(--clr-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.review__who { display: flex; flex-direction: column; gap: 2px; }
-.review__who strong { font-size: 0.875rem; font-weight: 700; }
-.review__stars { display: flex; gap: 1px; }
-.review__star { font-size: 14px; color: var(--clr-star); opacity: .35; }
-.review__star.fill { opacity: 1; }
-
-.review__text {
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.55;
-  color: var(--clr-text-2);
-}
-
-.review__reply {
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: var(--r-xs);
-  background: var(--clr-field);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.5;
-  color: var(--clr-text-2);
-}
-
-/* ── Horario ──
-   Va dentro del bloque de acciones y alineado con ellas: colgado del borde
-   de la tarjeta se leía como otra sección. */
-.schedule {
-  list-style: none;
-  margin: 2px 0 4px;
-  padding: 12px 14px;
-  border-radius: var(--r-xs);
-  background: var(--clr-field);
-  display: grid;
-  gap: 7px;
-}
-
-.schedule__row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--clr-text-2);
-}
-
-.schedule__row span:last-child {
-  color: var(--clr-text);
-  font-weight: 600;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Un día cerrado no compite con los que sí abren. */
+/* ══════════ HORARIO (barra lateral y hoja) ══════════ */
+.schedule { list-style: none; display: grid; gap: 10px; }
+.schedule__row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-size: .875rem; font-weight: 500; color: var(--clr-text-2); }
+.schedule__row span:last-child { color: var(--clr-text); font-weight: 600; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.schedule__row em { font-style: normal; color: var(--clr-mint); }
 .schedule__row--closed span:last-child { color: var(--clr-text-3); font-weight: 500; }
+.schedule__row--today span:first-child { color: var(--clr-text); font-weight: 700; }
 
-@media (max-width: 900px) {
-  .detail__body { grid-template-columns: 1fr; }
-  .card--sticky { position: static; }
-  .cover { height: 240px; }
+/* Las hojas: el foco entra al abrirlas y no deben rodearse de menta. */
+.hours:focus,
+.hours:focus-visible,
+.gsheet:focus,
+.gsheet:focus-visible { outline: none; box-shadow: var(--shadow-float); }
+.hours__head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.hours__title { flex: 1; text-align: left; }
+.hours__close {
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--clr-text-2);
+  cursor: pointer;
+}
+.hours__close:hover { background: var(--clr-field); color: var(--clr-text); }
+.hours__list { padding: 4px 0 8px; }
+
+/* Toda la galería en rejilla de tres, como `showGipsiPortfolioSheet`. */
+.gsheet { max-width: 720px; max-height: min(86vh, 820px); display: flex; flex-direction: column; }
+.gsheet__grid { overflow-y: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.gsheet__grid .gallery__item { flex: none; height: auto; aspect-ratio: 1; border-radius: var(--r-xs); }
+
+/* ══════════ BARRA DE RESERVA (móvil y tableta) ══════════ */
+.bookbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--tabbar-space, 0px);
+  z-index: 50;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--clr-base);
+  box-shadow: inset 0 .5px 0 var(--clr-border);
+}
+.bookbar app-button { display: block; max-width: 480px; margin: 0 auto; }
+
+.detail__toast { bottom: calc(96px + var(--tabbar-space, 0px) + env(safe-area-inset-bottom, 0px)); }
+.detail__toast--error .material-symbols-rounded { color: var(--clr-danger); }
+
+/* La barra lateral solo existe en escritorio. */
+.detail__aside { display: none; }
+
+/* ══════════ ESQUELETO ══════════ */
+.detail-skeleton__cover { aspect-ratio: 16 / 9; border-radius: 0; }
+.detail-skeleton__body { padding: 20px; display: grid; gap: 16px; }
+.detail-skeleton__main { display: grid; gap: 12px; }
+.detail-skeleton__line { height: 28px; width: 70%; border-radius: var(--r-xs); }
+.detail-skeleton__line--short { height: 18px; width: 50%; }
+.detail-skeleton__card { height: 104px; border-radius: var(--r-lg); }
+.detail-skeleton__aside { display: none; }
+.service-skel { height: 104px; border-radius: var(--r-lg); }
+.review-skel { height: 120px; margin-top: 12px; border-radius: var(--r-xl); }
+
+/* Móvil: las hojas suben desde abajo, como en la app. */
+@media (max-width: 640px) {
+  .sheet-backdrop { align-items: flex-end; padding: 0; }
+  .hours,
+  .gsheet {
+    max-width: none;
+    border-radius: 28px 28px 0 0;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
-@media (max-width: 640px) {
-  .detail__body,
-  .cover__bar,
-  .cover__info { width: calc(100% - 32px); }
-  .card { padding: 18px; }
+/* Tableta: la misma ficha de la app, con la columna centrada a un ancho de
+   lectura en vez de estirarse a 1024. */
+@media (min-width: 700px) and (max-width: 1024px) {
+  .detail__main { max-width: 680px; margin: 0 auto; }
 }
 
 /* ══════════════════════════════════════════
-   ESCRITORIO — la ficha deja de ser una pila de cajas
-   ══════════════════════════════════════════
-
-   El problema no era ninguna sección en concreto: eran seis cajas idénticas,
-   cada una con su icono de color y su titular, apiladas. Eso se lee como una
-   plantilla, no como la ficha de un negocio. La app no lo hace así: usa
-   `_SectionHeader`, que es un titular a secas, y separa con un filo.
-
-   Aquí igual. La columna principal pierde el fondo, el radio y el relleno de
-   caja; lo que ordena la lectura es el aire y una línea. La barra lateral
-   sigue siendo una tarjeta —ahí sí, porque es una acción y tiene que
-   despegarse— y se queda pegada al bajar. */
+   ESCRITORIO
+   ══════════════════════════════════════════ */
 @media (min-width: 1025px) {
+  .hero { width: min(1160px, 100% - 48px); margin: 24px auto 0; }
+  .cover { max-height: 440px; width: 100%; border-radius: var(--r-xxl); }
+  /* Sin foto, una franja y no 440 px de color liso diciendo «aquí no hay nada». */
+  .cover--empty { aspect-ratio: auto; height: 200px; }
+
+  /* Sobre la portada y quietos: en escritorio no hay que alcanzarlos con el
+     pulgar. La barra cuelga de `.detail`, así que se coloca a la altura y el
+     ancho de la portada (24 de margen arriba, la misma columna). */
+  .detail { position: relative; }
+  .cover__bar {
+    position: absolute;
+    top: 32px;
+    left: 50%;
+    width: min(1160px, 100% - 48px);
+    height: auto;
+    padding: 0 8px;
+    transform: translateX(-50%);
+  }
+  .cover__btn { width: 44px; height: 44px; margin: 8px; }
+
   .detail__body {
-    /* Más aire entre la lectura y la acción, que estaban a 20. */
+    width: min(1160px, 100% - 48px);
+    margin: 0 auto;
+    padding: 32px 0 96px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
     gap: 48px;
-    padding-top: 40px;
+    align-items: start;
   }
 
-  .detail__main { gap: 0; }
+  .head { padding: 0; }
+  .head__name { gap: 20px; }
+  .head__logo { width: 76px; height: 76px; }
+  .head__cat {
+    display: block;
+    margin-bottom: 6px;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--clr-text-3);
+  }
+  /* displaySmall: 32 → 40 en escritorio, 800. */
+  .head__title { font-size: 2.5rem; font-weight: 800; letter-spacing: -1.6px; line-height: 1.02; }
+  .head__meta { margin-top: 12px; }
+  .head__desc { max-width: 64ch; font-size: 1.0625rem; line-height: 1.65; color: var(--clr-text-2); }
+  .social { justify-content: flex-start; }
 
-  .detail__main .card {
-    background: none;
-    border-radius: 0;
+  /* Las píldoras y el aviso ya están en la barra lateral, con su texto. */
+  .info-actions,
+  .head__fee { display: none; }
+
+  .sec { margin: 40px 0 0; padding-top: 40px; }
+  .sec + .sec { margin-top: 40px; }
+  .sec__title { font-size: 1.625rem; font-weight: 800; letter-spacing: -.6px; }
+  .sec__open { justify-content: flex-start; gap: 10px; }
+
+  /* Galería en mosaico: la primera grande y cuatro al lado. El resto, en la
+     hoja de «Galería ›». Con menos de cinco, una fila de cuadrados. */
+  .gallery {
+    margin: 20px 0 0;
     padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 1fr;
+    overflow: visible;
   }
+  .gallery__item { flex: none; height: auto; aspect-ratio: 1; border-radius: var(--r-md); }
+  .gallery__item:nth-child(n + 6) { display: none; }
+  .gallery__item:first-child:nth-last-child(n + 5) { grid-column: span 2; grid-row: span 2; }
 
-  /* El filo separa; no hace falta que cada sección se dibuje su marco. */
-  .detail__main .card + .card {
-    margin-top: 40px;
-    padding-top: 40px;
-    box-shadow: inset 0 0.5px 0 var(--clr-border);
+  /* Servicios en una columna ancha, con la descripción y «Reservar» a la
+     vista. En dos columnas el nombre se cortaba a la mitad. */
+  .services { margin-top: 20px; gap: 12px; }
+  .service { height: 120px; }
+  .service__thumb { flex-basis: 120px; width: 120px; }
+  .service__info { padding: 14px 16px; gap: 6px; }
+  .service__name { font-size: 1rem; }
+  .service__desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    max-width: 60ch;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: .8125rem;
+    font-weight: 500;
+    color: var(--clr-text-2);
   }
-
-  /* Fuera los iconos de los titulares: seis iconos de color en una columna
-     compiten entre sí y con el contenido, que es lo que hay que mirar. */
-  .detail__main .card__title-icon { display: none; }
-
-  .detail__main .card__title {
-    font-family: var(--ff-display, var(--ff));
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -.5px;
-    margin-bottom: 18px;
+  .service__go { padding-right: 20px; }
+  .service__go-label {
+    display: block;
+    padding: 9px 18px;
+    border-radius: var(--r-pill);
+    background: var(--clr-mint);
+    color: var(--clr-mint-text);
+    font-size: .875rem;
+    font-weight: 700;
   }
+  .service__go .material-symbols-rounded { display: none; }
+  .service__place { margin-top: 0; }
 
-  /* La descripción es texto, no una ficha técnica: se lee a ancho cómodo. */
-  .detail__main .card__text {
-    max-width: 62ch;
-    font-size: 1rem;
-    line-height: 1.65;
+  /* Reseñas en dos columnas sin huecos: cada una mide lo que mide. */
+  .reviews { margin-top: 20px; display: block; columns: 2; column-gap: 16px; }
+  .review { break-inside: avoid; margin-bottom: 16px; }
+  .sec__more { margin-top: 4px; }
+
+  /* ── Barra lateral ── */
+  .detail__aside { display: block; position: sticky; top: 96px; }
+  .side { border-radius: var(--r-xl); background: var(--clr-surface); overflow: hidden; }
+  .side__book { padding: 24px; }
+  .side__eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--clr-text-3); }
+  .side__lead { margin: 6px 0 18px; font-family: var(--ff-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -.4px; }
+
+  .side__group { padding: 8px 12px; border-top: 1px solid var(--clr-border); }
+  .side__hours { padding: 20px 24px 24px; }
+  .side__title { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: .9375rem; font-weight: 700; }
+  .side__title .material-symbols-rounded { font-size: 20px; color: var(--clr-mint); }
+
+  .side-action {
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: none;
+    border-radius: var(--r-sm);
+    background: none;
+    color: var(--clr-text);
+    font-family: var(--ff);
+    font-size: .9375rem;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
   }
+  .side-action:hover { background: var(--clr-surface-hover); }
+  .side-action__icon { font-size: 22px; color: var(--clr-mint); }
+  .side-action__label { flex: 1; min-width: 0; display: grid; }
+  .side-action__label small { font-size: .8125rem; font-weight: 500; color: var(--clr-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side-action__value { font-size: .875rem; font-weight: 600; color: var(--clr-text-2); font-variant-numeric: tabular-nums; }
+  .side-action__chevron { font-size: 16px; color: var(--clr-text-3); }
 
-  /* Los servicios respiran: es la lista por la que se entra a reservar. */
-  .service { padding: 20px 0; }
+  .bookbar { display: none; }
+  .detail__toast { bottom: 32px; }
 
-  .detail__aside { align-self: start; }
+  .detail-skeleton__cover,
+  .detail-skeleton__body { width: min(1160px, 100% - 48px); margin: 24px auto 0; }
+  .detail-skeleton__cover { max-height: 440px; border-radius: var(--r-xxl); }
+  .detail-skeleton__body { grid-template-columns: 1fr 360px; gap: 48px; }
+  .detail-skeleton__aside { display: block; height: 360px; border-radius: var(--r-xl); }
 }
+
+/* En claro la media tarjeta de la respuesta se oscurece un punto, como en la
+   app: aclarándola se quedaba igual que el fondo. */
+@media (prefers-color-scheme: light) {
+  .review__reply { background: color-mix(in srgb, var(--clr-surface), #2E343B 7%); }
+}
+
