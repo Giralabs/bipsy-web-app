@@ -45,7 +45,6 @@
   width: 236px;
   height: 236px;
   flex-shrink: 0;
-  /* El aro sobresale del disco: el margen lo cuenta. */
   margin-bottom: 40px;
 }
 
@@ -61,13 +60,6 @@
   transform: translateX(-50%);
 }
 
-.status__disc::after {
-  content: '';
-  position: absolute;
-  inset: -22px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(192, 238, 211, .22);
-}
 
 /* Los pies dentro del disco y la cabeza fuera, como en la portada. */
 .status__mascot {
@@ -154,7 +146,6 @@
   .status { padding: 32px 20px 56px; }
   .status__art { width: 200px; height: 200px; margin-bottom: 34px; }
   .status__disc { width: 166px; }
-  .status__disc::after { inset: -18px; }
   .status__mascot { height: 196px; bottom: 12px; }
   .status__mascot--rig { width: 196px; }
 }

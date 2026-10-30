@@ -3,39 +3,34 @@
 
     <!-- ── Marca ── -->
     <div class="footer__brand">
-      <img src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
-           alt="Bipsy" class="footer__logo theme-dark-only" />
-      <img src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
-           alt="Bipsy" class="footer__logo theme-light-only" />
+      <picture>
+        <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-horizontal-carbon.webp" />
+        <img src="assets_web/bipsy-horizontal-mint.webp" alt="Bipsy" class="footer__logo"
+             width="108" height="30" loading="lazy" />
+      </picture>
 
       <p class="footer__claim">
         Pide cita en cualquier negocio que trabaje con agenda. Sin llamadas y sin esperas.
       </p>
 
-      <div class="footer__stores">
-        <a [href]="playStoreUrl" target="_blank" rel="noopener" class="footer__store">
-          <img src="assets_apps/donwload_play_store.webp" alt="Consíguelo en Google Play" />
-        </a>
-        <a [href]="appStoreUrl" target="_blank" rel="noopener" class="footer__store">
-          <img src="assets_apps/download_app_store.webp" alt="Descárgalo en el App Store" />
-        </a>
-      </div>
+      <!-- Solo con las fichas publicadas, como la tira de descarga del móvil:
+           hasta entonces los distintivos llevaban a «Muy pronto». -->
+      @if (storeLinksReady) {
+        <div class="footer__stores">
+          <a [href]="playStoreUrl" target="_blank" rel="noopener" class="footer__store">
+            <img src="assets_apps/donwload_play_store.webp" alt="Consíguelo en Google Play" loading="lazy" />
+          </a>
+          <a [href]="appStoreUrl" target="_blank" rel="noopener" class="footer__store">
+            <img src="assets_web/app-store.webp" alt="Descárgalo en el App Store" loading="lazy" />
+          </a>
+        </div>
+      }
 
       <!-- ── Redes ──
-           Apuntan a YouTube mientras no existan los perfiles, igual que las
-           tiendas. Ver docs/LEGAL-PENDIENTE.md, punto 5. -->
-      <div class="footer__socials">
-        <a href="https://www.youtube.com" target="_blank" rel="noopener" class="footer__social" aria-label="Bipsy en Instagram">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2Zm0 4.6a5.2 5.2 0 1 0 0 10.4 5.2 5.2 0 0 0 0-10.4Zm0 8.6a3.4 3.4 0 1 1 0-6.8 3.4 3.4 0 0 1 0 6.8Zm5.4-9.9a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>
-          </svg>
-        </a>
-        <a href="https://www.youtube.com" target="_blank" rel="noopener" class="footer__social" aria-label="Bipsy en LinkedIn">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20.4 20.5h-3.6v-5.6c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.7H9.3V9h3.4v1.6h.1c.5-.9 1.6-1.8 3.4-1.8 3.6 0 4.3 2.4 4.3 5.5v6.2ZM5.3 7.4a2.1 2.1 0 1 1 0-4.2 2.1 2.1 0 0 1 0 4.2ZM7.1 20.5H3.5V9h3.6v11.5Z"/>
-          </svg>
-        </a>
-      </div>
+           Fuera hasta que existan los perfiles (docs/LEGAL-PENDIENTE.md,
+           punto 5). Apuntaban a youtube.com: un icono de Instagram que lleva a
+           otra web es lo que más hace parecer de demo un pie. Al crearlos, va
+           aquí una fila `.footer__socials` con sus enlaces de verdad. -->
     </div>
 
     <!-- ── Navegación ── -->
@@ -89,10 +84,10 @@
            a 20 px de alto el logotipo salía ilegible. Estas son las mismas
            imágenes recortadas a su contenido. La variante "black" tiene el texto
            en blanco (fondo oscuro) y la "apricot" en negro (fondo claro). -->
-      <img src="assets_giralabs/giralabs_wordmark_dark.webp"
-           alt="Giralabs" class="footer__by-logo theme-dark-only" />
-      <img src="assets_giralabs/giralabs_wordmark_light.webp"
-           alt="Giralabs" class="footer__by-logo theme-light-only" />
+      <picture>
+        <source media="(prefers-color-scheme: light)" srcset="assets_web/giralabs-wordmark-light.webp" />
+        <img src="assets_web/giralabs-wordmark-dark.webp" alt="Giralabs" class="footer__by-logo" loading="lazy" />
+      </picture>
     </a>
 
     <p class="footer__legalline">

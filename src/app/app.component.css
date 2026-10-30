@@ -10,3 +10,12 @@
 .page-content {
   flex: 1;
 }
+
+/* Con pie, el contenido ocupa al menos la pantalla. Las páginas se descargan en
+   diferido y pintan sus datos al llegar: con el `<main>` vacío el pie salía a
+   media pantalla y el contenido lo echaba abajo después, el mayor salto de
+   maquetación de la web (CLS 0,33 en Explorar, 0,43 en las legales). Solo en
+   las de pie: en las cortas sin él volvería a sobrar scroll. */
+.page-content--footer {
+  min-height: 100vh;
+}

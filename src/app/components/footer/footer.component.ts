@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { HELP_INDEX, LEGAL_INDEX } from '../../pages/legal/legal.index';
 import { LEGAL_COMPANY } from '../../pages/legal/legal.models';
 import { HELP_CLIENTS_URL } from '../../data/site.data';
-import { APP_STORE_URL, PLAY_STORE_URL } from '../../data/app-links';
+import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY } from '../../data/app-links';
 
 /**
  * Pie de la web.
@@ -33,6 +33,7 @@ export class FooterComponent {
   // que salió este pie: un enlace que se ve bien y lleva a otro sitio.
   readonly appStoreUrl = APP_STORE_URL;
   readonly playStoreUrl = PLAY_STORE_URL;
+  readonly storeLinksReady = STORE_LINKS_READY;
 
   /** Los documentos legales publicados. Solo el nombre, no el texto. */
   readonly legalDocs = LEGAL_INDEX;

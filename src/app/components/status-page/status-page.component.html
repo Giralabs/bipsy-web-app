@@ -1,10 +1,10 @@
 <section class="status anim-fade-up">
 
   @if (fullPage) {
-    <img src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp"
-         alt="Bipsy" class="status__brand theme-dark-only" />
-    <img src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp"
-         alt="Bipsy" class="status__brand theme-light-only" />
+    <picture>
+      <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-horizontal-carbon.webp" />
+      <img src="assets_web/bipsy-horizontal-mint.webp" alt="Bipsy" class="status__brand" width="122" height="34" />
+    </picture>
   }
 
   <div class="status__body">

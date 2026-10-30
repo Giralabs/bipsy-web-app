@@ -51,7 +51,12 @@ export class StatusPageComponent {
     return this.mascot === 'support';
   }
 
+  /**
+   * A su medida (`scripts/build-web-assets.mjs`) las que la tienen: los
+   * originales de 2000 px pesan más de un megabyte para pintarse a 232.
+   * Bip saludando ya viene pequeño.
+   */
   get mascotSrc(): string {
-    return `assets_bip/bip_${this.mascot}.webp`;
+    return this.mascot === 'hello' ? 'assets_bip/bip_hello.webp' : `assets_web/bip-${this.mascot}.webp`;
   }
 }

@@ -1,206 +1,96 @@
-.navbar {
+/* La cabecera de escritorio: una sola, pegada arriba. Mismo ancho que el
+   contenido (1240), así el logo cae encima del primer titular. */
+/* Lo `sticky` es el componente y no el `<header>` de dentro: un sticky solo
+   se pega dentro de su padre, y el padre del header era este mismo host, que
+   mide lo que él. Así la barra se iba con el scroll. */
+:host {
+  display: block;
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+.navbar {
+  height: 72px;
+  background: var(--clr-base);
+  transition: box-shadow .2s ease, background-color .2s ease;
+}
+
+/* Al bajar, el filo de abajo dice dónde acaba la barra y empieza la página. */
+.navbar--scrolled {
   background: var(--clr-nav-bg);
-  backdrop-filter: blur(28px) saturate(1.7);
-  -webkit-backdrop-filter: blur(28px) saturate(1.7);
-  border-bottom: 1.2px solid var(--clr-nav-border);
-  padding: 0 48px;
-  height: 84px;
-  box-shadow: var(--clr-nav-shadow);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow: inset 0 -0.5px 0 var(--clr-border);
 }
 
 .navbar-inner {
-  max-width: 1440px;
+  width: min(1240px, 100% - 48px);
   margin: 0 auto;
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 48px;
+  gap: 28px;
 }
 
-/* Logo */
-.navbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
-.navbar-logo-img { height: 34px; width: auto; transition: opacity .2s ease; }
-.navbar-logo:hover .navbar-logo-img { opacity: .85; }
+.navbar-logo { display: flex; align-items: center; flex-shrink: 0; text-decoration: none; border-radius: var(--r-xs); }
+.navbar-logo-img { height: 32px; width: auto; display: block; }
 
-/* ── Enlaces ──
-   Modo plano, como el resto: la píldora se distingue por ser más clara que la
-   barra, sin degradado, sin borde y sin sombra. La activa lleva el acento. */
-.nav-links {
+/* ── Buscador ──
+   Ocupa el centro. Escondido ocupa su sitio igual —con `visibility`—, para
+   que al aparecer no empuje los botones de la derecha. */
+.navbar-search {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+}
+
+.navbar-search--on { opacity: 1; visibility: visible; transform: none; }
+.navbar-search app-search-bar { width: min(560px, 100%); }
+
+/* ── Derecha ── */
+.navbar-user {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
-  flex-shrink: 1;
-  overflow: hidden;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
+.nav-links { display: flex; align-items: center; gap: 4px; margin-right: 8px; }
+
 .nav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
+  gap: 7px;
+  height: 40px;
+  padding: 0 14px;
   border-radius: var(--r-pill);
   color: var(--clr-text-2);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
-  background: transparent;
-  border: none;
-  box-shadow: none;
   transition: background-color .2s ease, color .2s ease;
 }
 
-.nav-link:hover { background: var(--clr-field); color: var(--clr-text); }
+.nav-link:hover { background: var(--clr-surface); color: var(--clr-text); }
 
-.nav-link.active {
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
-  font-weight: 700;
-}
+.nav-link.active { background: var(--clr-mint); color: var(--clr-mint-text); font-weight: 700; }
+.nav-link.active .nav-icon { font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24; }
 
 .nav-icon { font-size: 20px; }
 
-/* ── Zona de usuario ── */
-.navbar-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.user-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 14px 4px 4px;
-  border-radius: var(--r-pill);
-  background: var(--clr-field);
-  border: none;
-  color: var(--clr-text);
-  text-decoration: none;
-  transition: background-color .2s ease;
-}
-
-.user-badge:hover { background: var(--clr-subtle); }
-
-.user-avatar,
-.user-avatar-img {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.user-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
-.user-avatar-img { object-fit: cover; }
-
-.user-name-label { font-size: 0.875rem; font-weight: 600; }
-
-.icon-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--clr-field);
-  border: none;
-  color: var(--clr-text-2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background-color .2s ease, color .2s ease;
-}
-
-.icon-btn:hover { background: var(--clr-subtle); color: var(--clr-text); }
-.icon-btn.active { background: var(--clr-mint); color: var(--clr-mint-text); }
-.icon-btn .material-symbols-rounded { font-size: 20px; }
-
-.nav-divider {
-  width: 1px;
-  height: 24px;
-  background-color: var(--clr-border);
-  margin: 0 16px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.biz-promo-link {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--clr-text-2);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  white-space: nowrap;
-}
-
-.biz-promo-link:hover {
-  color: var(--clr-mint);
-  transform: translateY(-1px);
-}
-
-@media (max-width: 900px) {
-  .nav-divider,
-  .biz-promo-link {
-    display: none !important;
-  }
-}
-
-@media (max-width: 700px) {
-  .nav-links { display: none; }
-  .user-name-label { display: none; }
-
-  /* El navbar provocaba scroll horizontal en TODA la web: 48px de padding a
-     cada lado + 48px de gap + dos botones de sesión de 138px fijos suman más
-     de lo que mide una pantalla de móvil (390px). Se reduce el espaciado y se
-     deja que los botones encojan. */
-  .navbar { padding: 0 16px; }
-  .navbar-inner { gap: 12px; }
-  /* flex-shrink: 0 en la regla base impedía que la zona de sesión cediera
-     espacio, que es justo lo que causaba el desbordamiento. */
-  .navbar-user { gap: 8px; min-width: 0; flex-shrink: 1; }
-  .navbar-logo { min-width: 0; }
-
-  /* El ancho de 138px llega como estilo en línea desde la plantilla, así que
-     solo se puede reducir con !important. El botón interior ya es full-width,
-     de modo que encoge con su host. */
-  .navbar-user app-button { width: 104px !important; }
-}
-
-/* Móviles estrechos (iPhone SE 1ª gen y similares). Con tan poco ancho
-   cualquier valor fijo se acaba pasando, así que los dos botones se reparten
-   el espacio que sobra tras el logo. */
-@media (max-width: 380px) {
-  .navbar { padding: 0 12px; }
-  .navbar-user app-button {
-    width: auto !important;
-    flex: 1 1 0;
-    min-width: 0;
-  }
-}
-
-/* Globo de mensajes sin leer, dentro de la píldora del enlace. */
 .nav-badge {
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  margin-left: 2px;
   border-radius: var(--r-pill);
   background: var(--clr-danger);
   color: #fff;
@@ -211,18 +101,71 @@
   justify-content: center;
 }
 
-/* ── Botones de sesión ──
-   El secundario se rellena con el color de TARJETA, que en claro es blanco
-   puro; sobre la barra —que también es casi blanca— quedaba invisible. Aquí
-   manda el relleno "sobre lienzo", que está medido para verse contra un fondo
-   claro sin gritar.
-
-   ::ng-deep porque el estilo del botón está encapsulado en su componente y lo
-   que cambia no es el botón en sí, sino cómo se comporta EN ESTA barra. */
-.navbar-user ::ng-deep .bipsy-btn--secondary {
-  background: var(--clr-subtle);
+.user-badge {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: 0 0 0 2px transparent;
+  transition: box-shadow .2s ease;
 }
 
-.navbar-user ::ng-deep .bipsy-btn--secondary:hover:not(:disabled) {
-  background: var(--clr-border);
+.user-badge:hover,
+.user-badge--active { box-shadow: 0 0 0 2px var(--clr-mint); }
+
+.user-avatar,
+.user-avatar-img { width: 100%; height: 100%; }
+
+.user-avatar {
+  display: grid;
+  place-items: center;
+  background: var(--clr-mint);
+  color: var(--clr-mint-text);
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.user-avatar-img { object-fit: cover; }
+
+/* Sin sesión: texto, secundario y principal. Del mismo alto que las pestañas. */
+.biz-promo-link,
+.nav-btn {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--r-pill);
+  font-family: var(--ff);
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.biz-promo-link { background: none; color: var(--clr-text-2); font-weight: 600; }
+.biz-promo-link:hover { color: var(--clr-text); background: var(--clr-surface); }
+
+.nav-btn { background: var(--clr-surface); color: var(--clr-text); }
+.nav-btn:hover { background: var(--clr-surface-hover); }
+
+.nav-btn--primary { background: var(--clr-mint); color: var(--clr-mint-text); }
+.nav-btn--primary:hover { background: var(--clr-mint-hover); }
+
+/* Hasta 1180 caben las pestañas con su texto; por debajo, solo el icono. */
+@media (max-width: 1180px) {
+  .navbar-inner { gap: 16px; }
+  .nav-link { padding: 0 11px; }
+  /* Escondido a la vista, no al lector: la pestaña sigue teniendo nombre. */
+  .nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .biz-promo-link { display: none; }
 }
