@@ -1,0 +1,95 @@
+:host { display: contents; }
+
+.pbs__amount,
+.pbs__note,
+.pbs__deadline,
+.pbs__card,
+.pbs__card-skel { margin-top: 16px; }
+
+/* El título recibe el foco al abrir solo para que el lector de pantalla
+   empiece por él; no es un control, así que no se le pinta el anillo. */
+.sheet__title:focus,
+.sheet__title:focus-visible { outline: none; box-shadow: none; }
+
+/* El importe manda: es lo que se decide en esta hoja. */
+.pbs__amount {
+  margin-top: 20px;
+  font-family: var(--ff-display);
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.pbs__note {
+  margin-top: 8px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+  text-align: center;
+}
+
+/* El plazo: una fila sobria, ámbar solo en los últimos minutos. */
+.pbs__deadline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--clr-field);
+  font-size: 0.875rem;
+}
+
+.pbs__deadline-title { font-weight: 600; color: var(--clr-text-2); }
+.pbs__deadline-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+.pbs__deadline--urgent .pbs__deadline-value { color: var(--clr-warn); }
+.pbs__deadline--over .pbs__deadline-value { color: var(--clr-danger-text); }
+
+/* La tarjeta con la que se paga. */
+.pbs__card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--clr-field);
+}
+
+.pbs__card-label { font-size: 0.9375rem; font-weight: 600; }
+.pbs__card-exp { font-size: 0.75rem; font-weight: 600; color: var(--clr-text-3); }
+
+.pbs__card-skel { height: 48px; border-radius: var(--r-md); }
+
+.flow__error { margin-top: 16px; }
+
+/* Cobrando: sin botones, porque un cobro en marcha no se interrumpe. */
+.pbs__processing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px 0 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--clr-text-2);
+}
+
+.pbs__spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--clr-subtle);
+  border-top-color: var(--clr-mint);
+  border-radius: 50%;
+  animation: pbs-spin .8s linear infinite;
+}
+
+@keyframes pbs-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pbs__spinner { animation-duration: 2.4s; }
+}

@@ -12,16 +12,18 @@
          no lo que pasa si no haces nada. Y el texto dice lo que de verdad
          significa no marcarla, porque «no guardar» se lee como «se borra al
          salir» y no es eso: sigue siendo la garantía de ESTA cita. -->
-    <label class="card__keep">
-      <input type="checkbox" [(ngModel)]="keepSaved" />
-      <span>
-        <strong>Guardar para próximas reservas</strong>
-        <small>
-          Si no la guardas, se usa solo para esta cita y se retira cuando deje de
-          poder generar un cargo.
-        </small>
-      </span>
-    </label>
+    @if (canDecline) {
+      <label class="card__keep">
+        <input type="checkbox" [(ngModel)]="keepSaved" />
+        <span>
+          <strong>Guardar para próximas reservas</strong>
+          <small>
+            Si no la guardas, se usa solo para esta cita y se retira cuando deje de
+            poder generar un cargo.
+          </small>
+        </span>
+      </label>
+    }
 
     @if (error) {
       <p class="flow__error" role="alert">

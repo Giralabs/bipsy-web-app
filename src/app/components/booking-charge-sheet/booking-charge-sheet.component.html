@@ -1,0 +1,100 @@
+<div class="sheet-backdrop" (click)="dismiss()">
+  <div
+    class="sheet bcs"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="bcs-title"
+    [attr.aria-busy]="phase === 'processing'"
+    (click)="$event.stopPropagation()"
+    #box
+  >
+    @switch (phase) {
+
+      <!-- ══════════ 1. LO QUE SE VA A COBRAR ══════════ -->
+      @case ('review') {
+        <h2 class="sheet__title bcs__title" id="bcs-title" tabindex="-1" #heading>{{ title }}</h2>
+
+        <p class="bcs__amount">{{ feeAmount }}</p>
+        <p class="bcs__concept">{{ concept }}</p>
+
+        @if (methodsLoading) {
+          <div class="skeleton bcs__card-skel" aria-hidden="true"></div>
+        } @else {
+          <div class="bcs__card" [class.bcs__card--none]="!card">
+            @if (card; as c) {
+              <span class="bcs__card-label">{{ cardText(c) }}</span>
+              @if (cardExp(c)) {
+                <span class="bcs__card-exp">{{ cardExp(c) }}</span>
+              }
+            } @else {
+              <span class="bcs__card-label">No tienes ninguna tarjeta guardada</span>
+            }
+          </div>
+        }
+
+        <p class="bcs__note">{{ reviewNote }}</p>
+
+        @if (actionError) {
+          <p class="flow__error" role="alert">
+            <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ actionError }}
+          </p>
+        }
+
+        <div class="sheet__actions">
+          <app-button
+            variant="destructive"
+            size="large"
+            [fullWidth]="true"
+            [disabled]="methodsLoading"
+            (onClick)="pay()"
+          >
+            {{ payButtonLabel }}
+          </app-button>
+          <!-- Sólido y no un texto suelto: es la salida de una hoja que cobra
+               dinero y tiene que verse tanto como el botón que cobra. -->
+          <app-button variant="secondary" [fullWidth]="true" [overCard]="true" (onClick)="dismiss()">
+            Volver
+          </app-button>
+        </div>
+      }
+
+      <!-- ══════════ 2. COBRANDO ══════════ -->
+      @case ('processing') {
+        <div class="bcs__processing" role="status">
+          <span class="bcs__spinner" aria-hidden="true"></span>
+          <h2 class="bcs__processing-title" id="bcs-title">Procesando el pago</h2>
+          <p class="bcs__note">
+            Estamos cobrando {{ feeAmount }} en tu tarjeta. No cierres esta página.
+          </p>
+        </div>
+      }
+
+      <!-- ══════════ 3. EL RECIBO ══════════ -->
+      @case ('result') {
+        <span class="material-symbols-rounded fill bcs__result-icon" [ngClass]="'bcs__result-icon--' + resultTone" aria-hidden="true">
+          {{ resultTone === 'ok' ? 'check_circle' : resultTone === 'warn' ? 'hourglass_bottom' : 'error' }}
+        </span>
+        <h2 class="sheet__title" id="bcs-title" tabindex="-1" #heading>{{ resultTitle }}</h2>
+        <p class="sheet__sub bcs__result-body">{{ resultBody }}</p>
+
+        <dl class="bcs__receipt">
+          <div class="bcs__row bcs__row--strong"><dt>Importe</dt><dd>{{ receiptAmount }}</dd></div>
+          <div class="bcs__row"><dt>Concepto</dt><dd>{{ receiptConcept }}</dd></div>
+          @if (receiptDate) {
+            <div class="bcs__row"><dt>Fecha</dt><dd>{{ receiptDate }}</dd></div>
+          }
+          @if (payment?.failureReason) {
+            <div class="bcs__row"><dt>Motivo</dt><dd>{{ payment?.failureReason }}</dd></div>
+          }
+        </dl>
+
+        <div class="sheet__actions">
+          <app-button variant="primary" size="large" [fullWidth]="true" icon="check" (onClick)="finish(false)">
+            Hecho
+          </app-button>
+          <app-button variant="text" [fullWidth]="true" (onClick)="finish(true)">Ver en Pagos</app-button>
+        </div>
+      }
+    }
+  </div>
+</div>

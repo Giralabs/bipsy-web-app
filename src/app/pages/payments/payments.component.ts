@@ -1,20 +1,24 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ApiError } from '../../core/api-error';
 import { SessionService } from '../../core/session.service';
 import { PaymentRepository } from '../../repositories/payment.repository';
+import { DialogService } from '../../core/dialog.service';
+import { PaymentMethodResponse, cardLabel } from '../../models/bipsy.models';
 import {
-  PaymentMethodResponse,
-  PaymentResponse,
-  cardLabel,
-} from '../../models/bipsy.models';
+  PaymentRecord,
+  cardExpiry,
+  cardIsExpired,
+  paymentKindLabel,
+  paymentStatusLabel,
+} from '../../models/payments-extras.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { AddCardSheetComponent } from '../../components/add-card-sheet/add-card-sheet.component';
 import { GroupedSectionComponent } from '../../components/grouped-list/grouped-section.component';
 import { GroupedRowComponent } from '../../components/grouped-list/grouped-row.component';
 import { euros } from '../../shared/dates';
-
 /**
  * Tus tarjetas y tus cobros. Port de `PaymentsScreen`.
  *
@@ -34,9 +38,12 @@ import { euros } from '../../shared/dates';
   styleUrl: './payments.component.css',
 })
 export class PaymentsComponent implements OnInit {
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly payments = inject(PaymentRepository);
+  private readonly dialog = inject(DialogService);
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild(AddCardSheetComponent) cardSheet?: AddCardSheetComponent;
 
@@ -46,7 +53,7 @@ export class PaymentsComponent implements OnInit {
   loadError: ApiError | null = null;
 
   methods: PaymentMethodResponse[] = [];
-  history: PaymentResponse[] = [];
+  history: PaymentRecord[] = [];
 
   addOpen = false;
   busyId: number | null = null;
@@ -56,7 +63,9 @@ export class PaymentsComponent implements OnInit {
   publishableKey: string | null = null;
 
   ngOnInit(): void {
-    this.session.status$.subscribe(status => {
+    // Cortada al salir: la sesión no completa nunca, y cada visita dejaba
+    // viva una suscripción que volvía a cargar los pagos al iniciar sesión.
+    this.session.status$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status === 'unknown') {
         return;
       }
@@ -98,52 +107,54 @@ export class PaymentsComponent implements OnInit {
     return cardLabel(method);
   }
 
-  expiry(method: PaymentMethodResponse): string | null {
-    if (!method.expMonth || !method.expYear) {
-      return null;
-    }
-    return `Caduca ${String(method.expMonth).padStart(2, '0')}/${String(method.expYear).slice(-2)}`;
+  expired(method: PaymentMethodResponse): boolean {
+    return cardIsExpired(method);
   }
 
-  amount(payment: PaymentResponse): string {
+  /** «Caduca 04/27», o «Caducada · 04/27»: una caducada no sirve para cobrar. */
+  expiry(method: PaymentMethodResponse): string | null {
+    const exp = cardExpiry(method);
+    if (!exp) {
+      return null;
+    }
+    return cardIsExpired(method) ? `Caducada · ${exp}` : `Caduca ${exp}`;
+  }
+
+  amount(payment: PaymentRecord): string {
     return euros(payment.amountCents / 100);
   }
 
-  /** `createdAt` es un `Instant` en UTC: hay que pasarlo a hora local. */
-  when(payment: PaymentResponse): string {
-    return new Date(payment.createdAt).toLocaleString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  /**
+   * Fecha y, si lo hay, el motivo del fallo. El estado va en la etiqueta de la
+   * derecha y solo cuando NO es el normal: «Cobrado» en cada fila es ruido —el
+   * importe ya lo dice—; «No cobrado» o «Pendiente de tu banco» hay que
+   * leerlos. `createdAt` es un `Instant` en UTC: a hora local.
+   */
+  detail(payment: PaymentRecord): string {
+    const d = new Date(payment.createdAt);
+    const parts = [
+      d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }),
+      d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    ];
+    if (payment.failureReason?.trim()) parts.push(payment.failureReason.trim());
+    return parts.join(' · ');
   }
 
-  kindLabel(payment: PaymentResponse): string {
-    switch (payment.kind) {
-      case 'RESCHEDULE_FEE': return 'Cambio de cita';
-      case 'NO_SHOW_FEE': return 'No acudiste';
-      default: return 'Cancelación';
-    }
+  kindLabel(payment: PaymentRecord): string {
+    return payment.description?.trim() || paymentKindLabel(payment.kind);
   }
 
-  statusTone(payment: PaymentResponse): string {
-    switch (payment.status) {
-      case 'SUCCEEDED': return 'success';
-      case 'FAILED': return 'danger';
-      case 'REFUNDED': return 'mint';
-      default: return 'warn';
-    }
+  statusTone(payment: PaymentRecord): string {
+    return paymentStatusLabel(payment.status).tone;
   }
 
-  statusLabel(payment: PaymentResponse): string {
-    switch (payment.status) {
-      case 'SUCCEEDED': return 'Cobrado';
-      case 'FAILED': return 'Rechazado';
-      case 'REFUNDED': return 'Devuelto';
-      case 'REQUIRES_ACTION': return 'Pago pendiente';
-      default: return 'Pendiente';
-    }
+  statusLabel(payment: PaymentRecord): string {
+    return paymentStatusLabel(payment.status).label;
+  }
+
+  /** Un cobro fallido no se ha llevado dinero: pintarlo igual haría pensar que sí. */
+  failed(payment: PaymentRecord): boolean {
+    return payment.status === 'FAILED';
   }
 
   // ----- AÑADIR TARJETA --------------------
@@ -161,6 +172,11 @@ export class PaymentsComponent implements OnInit {
     // Se pinta primero y se prepara después: `open()` necesita que su hueco
     // exista para montar el formulario de Stripe.
     setTimeout(async () => {
+      // `eventCoalescing` (app.config) deja la detección de cambios del clic
+      // para el siguiente fotograma, y este setTimeout llega antes: el `@if`
+      // aún no había pintado la hoja, `cardSheet` era undefined y salía «No
+      // hemos podido abrir la pasarela de pago». Se pinta aquí, a la fuerza.
+      this.cdr.detectChanges();
       const ok = await this.cardSheet?.open();
       if (!ok) {
         this.addOpen = false;
@@ -199,7 +215,13 @@ export class PaymentsComponent implements OnInit {
     if (this.busyId !== null) {
       return;
     }
-    if (!confirm(`¿Quitamos la tarjeta ${this.label(method)}?`)) {
+    const ok = await this.dialog.confirm({
+      title: '¿Quitar la tarjeta?',
+      message: `${this.label(method)} dejará de estar guardada en tu cuenta.`,
+      confirmLabel: 'Quitar',
+      destructive: true,
+    });
+    if (!ok) {
       return;
     }
     this.busyId = method.id;

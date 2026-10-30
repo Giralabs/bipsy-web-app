@@ -1,0 +1,98 @@
+@if (phase === 'tarjeta') {
+  <!-- El paso de la tarjeta ocupa la hoja entera: trae su cabecera y su botón
+       de guardar. Aquí se guarda siempre —se está pagando, y «solo para esta
+       cita» no significa nada en este sitio—. -->
+  <app-add-card-sheet
+    [publishableKey]="platformKey"
+    [canDecline]="false"
+    reason="La guardas una vez y pagas con ella ahora mismo. El número nunca pasa por Bipsy."
+    (saved)="onCardSaved($event)"
+    (closed)="backToReview()"
+  ></app-add-card-sheet>
+} @else {
+  <div class="sheet-backdrop" (click)="dismiss()">
+    <div
+      class="sheet pbs"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pbs-title"
+      aria-describedby="pbs-amount"
+      [attr.aria-busy]="phase === 'processing'"
+      (click)="$event.stopPropagation()"
+      #box
+    >
+      <h2 class="sheet__title" id="pbs-title" tabindex="-1" #title>
+        {{ retiene ? 'Reservar el importe' : 'Pagar la cita' }}
+      </h2>
+      <p class="sheet__sub">{{ subtitle }}</p>
+
+      <p class="pbs__amount" id="pbs-amount">{{ amount }}</p>
+      <!-- Si ya pagó una parte se dice: si no, el importe no cuadraría con el
+           precio de la cita y parecería un error. -->
+      @if (paidLabel) {
+        <p class="pbs__note">{{ paidLabel }}</p>
+      }
+      <!-- Lo que va a ver en su banco. Sin decirlo busca un cargo que todavía no
+           existe, o cree que le han cobrado dos veces cuando la retención pase
+           a cargo. -->
+      @if (retiene) {
+        <p class="pbs__note">
+          No se te cobra todavía: el importe queda reservado en tu tarjeta y solo se cobra si el
+          negocio acepta la cita. Si la rechaza, se libera solo.
+        </p>
+      }
+
+      <!-- El plazo del negocio. Debajo del importe: lo que decide si se paga es
+           el importe; el plazo solo dice que hay que decidirlo ahora. -->
+      @if (expiresAt) {
+        <div class="pbs__deadline" [class.pbs__deadline--urgent]="urgent" [class.pbs__deadline--over]="caducado">
+          <span class="pbs__deadline-title">Para pagar</span>
+          <span class="pbs__deadline-value" aria-live="polite">{{ countdownLabel }}</span>
+        </div>
+      }
+
+      <!-- La tarjeta con la que se paga: decir «con mi tarjeta» sin enseñar cuál
+           obliga a fiarse. -->
+      @if (hasCard) {
+        @if (methodsLoading) {
+          <div class="skeleton pbs__card-skel" aria-hidden="true"></div>
+        } @else if (card) {
+          <div class="pbs__card">
+            <span class="pbs__card-label">{{ cardText(card!) }}</span>
+            @if (cardExp(card!)) {
+              <span class="pbs__card-exp">{{ cardExp(card!) }}</span>
+            }
+          </div>
+        }
+      }
+
+      @if (error) {
+        <p class="flow__error" role="alert">
+          <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
+        </p>
+      }
+
+      @if (phase === 'processing') {
+        <div class="pbs__processing" role="status">
+          <span class="pbs__spinner" aria-hidden="true"></span>
+          <span>{{ retiene ? 'Reservando el importe…' : 'Procesando el pago…' }}</span>
+        </div>
+      } @else {
+        <div class="sheet__actions">
+          <!-- Sin tarjeta el botón NO se apaga: lleva a ponerla. Uno que dice lo
+               que hay que hacer y no deja hacerlo es peor que no estar. -->
+          <app-button
+            variant="primary"
+            size="large"
+            [fullWidth]="true"
+            [disabled]="caducado"
+            (onClick)="onPrimary()"
+          >
+            {{ payLabel }}
+          </app-button>
+          <app-button variant="text" [fullWidth]="true" (onClick)="dismiss()">Ahora no</app-button>
+        </div>
+      }
+    </div>
+  </div>
+}
