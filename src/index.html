@@ -28,8 +28,19 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#23282E" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ECEEED" media="(prefers-color-scheme: light)">
+  <meta name="color-scheme" content="dark light">
+
+  <!-- Solo los pesos que usa la web (400-800, sin cursivas: el único texto
+       inclinado es el del titular, en Bricolage). Antes se pedían también el
+       300 y dos cursivas que no salían en ninguna página. -->
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Plus+Jakarta+Sans:wght@400..800&display=swap" rel="stylesheet">
+  <!-- Los iconos, acotados a los ejes que se usan: grosor 400-500 y sin
+       GRAD. La fuente variable completa (grosor 100-700 y GRAD -50..200) es
+       varias veces más pesada. `block` y no `swap`: mientras llega, un icono
+       no debe pintarse como la palabra «arrow_forward». -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..500,0..1,0&display=block" rel="stylesheet">
 </head>
 <body>
   <app-root></app-root>
