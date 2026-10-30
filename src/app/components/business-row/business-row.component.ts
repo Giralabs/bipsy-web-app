@@ -1,4 +1,14 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BusinessResponse } from '../../models/bipsy.models';
@@ -15,6 +25,11 @@ import { DragScrollDirective } from '../../shared/drag-scroll.directive';
  *
  * En escritorio lleva flechas: con ratón, una fila que se sale por la derecha
  * no se descubre sola.
+ *
+ * Las filas paginadas (`hasMore`) piden la página siguiente con `loadMore` al
+ * acercarse al final, como `PagedBusinessRow` en la app. También cuando la fila
+ * no llega a desbordar: en una pantalla ancha caben las cinco de la primera
+ * página y sin eso no habría scroll que llegara al final nunca.
  */
 @Component({
   selector: 'app-business-row',
@@ -23,7 +38,7 @@ import { DragScrollDirective } from '../../shared/drag-scroll.directive';
   templateUrl: './business-row.component.html',
   styleUrl: './business-row.component.css',
 })
-export class BusinessRowComponent {
+export class BusinessRowComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) title!: string;
 
   /** Una línea bajo el título que dice por qué estos y no otros. */
@@ -64,6 +79,11 @@ export class BusinessRowComponent {
   /** Enlace de "Ver todos", si la fila lleva a alguna parte. */
   @Input() seeAllLink?: string;
 
+  /** Queda otra página en el servidor. */
+  @Input() hasMore = false;
+  /** Se acerca el final y queda más: quien la monta pide la siguiente. */
+  @Output() loadMore = new EventEmitter<void>();
+
   @Output() rebook = new EventEmitter<BusinessResponse>();
 
   @ViewChild('scroller') scroller?: ElementRef<HTMLElement>;
@@ -72,9 +92,22 @@ export class BusinessRowComponent {
 
   atStart = true;
   atEnd = false;
+  private frame?: number;
 
   get visible(): boolean {
     return this.loading || this.businesses.length > 0 || !!this.emptyMessage;
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['businesses'] || changes['hasMore'] || changes['loading']) {
+      // Tras pintar: hasta entonces no se sabe si la fila desborda.
+      cancelAnimationFrame(this.frame ?? 0);
+      this.frame = requestAnimationFrame(() => this.onScroll());
+    }
+  }
+
+  ngOnDestroy(): void {
+    cancelAnimationFrame(this.frame ?? 0);
   }
 
   distanceOf(business: BusinessResponse): number | null {
@@ -100,6 +133,12 @@ export class BusinessRowComponent {
       return;
     }
     this.atStart = el.scrollLeft <= 4;
-    this.atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    const left = el.scrollWidth - (el.scrollLeft + el.clientWidth);
+    // Con más por llegar, la flecha sigue viva: el final todavía no lo es.
+    this.atEnd = left <= 4 && !this.hasMore;
+    // Media pantalla antes del final: la página llega antes de que se note.
+    if (this.hasMore && !this.loading && left < el.clientWidth / 2) {
+      this.loadMore.emit();
+    }
   }
 }

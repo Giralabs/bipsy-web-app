@@ -5,35 +5,54 @@
        Saludo a la izquierda y tu foto en la esquina, que es por donde se
        entra a Perfil.
        ══════════════════════════════════════════ -->
+  @if (!desktop()) {
   <header class="mhead only-touch">
+    <!-- `_Header`: el saludo en UNA línea, del tamaño de «Mis citas» y
+         «Chat», y tu foto en la esquina, que es por donde se entra a Perfil. -->
     <div class="mhead__top">
-      <div class="mhead__hello">
-        <p class="mhead__eyebrow">{{ isAuthenticated ? dayPart : '¿Dónde reservas hoy?' }}</p>
-        <p class="mhead__greeting">{{ greeting }}</p>
-      </div>
-      <a [routerLink]="avatarLink" class="mhead__avatar" aria-label="Tu perfil">
+      <h1 class="mhead__greeting">{{ greeting }}</h1>
+      <!-- `ProfileAvatarButton`: el círculo en el acento y la ruedecita, que
+           dice que detrás están los ajustes. Una foto sola en la esquina se
+           lee como «eres tú» y nadie la toca. -->
+      <a [routerLink]="avatarLink" class="mhead__avatar" [attr.aria-label]="isAuthenticated ? 'Tu perfil y ajustes' : 'Entrar o crear cuenta'">
         <app-avatar [photoUrl]="avatarPhoto" [name]="avatarName" [size]="44"></app-avatar>
+        @if (isAuthenticated) {
+          <span class="mhead__badge" aria-hidden="true">
+            <span class="material-symbols-rounded fill">settings</span>
+          </span>
+        }
       </a>
     </div>
 
+    <!-- `_ExploreSearchBar`: la píldora y los tres círculos de la app
+         —Zona, Fecha y Filtros—. Cada uno abre su parte de Buscar. -->
     <div class="mhead__row">
-      <form class="mhead__search" (submit)="executeSearch(); $event.preventDefault()">
+      <form class="mhead__search" role="search" (submit)="executeSearch(); $event.preventDefault()">
         <span class="material-symbols-rounded">search</span>
         <input
-          type="text"
-          placeholder="Nombre, servicio, categoría..."
+          type="search"
+          placeholder="Nombre, servicio"
+          aria-label="Buscar por nombre o servicio"
           [(ngModel)]="searchQuery"
           name="bipsy-mobile-search"
           autocomplete="off"
           autocorrect="off"
           spellcheck="false"
+          enterkeyhint="search"
         />
       </form>
-      <button type="button" class="mhead__filters" (click)="openFilters()" aria-label="Filtros">
+      <a class="mhead__circle" routerLink="/buscar" [queryParams]="{ mapa: 1 }" aria-label="Zona">
+        <span class="material-symbols-rounded">location_on</span>
+      </a>
+      <a class="mhead__circle" routerLink="/buscar" [queryParams]="{ filtros: 1 }" aria-label="Fecha">
+        <span class="material-symbols-rounded">calendar_today</span>
+      </a>
+      <button type="button" class="mhead__circle" (click)="openFilters()" aria-label="Filtros">
         <span class="material-symbols-rounded">tune</span>
       </button>
     </div>
   </header>
+  } @else {
 
   <!-- ══════════════════════════════════════════
        HERO — escritorio
@@ -63,7 +82,7 @@
             <a routerLink="/buscar" class="hero__proof">
               <span class="hero__faces">
                 @for (biz of heroBusinesses; track biz.id) {
-                  <img [src]="businessImage(biz)" [alt]="biz.name" loading="lazy" />
+                  <img [src]="businessImage(biz)" alt="" width="34" height="34" decoding="async" />
                 }
               </span>
               <span class="hero__proof-text">
@@ -85,14 +104,22 @@
         </div>
       </div>
 
-      <img src="assets_bip/bip_hello.webp" alt="Bip, la mascota de Bipsy, saludando" class="hero__mascot" />
+      <!-- Decorativo: el titular ya dice lo que hay que saber. Es lo más
+           grande de la primera pantalla, así que se pide con prioridad. -->
+      <img src="assets_web/bip-hello-500.webp" alt="" class="hero__mascot"
+           srcset="assets_web/bip-hello-500.webp 1x, assets_web/bip-hello-1000.webp 2x"
+           width="281" height="500" fetchpriority="high" />
+
     </div>
   </section>
+  }
 
   <div class="wrap">
 
-    <!-- ══════════ TU PRÓXIMA CITA ══════════ -->
-    @if (isAuthenticated && heroBooking && !heroBookingIsPast) {
+    <!-- ══════════ TU PRÓXIMA CITA ══════════
+         Solo en escritorio: Explorar en la app no la tiene —está en Mis citas,
+         a una pestaña— y en el móvil empujaba las filas media pantalla. -->
+    @if (desktop() && isAuthenticated && heroBooking && !heroBookingIsPast) {
       <div class="ticket" role="link" tabindex="0" (click)="openHeroBooking()" (keydown.enter)="openHeroBooking()">
         <span class="ticket__leaf">
           <span class="ticket__month">{{ heroBookingDate.month }}</span>
@@ -174,7 +201,7 @@
       </div>
 
       <!-- Escritorio: tarjetas con el icono en su disco. -->
-      <div class="cats__row only-desk" appDragScroll #catsRow>
+      <div class="cats__row only-desk fade-row" appDragScroll #catsRow>
         @if (categories.length === 0 && isLoading) {
           @for (i of skeletons; track i) {
             <div class="skeleton cat-card-skeleton"></div>
@@ -209,14 +236,31 @@
         </div>
       } @else {
 
-        <!-- ══════════ TUS FAVORITOS — siempre la primera fila ══════════ -->
-        @if (isAuthenticated) {
+        <!-- Móvil: el aviso de ubicación de la app, lo primero tras las
+             categorías, compacto y con su ✕. -->
+        @if (!desktop() && !locationOn && !isLoading && !locateDismissed) {
+          <div class="mlocate">
+            <button type="button" class="mlocate__go" (click)="requestLocation()">
+              <span class="material-symbols-rounded fill">location_on</span>
+              Activa la ubicación para ver los negocios que tienes cerca.
+            </button>
+            <button type="button" class="mlocate__close" (click)="locateDismissed = true" aria-label="Cerrar el aviso">
+              <span class="material-symbols-rounded">close</span>
+            </button>
+          </div>
+        }
+
+        <!-- ══════════ TUS FAVORITOS — siempre la primera fila ══════════
+             En el móvil, como en la app, solo si hay alguno. -->
+        @if (isAuthenticated && (desktop() || favoritesLoading || favoriteBusinesses.length > 0)) {
           <app-business-row
             title="Tus favoritos"
             icon="favorite"
             subtitle="Tus sitios guardados, el último que marcaste primero"
             [businesses]="favoriteBusinesses"
             [loading]="favoritesLoading"
+            [hasMore]="pagers.favorites.hasMore"
+            (loadMore)="loadMoreRow('favorites')"
             [markPreviouslyBooked]="true"
             emptyMessage="Guarda un negocio con el corazón y aparecerá aquí, el último que marques primero."
             emptyActionLabel="Descubrir sitios"
@@ -224,20 +268,6 @@
             seeAllLink="/favoritos"
             (rebook)="onRebook($event)"
           />
-        } @else if (sessionKnown) {
-          <!-- Invitado: lo primero es invitarle a entrar. Sustituye a la fila
-               de favoritos vacía, que decía lo mismo con menos fuerza. -->
-          <section class="join">
-            <img src="assets_bip/bip_support.webp" alt="" class="join__img" />
-            <div class="join__text">
-              <h2 class="join__title">Tu cuenta de Bipsy es gratis</h2>
-              <p class="join__lead">Guarda tus sitios favoritos, gestiona tus citas y recibe recordatorios. Todo en un mismo sitio.</p>
-              <div class="join__actions">
-                <button type="button" class="join__btn join__btn--primary" (click)="goToRegister()">Crear cuenta</button>
-                <button type="button" class="join__btn" (click)="goToLogin()">Ya tengo cuenta</button>
-              </div>
-            </div>
-          </section>
         }
 
         <!-- Volver a reservar: su propia fila, como en la app. -->
@@ -247,12 +277,14 @@
             icon="event_repeat"
             subtitle="Donde ya has ido. Repite tu última cita en un clic"
             [businesses]="rebookRow"
+            [hasMore]="pagers.rebook.hasMore"
+            (loadMore)="loadMoreRow('rebook')"
             [markPreviouslyBooked]="true"
             (rebook)="onRebook($event)"
           />
         }
 
-        @if (!locationOn && !isLoading) {
+        @if (desktop() && !locationOn && !isLoading) {
           <div class="locate">
             <span class="locate__icon"><span class="material-symbols-rounded fill">near_me</span></span>
             <p class="locate__text">
@@ -270,13 +302,18 @@
           [subtitle]="locationOn ? 'Los mejores, de más cerca a más lejos' : 'Los sitios que más gustan en Bipsy'"
           [businesses]="featuredRow"
           [loading]="isLoading"
+          [hasMore]="pagers.featured.hasMore"
+          (loadMore)="loadMoreRow('featured')"
           [showDistance]="true"
           seeAllLink="/buscar"
           (rebook)="onRebook($event)"
         />
         }
 
-        @if (openTodayRow.length > 0) {
+        <!-- Lo que sigue lo añade la web en escritorio, donde hay sitio. En el
+             móvil la portada es la de la app: favoritos, volver a reservar y
+             destacados. -->
+        @if (desktop() && openTodayRow.length > 0) {
           <app-business-row
             title="Abiertos hoy"
             icon="today"
@@ -288,10 +325,9 @@
         }
 
         <!-- ══════════ CIUDADES ══════════ -->
-        @if (cities.length >= 2) {
+        @if (desktop() && cities.length >= 2) {
           <section class="cities">
             <header class="blk-head">
-              <span class="material-symbols-rounded fill blk-head__icon">location_city</span>
               <div>
                 <h2 class="blk-head__title">{{ citiesTitle }}</h2>
                 <p class="blk-head__sub">{{ citiesSubtitle }}</p>
@@ -300,7 +336,11 @@
             <div class="cities__grid" [class.cities__grid--few]="cities.length < 4">
               @for (city of cities; track city.name; let i = $index) {
                 <button type="button" class="city" [class.city--big]="i === 0 && cities.length >= 3" (click)="openCity(city)">
-                  <img class="city__img" [src]="city.image" alt="" loading="lazy" />
+                  @if (city.image) {
+                    <img class="city__img" [src]="city.image" alt="" loading="lazy" decoding="async" />
+                  } @else {
+                    <span class="city__img img-placeholder" aria-hidden="true"><span class="material-symbols-rounded">location_city</span></span>
+                  }
                   <span class="city__veil" aria-hidden="true"></span>
                   <span class="city__text">
                     <strong>{{ city.name }}</strong>
@@ -315,7 +355,7 @@
           </section>
         }
 
-        @if (topRatedRow.length > 0) {
+        @if (desktop() && topRatedRow.length > 0) {
           <app-business-row
             title="Mejor valorados"
             icon="star"
@@ -326,10 +366,9 @@
         }
 
         <!-- ══════════ LO QUE DICE LA GENTE ══════════ -->
-        @if (communityReviews.length >= 2) {
+        @if (desktop() && communityReviews.length >= 2) {
           <section class="voices">
             <header class="blk-head">
-              <span class="material-symbols-rounded fill blk-head__icon blk-head__icon--star">format_quote</span>
               <div class="blk-head__main">
                 <h2 class="blk-head__title">Lo que dice la gente</h2>
                 <p class="blk-head__sub">Reseñas reales de clientes que han reservado con Bipsy</p>
@@ -343,13 +382,14 @@
                 </button>
               </div>
             </header>
-            <div class="voices__row" appDragScroll #voicesRow>
+            <div class="voices__row fade-row" appDragScroll #voicesRow>
               @for (item of communityReviews; track item.review.id) {
-                <article class="voice" role="link" tabindex="0"
-                         (click)="openReviewBusiness(item.business)" (keydown.enter)="openReviewBusiness(item.business)">
-                  <span class="voice__stars">
+                <!-- `div` y no `article`: un `article` no admite `role="link"`. -->
+                <div class="voice" role="link" tabindex="0"
+                     (click)="openReviewBusiness(item.business)" (keydown.enter)="openReviewBusiness(item.business)">
+                  <span class="voice__stars" role="img" [attr.aria-label]="item.review.rating + ' de 5 estrellas'">
                     @for (filled of stars(item.review.rating); track $index) {
-                      <span class="material-symbols-rounded" [class.fill]="filled">star</span>
+                      <span class="material-symbols-rounded" [class.fill]="filled" aria-hidden="true">star</span>
                     }
                   </span>
                   <p class="voice__text">“{{ item.review.comment }}”</p>
@@ -364,14 +404,14 @@
                       <span class="voice__biz">{{ item.business.name }}@if (item.business.city) { · {{ item.business.city }} }</span>
                     </span>
                   </footer>
-                </article>
+                </div>
               }
             </div>
           </section>
         }
 
         <!-- ══════════ EL MAPA ══════════ -->
-        @if (mapPins.length >= 2) {
+        @if (desktop() && mapPins.length >= 2) {
           <a routerLink="/buscar" [queryParams]="{ mapa: 1 }" class="mapband">
             <span class="mapband__text">
               <span class="mapband__eyebrow">
@@ -387,14 +427,18 @@
               <span class="mapband__road mapband__road--c"></span>
               @for (biz of mapPins; track biz.id; let i = $index) {
                 <span class="pin" [class]="'pin pin--' + i">
-                  <img [src]="businessImage(biz)" alt="" loading="lazy" />
+                  @if (businessImage(biz); as src) {
+                    <img [src]="src" alt="" loading="lazy" decoding="async" />
+                  } @else {
+                    <span class="img-placeholder"><span class="material-symbols-rounded">storefront</span></span>
+                  }
                 </span>
               }
             </span>
           </a>
         }
 
-        @if (newRow.length > 0) {
+        @if (desktop() && newRow.length > 0) {
           <app-business-row
             title="Nuevos en Bipsy"
             icon="new_releases"
@@ -402,6 +446,27 @@
             [businesses]="newRow"
             (rebook)="onRebook($event)"
           />
+        }
+
+        <!-- Invitado: la invitación a entrar CIERRA Explorar, como en la app.
+             Al final y no arriba: quien llega viene a mirar primero, y arriba
+             empujaba los negocios fuera de la primera pantalla. -->
+        @if (!isAuthenticated && sessionKnown && !isLoading) {
+          <section class="join" aria-labelledby="join-title">
+            <img src="assets_web/bip-support.webp" alt="" class="join__img"
+                 width="200" height="200" loading="lazy" decoding="async" />
+            <div class="join__text">
+              <h2 class="join__title" id="join-title">Inicia sesión</h2>
+              <p class="join__lead">Accede a tu cuenta para reservar en un par de toques y guardar tus sitios favoritos. Es gratis.</p>
+              <div class="join__actions">
+                <button type="button" class="join__btn join__btn--primary" (click)="goToLogin()">
+                  <span class="material-symbols-rounded" aria-hidden="true">login</span>
+                  Iniciar sesión
+                </button>
+                <button type="button" class="join__btn" (click)="goToRegister()">Crear cuenta</button>
+              </div>
+            </div>
+          </section>
         }
       }
     } @else {
@@ -455,40 +520,61 @@
     <!-- ══════════ LAS APPS ══════════
          `.business-promo-card` no se renombra: la tira promocional y el
          «¿Tienes un negocio?» del header hacen scroll hasta ella. -->
+    <!-- Móvil: el botón del mapa de la app, `_MapToggleFab`. -->
+    @if (!desktop()) {
+      <a class="map-fab" routerLink="/buscar" [queryParams]="{ mapa: 1 }" aria-label="Ver en el mapa">
+        <span class="material-symbols-rounded">map</span>
+      </a>
+    }
+
     <section class="apps only-desk">
       <article class="app-card app-card--client">
         <div class="app-card__text">
-          <img src="assets_bipsy/Combination Marks/combinationmark_mint_horizontal_nobackground.webp" alt="Bipsy" class="app-card__logo theme-dark-only" />
-          <img src="assets_bipsy/Combination Marks/combinationmark_carbon_horizontal_nobackground.webp" alt="Bipsy" class="app-card__logo theme-light-only" />
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="assets_web/bipsy-horizontal-carbon.webp" />
+            <img src="assets_web/bipsy-horizontal-mint.webp" alt="Bipsy" class="app-card__logo" width="108" height="30" loading="lazy" />
+          </picture>
           <h3 class="app-card__title">Bipsy, también en tu móvil</h3>
           <p class="app-card__lead">Reserva, cambia tu cita y recibe avisos estés donde estés.</p>
           <div class="app-card__stores">
             <a [href]="playStoreUrl" target="_blank" rel="noopener">
-              <img src="assets_apps/donwload_play_store.webp" alt="Consíguelo en Google Play" />
+              <img src="assets_apps/donwload_play_store.webp" alt="Consíguelo en Google Play" loading="lazy" />
             </a>
             <a [href]="appStoreUrl" target="_blank" rel="noopener">
-              <img src="assets_apps/download_app_store.webp" alt="Descárgalo en el App Store" />
+              <img src="assets_web/app-store.webp" alt="Descárgalo en el App Store" loading="lazy" />
             </a>
           </div>
         </div>
-        <img src="assets_apps/bipsy_dark.webp" alt="" class="app-card__img theme-dark-only" loading="lazy" />
-        <img src="assets_apps/bipsy_light.webp" alt="" class="app-card__img theme-light-only" loading="lazy" />
+        <picture>
+          <source media="(prefers-color-scheme: light)" sizes="(max-width: 1180px) 58vw, 360px"
+                  srcset="assets_web/bipsy-light-480.webp 480w, assets_web/bipsy-light-960.webp 960w" />
+          <img src="assets_web/bipsy-dark-480.webp" alt="" class="app-card__img" width="1414" height="1090" loading="lazy" decoding="async"
+               sizes="(max-width: 1180px) 58vw, 360px"
+               srcset="assets_web/bipsy-dark-480.webp 480w, assets_web/bipsy-dark-960.webp 960w" />
+        </picture>
       </article>
 
       <article class="app-card app-card--business business-promo-card">
         <div class="app-card__text">
-          <img src="assets_bipsy_business/Combination Marks/combinationmark_horizontal_dark_nobackground.webp" alt="Bipsy Business" class="app-card__logo theme-dark-only" />
-          <img src="assets_bipsy_business/Combination Marks/combinationmark_horizontal_light_nobackground.webp" alt="Bipsy Business" class="app-card__logo theme-light-only" />
+          <picture>
+            <source media="(prefers-color-scheme: light)" srcset="assets_web/business-horizontal-light.webp" />
+            <img src="assets_web/business-horizontal-dark.webp" alt="Bipsy Business" class="app-card__logo" width="85" height="30" loading="lazy" />
+          </picture>
           <span class="app-card__badge">30 días gratis</span>
           <h3 class="app-card__title">¿Tienes un negocio?</h3>
           <p class="app-card__lead">Gestiona tu agenda, tus clientes y tus cobros desde una sola app.</p>
-          <a href="https://www.youtube.com" target="_blank" rel="noopener" class="app-card__cta">
+          <a [href]="businessInfoUrl" target="_blank" rel="noopener" class="app-card__cta">
             Abre ya tu negocio
             <span class="material-symbols-rounded">arrow_forward</span>
           </a>
         </div>
-        <img src="assets_apps/bipsy_business_dark.webp" alt="" class="app-card__img theme-dark-only" loading="lazy" />
-        <img src="assets_apps/bipsy_business_light.webp" alt="" class="app-card__img theme-light-only" loading="lazy" />
+        <picture>
+          <source media="(prefers-color-scheme: light)" sizes="(max-width: 1180px) 58vw, 360px"
+                  srcset="assets_web/bipsy-business-light-480.webp 480w, assets_web/bipsy-business-light-960.webp 960w" />
+          <img src="assets_web/bipsy-business-dark-480.webp" alt="" class="app-card__img" width="1414" height="962" loading="lazy" decoding="async"
+               sizes="(max-width: 1180px) 58vw, 360px"
+               srcset="assets_web/bipsy-business-dark-480.webp 480w, assets_web/bipsy-business-dark-960.webp 960w" />
+        </picture>
       </article>
     </section>
   </div>

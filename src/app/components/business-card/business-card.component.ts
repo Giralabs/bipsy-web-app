@@ -2,11 +2,11 @@ import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, inject } fr
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { BusinessResponse, businessLocationDisplay, primaryCategory } from '../../models/bipsy.models';
+import { BusinessResponse, businessLocationDisplay } from '../../models/bipsy.models';
 import { SessionService } from '../../core/session.service';
 import { BipsyService } from '../../services/bipsy.service';
 import { businessPath } from '../../shared/slug';
-import { fixImageUrl, placeholderImage } from '../../shared/image-url';
+import { fixImageUrl } from '../../shared/image-url';
 
 /**
  * Tarjeta de un negocio. Port de `_GlassHomeCard` (Explorar, app cliente).
@@ -63,21 +63,14 @@ export class BusinessCardComponent implements OnInit {
       .subscribe(ids => (this.isFavorite = !!this.business && ids.includes(this.business.id)));
   }
 
-  get imageUrl(): string {
-    const fixed = fixImageUrl(this.business?.coverImageUrl || this.business?.profileImageUrl);
-    if (fixed) {
-      return fixed;
-    }
-    return placeholderImage(this.business?.id ?? 0, primaryCategory(this.business)?.code);
+  /** Null sin foto: la plantilla pinta el hueco de marca, como la app. */
+  get imageUrl(): string | null {
+    return fixImageUrl(this.business?.coverImageUrl || this.business?.profileImageUrl);
   }
 
   /** `/negocio/barberia-el-maestro-3`: el id al final y el nombre delante. */
   get link(): string[] {
     return businessPath(this.business);
-  }
-
-  get categoryName(): string | undefined {
-    return this.business ? primaryCategory(this.business)?.name : undefined;
   }
 
   get locationDisplay(): string {

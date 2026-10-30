@@ -15,20 +15,6 @@
 
 .row__heading { display: flex; align-items: center; gap: 12px; min-width: 0; }
 
-/* El disco de marca junto al título: separa una fila de otra de un vistazo. */
-.row__icon {
-  flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--clr-mint-dim);
-  color: var(--clr-mint);
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .row__titles { min-width: 0; }
 
 /* headlineMedium: Bricolage Grotesque 24 px, 700, tracking -0,6. */
@@ -107,7 +93,15 @@
   scroll-snap-align: start;
 }
 
-.row__skeleton { height: 214px; border-radius: var(--r-lg); }
+.row__skeleton { height: 214px; border-radius: var(--r-xl); }
+
+/* Escritorio: cuatro por pantalla a todo el ancho de la columna. Con 256 fijos,
+   una fila de dos o tres negocios dejaba media pantalla vacía a la derecha y
+   la portada parecía a medio cargar. La quinta asoma al desplazar. */
+@media (min-width: 1025px) {
+  .row__item { flex: 0 0 calc((100% - 3 * 14px) / 4); min-width: 0; }
+  .row__skeleton { height: 248px; }
+}
 
 /* ── Vacía ── */
 .row__empty {
@@ -120,19 +114,14 @@
   background: var(--clr-surface);
 }
 
+/* Icono gris a secas, como GipsiEmptyState: sin disco. */
 .row__empty-icon {
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--clr-mint-dim);
-  color: var(--clr-mint);
+  color: var(--clr-text-3);
   display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.row__empty-icon .material-symbols-rounded { font-size: 24px; }
+.row__empty-icon .material-symbols-rounded { font-size: 32px; }
 
 .row__empty-text {
   flex: 1;
@@ -166,13 +155,21 @@
 .row__empty-btn .material-symbols-rounded { font-size: 18px; }
 
 @media (max-width: 560px) {
-  /* 275, el ancho que `_GlassHomeCard` usa en las filas de la app. */
-  .row__item { flex-basis: 275px; min-width: 275px; }
+  /* 263: los 275 de `_GlassHomeCard` en las filas de la app, menos su margen
+     derecho de 12, que aquí pone el `gap` de la fila. */
+  .row__item { flex-basis: 263px; min-width: 263px; }
+  .row__scroll { gap: 12px; }
   .row__empty { flex-wrap: wrap; }
   .row__empty-text { flex: 1 1 calc(100% - 64px); }
   .row__empty-btn { margin-left: 64px; }
-  .row__icon { width: 34px; height: 34px; font-size: 18px; }
-  .row__title { font-size: 1.3125rem; }
+}
+
+/* En el móvil, el `_RowShell` de la app: el titular en `headlineMedium` (24)
+   y nada más. El subtítulo es cosa del escritorio, donde hay aire. */
+@media (max-width: 1024px) {
+  .row__head { margin-top: 16px; margin-bottom: 12px; }
+  .row__title { font-size: 1.5rem; }
+  .row__subtitle { display: none; }
 }
 
 /* ── Móvil: la fila a sangre, como en la app ──

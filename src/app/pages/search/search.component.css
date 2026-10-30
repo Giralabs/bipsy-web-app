@@ -1,4 +1,4 @@
-.search-page { min-height: 100vh; }
+.search-page { }
 
 /* ── Cabecera ──
    Corta a propósito: lo que se viene a ver son los resultados, no un titular. */
@@ -180,16 +180,21 @@
   padding: 8px 0 80px;
 }
 
+/* El «5 resultados» de la app (`labelMedium`, en minúscula), igual en móvil y
+   en escritorio: con versalitas solo en escritorio decía lo mismo de dos
+   maneras según el ancho. */
 .results-count {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--clr-text-2);
   margin-bottom: 14px;
 }
 
-.results-count__extra { font-weight: 600; text-transform: none; letter-spacing: 0; }
+.results-count__extra { font-weight: 600; }
+
+@media (max-width: 1024px) {
+  .results-count { margin-bottom: 12px; }
+}
 
 /* Auto-fill y no tres columnas fijas: en un monitor ancho, tres tarjetas de
    400 px eran carteles, no resultados. */
@@ -199,7 +204,36 @@
   gap: 16px;
 }
 
-.results-skeleton { height: 200px; border-radius: var(--r-lg); }
+.results-skeleton { height: 200px; border-radius: var(--r-xl); }
+
+/* ── Lista y mapa ──
+   En el móvil el mapa sustituye a la lista (el botón flotante alterna). En
+   escritorio, lado a lado: la lista a dos columnas y el mapa pegado debajo de
+   la barra mientras se recorre la lista. */
+@media (max-width: 1024px) {
+  .results-layout--map .results-list { display: none; }
+}
+
+@media (min-width: 1025px) {
+  .results-layout--map {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .results-layout--map .results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .results-map {
+    position: sticky;
+    top: 96px;
+    border-radius: var(--r-xl);
+    overflow: hidden;
+  }
+
+  /* El mapa ocupa el alto de la ventana bajo la barra, no un 70 % fijo. */
+  .results-map ::ng-deep .map { height: calc(100vh - 120px); max-height: 820px; min-height: 480px; }
+}
 
 /* La etiqueta del botón sobra en cuanto aprieta: el icono ya lo dice. */
 @media (max-width: 900px) {
@@ -211,8 +245,11 @@
   .search-header,
   .results-wrap { width: calc(100% - 32px); }
 
-  .tool-btn { padding: 0 14px; }
+  /* Círculos de 46, los de `_ExploreSearchBar`: sin etiqueta, la píldora
+     ancha se leía como otro campo. El contador se queda colgado del canto. */
+  .tool-btn { position: relative; width: 46px; padding: 0; justify-content: center; }
   .tool-btn__label { display: none; }
+  .tool-btn__count { position: absolute; top: -2px; right: -2px; box-shadow: 0 0 0 2px var(--clr-base); }
 }
 
 /* ── Botón flotante del mapa (móvil) ──
