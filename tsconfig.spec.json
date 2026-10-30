@@ -4,8 +4,11 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
+    /* `google.maps` como en tsconfig.app.json: los specs importan componentes
+       que tocan el mapa y sin los tipos no compilan. */
     "types": [
-      "jasmine"
+      "jasmine",
+      "google.maps"
     ]
   },
   "include": [
