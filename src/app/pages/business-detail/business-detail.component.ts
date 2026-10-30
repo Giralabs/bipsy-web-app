@@ -34,7 +34,7 @@ import { duration, euros, parseLocal } from '../../shared/dates';
 import { fixImageUrl } from '../../shared/image-url';
 import { categoryIcon } from '../../shared/category-icons';
 import { PageMetaService } from '../../core/page-meta.service';
-import { businessBookingPath, businessIdFromParam } from '../../shared/slug';
+import { businessBookingPath, businessIdFromParam, businessSlug } from '../../shared/slug';
 
 /**
  * Reseñas por página. Más que las 3 de la app: en escritorio caben, y con tres
@@ -547,7 +547,7 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     if (!business) {
       return;
     }
-    const link = `${location.origin}/negocio/${business.id}`;
+    const link = `${location.origin}/negocio/${businessSlug(business)}`;
     const text = business.city
       ? `Mira ${business.name} en ${business.city} y pide cita con Bipsy:\n${link}`
       : `Mira ${business.name} y pide cita con Bipsy:\n${link}`;
