@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { NavigationEnd, Router } from '@angular/router';
+import { BehaviorSubject, filter } from 'rxjs';
 import { ApiService } from './api.service';
+import { ApiError } from './api-error';
 import { SocialAuthService } from './social-auth.service';
 import { TokenStorageService } from './token-storage.service';
 import { AuthRepository } from '../repositories/auth.repository';
@@ -10,6 +12,16 @@ import { fixImageUrl } from '../shared/image-url';
 
 /** Dónde está la sesión. `unknown` mientras se comprueba al arrancar. */
 export type SessionStatus = 'unknown' | 'authenticated' | 'anonymous';
+
+/** La pantalla de «verifica tu correo». */
+export const EMAIL_PENDING_PATH = '/verificar-correo';
+
+/**
+ * Lo que se puede abrir aunque el correo esté sin verificar: los documentos
+ * legales (el correo de verificación enlaza a ellos), la cita de invitado, que
+ * es de quien no tiene cuenta, y las páginas de servicio.
+ */
+const EMAIL_PENDING_EXEMPT = [EMAIL_PENDING_PATH, '/legal', '/cita/', '/admin', '/error'];
 
 /**
  * Estado de sesión de la web. Equivalente al `AuthController` de la app.
@@ -26,6 +38,14 @@ export class SessionService {
   private readonly auth = inject(AuthRepository);
   private readonly meRepo = inject(MeRepository);
   private readonly social = inject(SocialAuthService);
+  private readonly router = inject(Router);
+
+  /**
+   * El servidor dice que el correo de esta sesión está sin verificar. Pasa
+   * sobre todo con Apple, que puede no dar el correo y se escribe a mano.
+   * Solo cuenta un `false` explícito: un `/me` sin el campo no echa a nadie.
+   */
+  private emailUnverified = false;
 
   private readonly statusSubject = new BehaviorSubject<SessionStatus>('unknown');
   readonly status$ = this.statusSubject.asObservable();
@@ -47,7 +67,37 @@ export class SessionService {
     // El refresco ha fallado: la sesión ya no existe y la UI tiene que
     // enterarse aunque nadie estuviera mirando esa petición.
     this.api.sessionExpired$.subscribe(() => this.clearSession());
+    // Como el router de la app: con el correo sin verificar, cualquier pantalla
+    // lleva a la de espera. Se mira en cada navegación y no solo al entrar,
+    // porque un enlace o el botón atrás pueden sacarle de ella. El servicio
+    // vive lo que la web, así que esta suscripción no hay que cortarla.
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(e => this.enforceEmailVerified(e.urlAfterRedirects));
     void this.restore();
+  }
+
+  /** Si la sesión tiene el correo sin verificar. */
+  get needsEmailVerification(): boolean {
+    return this.isAuthenticated && this.emailUnverified;
+  }
+
+  private enforceEmailVerified(url: string): void {
+    const path = url.split(/[?#]/)[0];
+    if (this.needsEmailVerification) {
+      if (!EMAIL_PENDING_EXEMPT.some(p => path === p || path.startsWith(p.endsWith('/') ? p : `${p}/`))) {
+        void this.router.navigateByUrl(EMAIL_PENDING_PATH, { replaceUrl: true });
+      }
+    } else if (path === EMAIL_PENDING_PATH && this.statusSubject.value !== 'unknown') {
+      // Ya verificado, o sin sesión: la pantalla de espera no tiene nada que
+      // hacer y se vuelve a Explorar, como la app.
+      void this.router.navigateByUrl('/', { replaceUrl: true });
+    }
+  }
+
+  /** Vuelve a aplicar la regla sobre la página actual tras un cambio de sesión. */
+  private recheckEmailVerified(): void {
+    this.enforceEmailVerified(this.router.url);
   }
 
   get isAuthenticated(): boolean {
@@ -78,10 +128,23 @@ export class SessionService {
     try {
       await this.refreshProfile();
       this.statusSubject.next('authenticated');
-    } catch {
+      this.recheckEmailVerified();
+    } catch (raw) {
       // Un token que ya no vale es un token que sobra. Sin esto la web se
       // quedaba con la sesión "a medias": cabecera de usuario y 401 en todo.
-      this.clearSession();
+      //
+      // Pero solo si el servidor lo ha rechazado. Sin red o con el backend
+      // dormido no se sabe nada del token, y borrarlo cerraba la sesión a
+      // quien abría la web en un mal momento: se deja guardado para que la
+      // próxima carga lo vuelva a intentar.
+      const error = ApiError.from(raw);
+      if (error.isUnauthorized || error.isForbidden) {
+        this.clearSession();
+      } else {
+        this.userSubject.next(null);
+        this.statusSubject.next('anonymous');
+      }
+      this.recheckEmailVerified();
     }
   }
 
@@ -90,6 +153,7 @@ export class SessionService {
     await this.refreshProfile();
     this.statusSubject.next('authenticated');
     this.closeAuthModal();
+    this.recheckEmailVerified();
   }
 
   /** Tras el alta, la sesión ya viene abierta en la respuesta. */
@@ -97,6 +161,17 @@ export class SessionService {
     await this.refreshProfile();
     this.statusSubject.next('authenticated');
     this.closeAuthModal();
+    this.recheckEmailVerified();
+  }
+
+  /**
+   * «Ya lo verifiqué»: relee `/me` y, si ya está, la regla de arriba saca de
+   * la pantalla de espera. Devuelve si sigue pendiente.
+   */
+  async recheckEmail(): Promise<boolean> {
+    await this.refreshProfile();
+    this.recheckEmailVerified();
+    return this.needsEmailVerification;
   }
 
   async logout(): Promise<void> {
@@ -112,6 +187,7 @@ export class SessionService {
   /** Relee `/customers/me` — el perfil con foto y favoritos. */
   async refreshProfile(): Promise<void> {
     const me = await this.meRepo.me();
+    this.emailUnverified = me.emailVerified === false;
     let customer: CustomerProfile | null = null;
     if (me.role === 'CUSTOMER') {
       customer = await this.meRepo.customer();
@@ -173,6 +249,7 @@ export class SessionService {
 
   private clearSession(): void {
     this.tokens.clear();
+    this.emailUnverified = false;
     this.userSubject.next(null);
     this.favoritesSubject.next([]);
     this.statusSubject.next('anonymous');

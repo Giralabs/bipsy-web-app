@@ -9,6 +9,7 @@ import {
   RescheduleBookingRequest,
   ReviewResponse,
 } from '../models/bipsy.models';
+import { BookingToConfirm, CustomerConfirmRequest } from '../models/confirm.models';
 
 /** Citas del cliente: crear, listar, cambiar de hora, cancelar y valorar. */
 @Injectable({ providedIn: 'root' })
@@ -47,6 +48,37 @@ export class BookingRepository {
   /** Lo que costaría cancelar ahora mismo. Se consulta ANTES de preguntar. */
   cancellationFee(id: number): Promise<CancellationFee> {
     return this.api.get<CancellationFee>(`/bookings/${id}/cancellation-fee`);
+  }
+
+  // ----- CITAS QUE PONE EL NEGOCIO --------------------
+
+  /**
+   * La misma cita que `byId`, leída con los campos de confirmación (plazo,
+   * tarjeta, política). Es el mismo endpoint: solo cambia lo que se mira.
+   */
+  toConfirm(id: number): Promise<BookingToConfirm> {
+    return this.api.get<BookingToConfirm>(`/bookings/${id}`);
+  }
+
+  /**
+   * Acepta una cita que puso el negocio.
+   *
+   * `acceptedPolicy` solo hace falta cuando la cita trae
+   * `requiresPolicyConsent`. Puede responder 409 si el plazo ya terminó y 402
+   * si hace falta tarjeta y no hay ninguna: las dos son respuestas normales de
+   * esa pantalla, no fallos que haya que esconder.
+   */
+  customerConfirm(id: number, acceptedPolicy = false): Promise<BookingToConfirm> {
+    const body: CustomerConfirmRequest = { acceptedPolicy };
+    return this.api.put<BookingToConfirm>(`/bookings/${id}/customer-confirm`, body);
+  }
+
+  /**
+   * Rechaza una cita que puso el negocio. **No cuesta penalización**, al
+   * contrario que `cancel`: por eso es un endpoint propio. Responde 204.
+   */
+  customerDecline(id: number): Promise<void> {
+    return this.api.put<void>(`/bookings/${id}/customer-decline`, {});
   }
 
   // ----- RESEÑAS --------------------

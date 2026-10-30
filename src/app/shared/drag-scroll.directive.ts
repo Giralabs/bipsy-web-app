@@ -42,12 +42,31 @@ export class DragScrollDirective implements OnDestroy {
     }
   };
 
+  /**
+   * Dónde está la fila: `drag--scrolled` en cuanto deja el principio y
+   * `drag--end` al llegar al final (o si no hay nada que desplazar). Con eso
+   * `.fade-row` funde solo el borde por el que queda contenido.
+   */
+  private readonly onScroll = () => {
+    const max = this.host.scrollWidth - this.host.clientWidth;
+    this.host.classList.toggle('drag--scrolled', this.host.scrollLeft > 2);
+    this.host.classList.toggle('drag--end', this.host.scrollLeft >= max - 2);
+  };
+
+  /** El contenido llega después que la fila: se vuelve a medir al cambiar de tamaño. */
+  private readonly resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(this.onScroll);
+
   constructor() {
     this.host.addEventListener('click', this.onCaptureClick, true);
+    this.host.addEventListener('scroll', this.onScroll, { passive: true });
+    this.resize?.observe(this.host);
+    requestAnimationFrame(this.onScroll);
   }
 
   ngOnDestroy(): void {
     this.host.removeEventListener('click', this.onCaptureClick, true);
+    this.host.removeEventListener('scroll', this.onScroll);
+    this.resize?.disconnect();
   }
 
   @HostListener('pointerdown', ['$event'])

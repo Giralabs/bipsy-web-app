@@ -80,6 +80,30 @@ export class ApiService {
     return this.request<T>('POST', path, form, undefined, true);
   }
 
+  /**
+   * Descarga un fichero privado (un adjunto del chat) como `Blob`.
+   *
+   * Pasa por el mismo refresco que el resto: antes se pedía con `HttpClient`
+   * a pelo y el token del momento, así que con el access token caducado las
+   * fotos del chat daban 401 y salían rotas hasta recargar la página.
+   */
+  async getBlob(path: string, retried = false): Promise<Blob> {
+    try {
+      return await firstValueFrom(
+        this.http.get(this.baseUrl + path, {
+          responseType: 'blob',
+          headers: this.headersFor(true, undefined),
+        }).pipe(timeout(REQUEST_TIMEOUT_MS)),
+      );
+    } catch (raw) {
+      const error = ApiError.from(raw);
+      if (error.isUnauthorized && !retried && this.tokens.refreshToken && (await this.refreshSession())) {
+        return this.getBlob(path, true);
+      }
+      throw error;
+    }
+  }
+
   private async request<T>(
     method: string,
     path: string,
@@ -123,6 +147,17 @@ export class ApiService {
         const ok = await this.refreshSession();
         if (ok) {
           return this.request<T>(method, path, body, params, auth, extraHeaders, true);
+        }
+        // El refresco no llegó al servidor (el token sigue guardado): esto es
+        // un fallo de red, no una sesión caducada. Con el 401 original, quien
+        // llama —`SessionService.restore`— borraba una sesión que vale.
+        if (this.tokens.refreshToken) {
+          throw new ApiError(
+            0,
+            'No hemos podido conectar con Bipsy. Comprueba tu conexión a internet.',
+            undefined,
+            true,
+          );
         }
       }
       throw error;
@@ -171,9 +206,21 @@ export class ApiService {
         );
         this.tokens.save(auth);
         return true;
-      } catch {
-        this.tokens.clear();
-        this.sessionExpiredSubject.next();
+      } catch (raw) {
+        // Solo un «no» del servidor cierra la sesión. Sin red, o con el
+        // servidor caído o despertando, el refresh token sigue valiendo: antes
+        // se borraba igual y un corte de wifi de dos segundos echaba al login.
+        const error = ApiError.from(raw);
+        // Otra pestaña ha rotado los tokens mientras tanto: el nuestro ya
+        // estaba usado, pero el par nuevo está guardado y vale. El cerrojo de
+        // arriba solo protege dentro de una pestaña.
+        if (this.tokens.refreshToken && this.tokens.refreshToken !== refreshToken) {
+          return true;
+        }
+        if (!error.networkError && error.status >= 400 && error.status < 500) {
+          this.tokens.clear();
+          this.sessionExpiredSubject.next();
+        }
         return false;
       } finally {
         this.refreshing = null;
@@ -198,7 +245,7 @@ export class ApiService {
  * Servida desde `localhost` es, por definición, una compilación de desarrollo:
  * ahí manda el backend local.
  */
-function resolveApiUrl(): string {
+export function resolveApiUrl(): string {
   const configured = environment.apiUrl;
   const host = typeof window === 'undefined' ? '' : window.location.hostname;
   const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';

@@ -3,9 +3,14 @@ import { ApiService } from '../core/api.service';
 import { CustomerProfile, MeResponse, PrivacySettings } from '../models/bipsy.models';
 
 /** Cuerpo de `PUT /customers/me`. El usuario no es editable desde aquí. */
+/**
+ * Body de `PUT /customers/me`: solo nombre y teléfono. El servidor no acepta
+ * el correo (`CustomerDtos.UpdateCustomerRequest`); antes la web lo mandaba
+ * igual desde un campo editable, el guardado decía «Perfil actualizado» y el
+ * correo seguía siendo el de antes.
+ */
 export interface UpdateCustomerRequest {
   name: string;
-  email: string;
   phone: string;
 }
 
@@ -48,6 +53,21 @@ export class MeRepository {
 
   revokeAllSessions(): Promise<void> {
     return this.api.post<void>('/me/revoke-all-sessions', {});
+  }
+
+  // ----- CUENTAS VINCULADAS --------------------
+
+  /**
+   * Vincula Google a la cuenta actual. `idToken` es el de Firebase (el mismo
+   * que valida el acceso con Google). El servidor exige el mismo correo: si no
+   * coincide responde 400 con un mensaje que ya se puede enseñar.
+   */
+  linkGoogle(idToken: string): Promise<void> {
+    return this.api.post<void>('/me/link/google', { idToken });
+  }
+
+  unlinkGoogle(): Promise<void> {
+    return this.api.delete<void>('/me/link/google');
   }
 
   privacy(): Promise<PrivacySettings> {

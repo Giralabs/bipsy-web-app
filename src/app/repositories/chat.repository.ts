@@ -1,8 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../core/api.service';
-import { TokenStorageService } from '../core/token-storage.service';
 import { ChatMessageResponse, ConversationResponse } from '../models/bipsy.models';
 
 /**
@@ -19,8 +16,6 @@ import { ChatMessageResponse, ConversationResponse } from '../models/bipsy.model
 @Injectable({ providedIn: 'root' })
 export class ChatRepository {
   private readonly api = inject(ApiService);
-  private readonly http = inject(HttpClient);
-  private readonly tokens = inject(TokenStorageService);
 
   inbox(page = 0, size = 30): Promise<ConversationResponse[]> {
     return this.api.get<ConversationResponse[]>('/conversations', { page, size });
@@ -84,14 +79,8 @@ export class ChatRepository {
    * Quien lo llame debe hacer `URL.revokeObjectURL` al terminar.
    */
   async attachmentObjectUrl(conversationId: number, messageId: number): Promise<string> {
-    const blob = await firstValueFrom(
-      this.http.get(
-        `${this.api.baseUrl}/conversations/${conversationId}/messages/${messageId}/attachment`,
-        {
-          responseType: 'blob',
-          headers: { Authorization: `Bearer ${this.tokens.accessToken ?? ''}` },
-        },
-      ),
+    const blob = await this.api.getBlob(
+      `/conversations/${conversationId}/messages/${messageId}/attachment`,
     );
     return URL.createObjectURL(blob);
   }

@@ -119,11 +119,19 @@ export class ChatSocketService {
     // No se refresca aquí a propósito — de eso ya se encarga `ApiService` en
     // la primera petición REST, y para entonces el siguiente reintento cogerá
     // el token nuevo.
-    socket.onclose = () => this.onClosed();
-    socket.onerror = () => this.onClosed();
+    socket.onclose = () => this.onClosed(socket);
+    socket.onerror = () => this.onClosed(socket);
   }
 
-  private onClosed(): void {
+  private onClosed(socket: WebSocket): void {
+    // El `onclose` de un socket viejo llega tarde: salir y volver a entrar
+    // abre uno nuevo antes de que el anterior termine de cerrarse. Sin esta
+    // comprobación, ese cierre tardío borraba la referencia al nuevo y
+    // programaba otro reintento: dos sockets abiertos y cada mensaje, doble.
+    // También evita contar dos veces el `onerror` + `onclose` de una caída.
+    if (this.socket !== socket) {
+      return;
+    }
     this.socket = null;
     if (this.wantConnected) {
       this.scheduleReconnect();
