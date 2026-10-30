@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ApiError } from '../../core/api-error';
 import { GuestBookingRepository } from '../../repositories/guest-booking.repository';
+import { DialogService } from '../../core/dialog.service';
 import { GuestBookingResponse } from '../../models/bipsy.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { euros, longDate } from '../../shared/dates';
@@ -34,6 +35,7 @@ import { euros, longDate } from '../../shared/dates';
 export class GuestBookingComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly guest = inject(GuestBookingRepository);
+  private readonly dialog = inject(DialogService);
 
   booking?: GuestBookingResponse;
   loading = true;
@@ -98,10 +100,13 @@ export class GuestBookingComponent implements OnInit {
   async cancel(): Promise<void> {
     if (this.busy || !this.booking) return;
 
-    const aviso = this.lateFeeWarning
-      ? `¿Seguro que quieres cancelar? ${this.lateFeeWarning}`
-      : '¿Avisar de que no puedes ir? El hueco quedará libre.';
-    if (!confirm(aviso)) return;
+    const ok = await this.dialog.confirm({
+      title: '¿Avisar de que no puedes ir?',
+      message: this.lateFeeWarning ?? 'La cita se anula y el hueco queda libre para otra persona.',
+      confirmLabel: 'No puedo ir',
+      destructive: true,
+    });
+    if (!ok) return;
 
     this.busy = true;
     this.error = null;

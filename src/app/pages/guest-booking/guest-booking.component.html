@@ -8,7 +8,7 @@
       <!-- No se distingue «no existió nunca» de «ya no está»: convertiría la
            página en un oráculo con el que ir probando enlaces. -->
       <div class="empty-state">
-        <span class="material-symbols-rounded">link_off</span>
+        <span class="material-symbols-rounded" aria-hidden="true">link_off</span>
         <h3>Este enlace no vale</h3>
         <p>
           El enlace no es correcto o la cita ya no existe. Si crees que es un
@@ -18,7 +18,7 @@
 
     } @else if (!booking) {
       <div class="empty-state">
-        <span class="material-symbols-rounded">error</span>
+        <span class="material-symbols-rounded" aria-hidden="true">error</span>
         <h3>No hemos podido cargar tu cita</h3>
         <p>{{ error }}</p>
       </div>
@@ -27,7 +27,7 @@
 
       @if (canceled) {
         <!-- ══════════ CANCELADA ══════════ -->
-        <span class="material-symbols-rounded gb__icon gb__icon--off">event_busy</span>
+        <span class="material-symbols-rounded gb__icon gb__icon--off" aria-hidden="true">event_busy</span>
         <h1 class="gb__title">
           {{ justCanceled ? 'Avisado, gracias' : 'Esta cita ya no está' }}
         </h1>
@@ -53,18 +53,18 @@
       } @else {
         <!-- ══════════ LA CITA ══════════ -->
         @if (booking.past) {
-          <span class="material-symbols-rounded gb__icon gb__icon--past">history</span>
+          <span class="material-symbols-rounded gb__icon gb__icon--past" aria-hidden="true">history</span>
           <h1 class="gb__title">Esta cita ya pasó</h1>
           <p class="gb__lead">Esto es lo que reservaste en {{ booking.businessName }}.</p>
         } @else if (pending) {
-          <span class="material-symbols-rounded gb__icon gb__icon--wait">schedule</span>
+          <span class="material-symbols-rounded gb__icon gb__icon--wait" aria-hidden="true">schedule</span>
           <h1 class="gb__title">Pendiente de confirmar</h1>
           <p class="gb__lead">
             {{ booking.businessName }} tiene que aceptar tu cita. Te escribimos en
             cuanto lo haga.
           </p>
         } @else {
-          <span class="material-symbols-rounded fill gb__icon">check_circle</span>
+          <span class="material-symbols-rounded fill gb__icon" aria-hidden="true">check_circle</span>
           <h1 class="gb__title">Tu cita</h1>
           <p class="gb__lead">Te esperan en {{ booking.businessName }}.</p>
         }
@@ -87,7 +87,7 @@
 
         @if (booking.acknowledged && !booking.past) {
           <p class="gb__ack">
-            <span class="material-symbols-rounded fill">task_alt</span>
+            <span class="material-symbols-rounded fill" aria-hidden="true">task_alt</span>
             Ya has dicho que irás. Te esperan.
           </p>
         }
@@ -98,7 +98,7 @@
 
         @if (error) {
           <p class="flow__error" role="alert">
-            <span class="material-symbols-rounded fill">error</span>{{ error }}
+            <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
           </p>
         }
 

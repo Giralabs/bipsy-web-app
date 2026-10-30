@@ -22,6 +22,38 @@
 }
 
 .ap__list { display: flex; flex-direction: column; gap: 10px; }
+
+/* «Por confirmar» abre la pantalla: sin margen arriba y con aire debajo antes
+   de la próxima cita. */
+.ap__month--first { margin-top: 0; }
+.ap__awaiting { margin-bottom: 20px; }
+
+/* La tarjeta de «te pide el pago»: el contador de plazo y debajo qué y cuánto.
+   Toda ella es el botón, como la DeadlineCard de la app. */
+.ap__pay {
+  display: block;
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-md);
+  background: var(--clr-surface);
+  color: inherit;
+  font-family: var(--ff);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.ap__pay:hover { background: var(--clr-surface-hover); }
+
+.ap__pay-detail {
+  display: block;
+  padding: 10px 18px 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--clr-text);
+}
 .ap__skeleton { height: 100px; border-radius: var(--r-xl); }
 
 /* ── La próxima ── */
@@ -32,8 +64,11 @@
   gap: 20px;
   padding: 20px 24px 20px 20px;
   border-radius: var(--r-xxl);
-  /* `primaryGradient`: la única tarjeta de la pantalla en color de marca. */
-  background: linear-gradient(135deg, #D4F7E3 0%, #A0E3BD 100%);
+  /* La única tarjeta de la pantalla en color de marca. Lisa: el degradado y el
+     aro de encima eran adorno que la app no tiene. Menta fijo y no
+     `--clr-mint`, que en claro es carbón: el texto de la tarjeta es oscuro
+     en los dos temas. */
+  background: #C0EED3;
   color: #1E242A;
   cursor: pointer;
   overflow: hidden;
@@ -42,18 +77,6 @@
 
 .next:hover { transform: translateY(-3px); }
 .next:focus-visible { outline: 2px solid var(--clr-text); outline-offset: 3px; }
-
-.next::after {
-  content: '';
-  position: absolute;
-  right: -60px;
-  top: -80px;
-  width: 220px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1.5px solid rgba(46, 52, 59, .12);
-  pointer-events: none;
-}
 
 .next__leaf {
   flex: 0 0 auto;
@@ -143,16 +166,11 @@
 .ap__empty h3 { font-family: var(--ff-display); font-size: 1.125rem; font-weight: 700; letter-spacing: -.3px; }
 .ap__empty p { margin-top: 2px; font-size: 0.875rem; font-weight: 500; color: var(--clr-text-2); }
 
+/* Icono gris suelto, como `GipsiEmptyState`: nada de disco de color. */
 .ap__empty-icon {
   flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--clr-mint-dim);
-  color: var(--clr-mint);
+  font-size: 32px;
+  color: var(--clr-text-3);
 }
 
 /* ── Lateral ── */
@@ -169,17 +187,12 @@
 
 .ap__review:hover { background: var(--clr-surface-hover); }
 
+/* La estrella suelta, sin cuadro tintado ni giro. */
 .ap__review-icon {
   flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 176, 32, .16);
+  font-size: 28px;
   color: var(--clr-star);
-  transform: rotate(-8deg);
 }
 
 .ap__review-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.8125rem; font-weight: 500; color: var(--clr-text-2); }
@@ -191,19 +204,51 @@
 .ap__tip p { font-size: 0.8125rem; font-weight: 500; line-height: 1.55; color: var(--clr-text-2); }
 .ap__tip strong { display: block; margin-bottom: 2px; font-size: 0.875rem; color: var(--clr-text); }
 
-@media (max-width: 1024px) {
-  .ap { grid-template-columns: 1fr; margin-top: 16px; }
-  .ap__aside { position: static; }
-  .ap__aside .ap__tip { display: none; }
-  .ap__segmented { max-width: none; }
+/* ══════════ MÓVIL: `MyBookingsScreen` ══════════
+   El escritorio no pasa por aquí: por debajo de 1025 se pinta la cabecera de
+   la app y la lista plana, sin destacada ni columna lateral. */
+.mhead { padding-top: 8px; }
+.mhead__top { display: flex; align-items: center; gap: 16px; min-height: 44px; }
+
+/* displaySmall de la app: Bricolage 32, 800, -1,2. */
+.mhead__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--ff-display);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1.2px;
+  color: var(--clr-text);
 }
 
-@media (max-width: 640px) {
-  .next { flex-wrap: wrap; gap: 14px; padding: 16px; border-radius: var(--r-xl); }
-  .next__leaf { width: 64px; height: 72px; }
-  .next__day { font-size: 2rem; }
-  .next__title { font-size: 1.375rem; white-space: normal; }
-  .next__side { flex-direction: row; align-items: center; justify-content: space-between; width: 100%; }
-  .ap__empty { flex-direction: column; align-items: flex-start; }
-  .ap__empty > div { flex: none; width: 100%; }
+/* `ProfileAvatarButton`: 44 con la ruedecita de ajustes en la esquina. */
+.mhead__avatar { position: relative; flex: 0 0 auto; display: inline-flex; border-radius: 50%; text-decoration: none; }
+.mhead__avatar:focus-visible { outline: 2px solid var(--clr-mint); outline-offset: 2px; }
+/* Las iniciales sobre menta, como el botón de la app; con foto no se ve. */
+.mhead__avatar app-avatar { background: var(--clr-mint); color: var(--clr-mint-text); }
+.mhead__gear {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--clr-base);
+  color: var(--clr-mint);
+}
+.mhead__gear .material-symbols-rounded { font-size: 14px; }
+
+/* bodyMedium. */
+.mhead__sub { margin-top: 8px; font-size: 0.9375rem; font-weight: 500; color: var(--clr-text-2); }
+
+.ap__mempty { margin-top: 48px; }
+
+@media (max-width: 1024px) {
+  .ap { grid-template-columns: 1fr; margin-top: 20px; }
+  .ap__segmented { max-width: none; margin: 0 0 12px; }
+  .ap__list { gap: 12px; }
+  .ap__skeleton { height: 104px; border-radius: var(--r-lg); }
 }

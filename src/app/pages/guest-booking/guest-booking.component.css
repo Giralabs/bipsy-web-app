@@ -1,6 +1,6 @@
 /* La página de la cita de quien no tiene cuenta. Centrada y estrecha: se abre
    desde un correo, casi siempre en el móvil, y no hay nada más que hacer aquí. */
-.gb { min-height: 100vh; display: flex; justify-content: center; padding: 48px 20px 96px; }
+.gb { display: flex; justify-content: center; padding: 48px 20px 96px; }
 .gb__inner { width: 100%; max-width: 480px; text-align: center; }
 
 .gb__icon { font-size: 64px; color: var(--clr-mint); margin-bottom: 12px; }

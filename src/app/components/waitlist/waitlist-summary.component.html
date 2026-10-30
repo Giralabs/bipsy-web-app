@@ -3,7 +3,7 @@
 
     @if (error) {
       <p class="flow__error" role="alert">
-        <span class="material-symbols-rounded fill">error</span>{{ error }}
+        <span class="material-symbols-rounded fill" aria-hidden="true">error</span>{{ error }}
       </p>
     }
 
@@ -12,13 +12,15 @@
       <div class="wl__offer">
         <div class="wl__offer-head">
           <span class="badge badge--mint">
-            <span class="material-symbols-rounded wl__icon">bolt</span>
+            <span class="material-symbols-rounded wl__icon" aria-hidden="true">bolt</span>
             Hueco libre
           </span>
           <span class="wl__timer">Te quedan {{ timeLeft(offer) }}</span>
         </div>
 
-        <p class="wl__title">{{ offer.serviceName }}</p>
+        <!-- El título lleva a la página del aviso: allí está todo para decidir
+             (precio, profesional, política entera) y lo que aquí no cabe. -->
+        <a class="wl__title" [routerLink]="offerLink(offer)">{{ offer.serviceName }}</a>
         <p class="wl__sub">{{ offer.businessName }} · {{ slotLabel(offer) }}</p>
 
         @if (offer.requiresPolicyConsent && offer.policyText) {
@@ -38,6 +40,7 @@
           <app-button variant="ghost" size="small" [disabled]="busyId !== null" (onClick)="decline(offer)">
             Rechazar
           </app-button>
+          <a class="wl__more" [routerLink]="offerLink(offer)">Ver detalles</a>
         </div>
       </div>
     }
@@ -45,7 +48,7 @@
     <!-- Y debajo, en lo que estás esperando. -->
     @for (entry of waitingEntries; track entry.id) {
       <div class="wl__entry">
-        <span class="material-symbols-rounded wl__entry-icon">hourglass_top</span>
+        <span class="material-symbols-rounded wl__entry-icon" aria-hidden="true">hourglass_top</span>
         <span class="wl__entry-text">
           <strong>{{ entry.serviceName }}</strong>
           <small>{{ entry.businessName }} · {{ rangeLabel(entry) }}</small>

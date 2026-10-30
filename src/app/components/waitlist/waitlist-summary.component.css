@@ -27,7 +27,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-.wl__title { font-size: 1rem; font-weight: 700; letter-spacing: -0.1px; }
+.wl__title {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  color: var(--clr-text);
+  text-decoration: none;
+}
+.wl__title:hover { text-decoration: underline; }
 
 .wl__sub {
   margin-top: 3px;
@@ -47,7 +55,18 @@
   color: var(--clr-text-2);
 }
 
-.wl__actions { margin-top: 12px; display: flex; gap: 8px; }
+.wl__actions { margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* Enlace y no botón: lleva a otra página, no hace nada aquí. */
+.wl__more {
+  margin-left: auto;
+  padding: 6px 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--clr-mint);
+  text-decoration: none;
+}
+.wl__more:hover { text-decoration: underline; }
 
 /* La espera sin aviso es una fila tranquila: no compite con el hueco libre. */
 .wl__entry {
