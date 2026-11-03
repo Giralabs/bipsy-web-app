@@ -13,9 +13,7 @@ import {
 } from '../../core/social-auth.service';
 import { ButtonComponent } from '../button/button.component';
 import { SocialButtonsComponent } from '../social-buttons/social-buttons.component';
-import { isValidEmail, isValidPhone } from '../../shared/validation';
-import { confirmPhone } from '../../shared/confirm-phone';
-import { DialogService } from '../../core/dialog.service';
+import { isValidEmail } from '../../shared/validation';
 
 /**
  * El formulario de acceso. **Uno solo, para los dos sitios que entran.**
@@ -29,7 +27,7 @@ import { DialogService } from '../../core/dialog.service';
  * su contraseña.
  *
  * Quien lo usa no se entera de cómo se ha entrado: hace su trabajo —incluido
- * pedir el teléfono que ni Google ni Apple dan— y avisa con `signedIn` cuando
+ * pedir el correo cuando Apple no lo da— y avisa con `signedIn` cuando
  * ya hay sesión. Ni rutas ni navegación: eso lo decide la pantalla.
  */
 @Component({
@@ -41,7 +39,6 @@ import { DialogService } from '../../core/dialog.service';
 export class LoginFormComponent implements OnInit {
   private readonly session = inject(SessionService);
   private readonly social = inject(SocialAuthService);
-  private readonly dialog = inject(DialogService);
 
   /** Encabezado, si la pantalla quiere uno. El acceso entra sin título. */
   @Input() title: string | null = null;
@@ -71,17 +68,14 @@ export class LoginFormComponent implements OnInit {
   /** Cuál de los dos botones está girando. Null si ninguno. */
   socialLoading: SocialProvider | null = null;
 
-  /** Cuenta nueva con Google o Apple: falta el teléfono antes de entrar. */
-  needsPhone = false;
-
   /**
-   * Y además el correo, porque Apple no lo ha dado.
+   * Cuenta nueva con Apple y sin correo: es lo único que se pide antes de
+   * entrar. El teléfono es opcional y no se pregunta aquí.
    *
    * Apple entrega el correo una única vez, la primera que se autoriza la app.
    * Si esa vez fue en otro sitio, el token llega sin él.
    */
   needsEmail = false;
-  phone = '';
   private identity: SocialIdentity | null = null;
 
   ngOnInit(): void {
@@ -152,18 +146,13 @@ export class LoginFormComponent implements OnInit {
     }
   }
 
-  /** Segundo intento, ya con el teléfono (y el correo) que pidió el servidor. */
+  /** Segundo intento, ya con el correo que Apple no dio. */
   async submitProfile(): Promise<void> {
-    const problema = this.needsEmail && !isValidEmail(this.username.trim())
-      ? 'Ese correo no parece válido.'
-      : !isValidPhone(this.phone) ? 'Introduce tu teléfono' : null;
-    if (problema) {
-      this.error = problema;
+    if (!isValidEmail(this.username.trim())) {
+      this.error = 'Ese correo no parece válido.';
       return;
     }
-    // El teléfono que ni Google ni Apple dan se relee antes de guardarlo,
-    // como en el alta: es justo para lo que existe este paso.
-    if (this.socialLoading || !(await confirmPhone(this.dialog, this.phone))) {
+    if (this.socialLoading) {
       return;
     }
     const provider = this.identity?.provider ?? 'google';
@@ -181,9 +170,10 @@ export class LoginFormComponent implements OnInit {
   /**
    * Canjea la identidad por la sesión, pidiendo lo que falte.
    *
-   * El teléfono es obligatorio para el alta y ninguno de los dos proveedores lo
-   * da. El correo solo falta con Apple, y entonces la cuenta nace sin verificar
-   * — lo que la verifica después es que le llegue algo a esa dirección.
+   * Con una cuenta nueva entra a la primera: el teléfono es opcional y no se
+   * pide. Lo único que puede faltar es el correo, y solo con Apple; entonces la
+   * cuenta nace sin verificar — lo que la verifica después es que le llegue
+   * algo a esa dirección.
    */
   private async exchangeToken(): Promise<void> {
     if (!this.identity) {
@@ -191,18 +181,11 @@ export class LoginFormComponent implements OnInit {
     }
     const res = await this.social.signIn(
       this.identity,
-      this.phone.trim() || undefined,
       this.username.trim() || undefined,
     );
 
     if (res.needsProfile) {
-      // Cuenta nueva: el negocio necesita un teléfono para avisarte de tus
-      // citas. Se pide aquí mismo en vez de mandar a otra pantalla.
-      if (res.email) {
-        this.username = res.email;
-      }
-      this.needsPhone = true;
-      this.needsEmail = !res.email;
+      this.needsEmail = true;
       return;
     }
 
@@ -213,7 +196,6 @@ export class LoginFormComponent implements OnInit {
   /** Ya hay sesión. Nada se queda en memoria más de lo que hace falta. */
   private done(): void {
     this.password = '';
-    this.needsPhone = false;
     this.needsEmail = false;
     this.identity = null;
     this.signedIn.emit();

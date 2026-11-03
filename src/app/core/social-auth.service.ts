@@ -30,8 +30,8 @@ export interface SocialIdentity {
 /**
  * Respuesta de `POST /auth/google` y `POST /auth/apple`.
  *
- * Con `needsProfile` la cuenta es nueva y falta el teléfono: se pide y se
- * reintenta con él. Si no, `auth` trae la sesión.
+ * Con `needsProfile` la cuenta es nueva y Apple no ha dado el correo: se pide y
+ * se reintenta con él. Si no, `auth` trae la sesión.
  */
 export interface SocialSignInResponse {
   needsProfile: boolean;
@@ -171,25 +171,22 @@ export class SocialAuthService {
   /**
    * Canjea la identidad por la sesión de Bipsy.
    *
-   * `phone` solo hace falta la primera vez (cuenta nueva): el backend responde
-   * `needsProfile` y la pantalla lo pide antes de reintentar.
+   * Una cuenta nueva se crea a la primera: el teléfono es opcional y no se
+   * manda.
    *
    * `email` solo cuando **Apple no lo da**. Apple entrega el correo una única
    * vez, la primera que se autoriza la app, así que un token puede llegar sin
-   * él; entonces la respuesta trae `email: null` y hay que pedirlo igual que el
-   * teléfono. Si el proveedor sí lo manda, el servidor **ignora** este: lo
+   * él; entonces la respuesta trae `needsProfile` y hay que pedirlo. Si el proveedor sí lo manda, el servidor **ignora** este: lo
    * contrario permitiría quedarse con la cuenta de otro mandando su dirección.
    */
   async signIn(
     identity: SocialIdentity,
-    phone?: string,
     email?: string,
   ): Promise<SocialSignInResponse> {
     const res = await this.api.post<SocialSignInResponse>(
       identity.provider === 'apple' ? '/auth/apple' : '/auth/google',
       {
         idToken: identity.idToken,
-        ...(phone ? { phone } : {}),
         ...(email ? { email } : {}),
         ...(identity.name ? { name: identity.name } : {}),
       },

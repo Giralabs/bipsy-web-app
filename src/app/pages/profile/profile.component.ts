@@ -520,7 +520,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const name = this.formName.trim();
     const phone = this.formPhone.trim();
     this.nameError = !name ? 'Introduce tu nombre.' : name.length < 2 ? 'Demasiado corto.' : null;
-    this.phoneError = !phone ? 'Introduce tu teléfono.' : phone.length < 6 ? 'Demasiado corto.' : null;
+    // Opcional: vacío lo borra. Lo que no vale es un número a medias.
+    this.phoneError = phone && phone.length < 6 ? 'Demasiado corto.' : null;
     return !this.nameError && !this.phoneError;
   }
 
@@ -532,13 +533,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     // Solo cuando ha cambiado: confirmar el de siempre en cada visita al
     // perfil es ruido. Un número mal escrito no lo descubre nadie hasta que
     // el negocio necesita llamar.
-    if (phone !== (this.profile?.phone ?? '').trim() && !(await confirmPhone(this.dialog, phone))) {
+    if (phone && phone !== (this.profile?.phone ?? '').trim() && !(await confirmPhone(this.dialog, phone))) {
       return;
     }
     await this.run(async () => {
       await this.meRepo.updateCustomer({
         name: this.formName.trim(),
-        phone,
+        phone: phone || undefined,
       });
 
       // La foto va después de los datos y en su propia llamada: son dos

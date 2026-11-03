@@ -11,7 +11,8 @@ import { CustomerProfile, MeResponse, PrivacySettings } from '../models/bipsy.mo
  */
 export interface UpdateCustomerRequest {
   name: string;
-  phone: string;
+  /** Opcional: sin él, el teléfono se borra. Es un PUT, no un parche. */
+  phone?: string;
 }
 
 /** La cuenta: quién soy, mis datos, mi contraseña y mis favoritos. */

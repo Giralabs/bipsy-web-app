@@ -1,51 +1,30 @@
-@if (needsPhone) {
+@if (needsEmail) {
 
-  <!-- Cuenta nueva con Google o Apple: falta lo que ningún proveedor da, y se
-       pide aquí en vez de mandar a otra pantalla. -->
+  <!-- Cuenta nueva con Apple y sin correo: es lo único que puede faltar, y se
+       pide aquí en vez de mandar a otra pantalla. El teléfono no se pide: es
+       opcional y se añade desde el perfil si se quiere. -->
   <h1 class="flow__title">Solo un dato más</h1>
   <p class="flow__subtitle">
-    @if (needsEmail) {
-      Apple no nos ha dado tu correo —solo lo da la primera vez—, así que
-      escríbelo junto a tu teléfono: es por donde te avisamos de tus citas.
-    } @else {
-      Necesitamos tu teléfono para que los negocios puedan avisarte de tus citas.
-    }
+    Apple no nos ha dado tu correo —solo lo da la primera vez—, así que
+    escríbelo: es por donde te avisamos de tus citas.
   </p>
 
   <form (submit)="submitProfile(); $event.preventDefault()" novalidate>
     <div class="form-group">
       <div class="form-group__box">
-        @if (needsEmail) {
-          <div class="form-row">
-            <label class="form-row__label" for="social-email">Correo</label>
-            <input
-              id="social-email"
-              class="form-row__input"
-              type="email"
-              name="email"
-              autocomplete="email"
-              inputmode="email"
-              placeholder="tu@correo.com"
-              maxlength="120"
-              [disabled]="socialLoading !== null"
-              [(ngModel)]="username"
-            />
-          </div>
-        }
-
         <div class="form-row">
-          <label class="form-row__label" for="social-phone">Teléfono</label>
+          <label class="form-row__label" for="social-email">Correo</label>
           <input
-            id="social-phone"
+            id="social-email"
             class="form-row__input"
-            type="tel"
-            name="phone"
-            autocomplete="tel"
-            inputmode="tel"
-            placeholder="612 345 678"
-            maxlength="20"
+            type="email"
+            name="email"
+            autocomplete="email"
+            inputmode="email"
+            placeholder="tu@correo.com"
+            maxlength="120"
             [disabled]="socialLoading !== null"
-            [(ngModel)]="phone"
+            [(ngModel)]="username"
           />
         </div>
       </div>

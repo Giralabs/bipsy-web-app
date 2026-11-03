@@ -205,7 +205,7 @@ export class SessionService {
       id: customer.id,
       name: customer.name,
       email: customer.email,
-      phone: customer.phone,
+      phone: customer.phone ?? undefined,
       profileImageUrl: fixImageUrl(customer.profileImageUrl) ?? undefined,
       initials: initialsOf(customer.name),
       role: current?.role ?? 'CUSTOMER',
@@ -263,7 +263,7 @@ function toUserProfile(me: MeResponse, customer: CustomerProfile | null): UserPr
     name,
     email: customer?.email ?? me.email,
     username: customer?.username ?? me.username,
-    phone: customer?.phone ?? me.phone,
+    phone: customer?.phone ?? me.phone ?? undefined,
     role: me.role,
     // Llega relativa a la API: normalizada aquí, la barra, los ajustes y la
     // hoja de la foto usan todos la misma URL.

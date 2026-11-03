@@ -206,7 +206,7 @@
                   <label class="field">
                     <span class="field__label">Teléfono</span>
                     <input class="field__input" type="tel" [(ngModel)]="formPhone" name="phone" maxlength="20"
-                           autocomplete="tel" placeholder="Tu teléfono" [disabled]="saving"
+                           autocomplete="tel" placeholder="Opcional" [disabled]="saving"
                            [attr.aria-invalid]="phoneError ? true : null"
                            [attr.aria-describedby]="phoneError ? 'pf-phone-err' : null"
                            (ngModelChange)="phoneError = null" />
