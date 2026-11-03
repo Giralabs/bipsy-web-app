@@ -68,14 +68,14 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // ----- GOOGLE Y APPLE --------------------
   //
   // Con cualquiera de los dos el correo llega ya verificado, así que el alta se
-  // salta los dos primeros pasos: solo queda el teléfono, y solo si la cuenta
-  // es nueva.
+  // salta todos los pasos: la cuenta se crea a la primera. Solo se para si
+  // Apple no ha dado el correo, y entonces se pide eso y nada más.
   //
   // Con Apple, además, el nombre solo llega la PRIMERA vez que se autoriza:
   // viaja en la identidad hasta el backend, que es quien lo guarda al crear la
   // cuenta.
   socialLoading: SocialProvider | null = null;
-  needsPhone = false;
+  needsEmail = false;
   private identity: SocialIdentity | null = null;
 
   ngOnInit(): void {
@@ -127,21 +127,20 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
   }
 
-  async submitSocialPhone(): Promise<void> {
-    if (this.phone.trim().length < 9) {
-      this.error = 'Introduce tu teléfono';
+  async submitSocialEmail(): Promise<void> {
+    const email = this.email.trim().toLowerCase();
+    if (!isValidEmail(email)) {
+      this.error = 'Ese correo no parece válido';
       return;
     }
-    // Esta pantalla existe justo para pedir el teléfono: no releerlo aquí
-    // sería peor que en el alta normal.
-    if (!(await confirmPhone(this.dialog, this.phone))) {
+    if (this.socialLoading) {
       return;
     }
-    const provider = this.identity?.provider ?? 'google';
+    const provider = this.identity?.provider ?? 'apple';
     this.socialLoading = provider;
     this.error = null;
     try {
-      await this.exchangeToken(this.phone.trim());
+      await this.exchangeToken(email);
     } catch (raw) {
       this.error = socialMessageFor(raw, provider);
     } finally {
@@ -149,13 +148,13 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async exchangeToken(phone?: string): Promise<void> {
+  private async exchangeToken(email?: string): Promise<void> {
     if (!this.identity) {
       return;
     }
-    const res = await this.social.signIn(this.identity, phone);
+    const res = await this.social.signIn(this.identity, email);
     if (res.needsProfile) {
-      this.needsPhone = true;
+      this.needsEmail = true;
       return;
     }
     await this.session.onRegistered();
@@ -246,7 +245,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
       this.error = 'Nombre demasiado corto';
       return;
     }
-    if (this.phone.trim().length < 9) {
+    // El teléfono es opcional; si se escribe, que sea un número entero.
+    const phone = this.phone.trim();
+    if (phone && phone.length < 9) {
       this.error = 'Teléfono demasiado corto';
       return;
     }
@@ -256,8 +257,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
       return;
     }
     // Lo último antes de crear la cuenta: un número mal escrito no lo descubre
-    // nadie hasta que el negocio necesita llamar.
-    if (this.loading || !(await confirmPhone(this.dialog, this.phone))) {
+    // nadie hasta que el negocio necesita llamar. Sin número no hay nada que
+    // releer.
+    if (this.loading || (phone && !(await confirmPhone(this.dialog, phone)))) {
       return;
     }
 
@@ -266,7 +268,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         signupToken: this.signupToken!,
         name: this.name.trim(),
         password: this.password,
-        phone: this.phone.trim(),
+        phone: phone || undefined,
         referralCode: this.referralCode.trim() || undefined,
       });
       await this.session.onRegistered();

@@ -471,7 +471,8 @@ export interface RegisterCustomerRequest {
   signupToken: string;
   name: string;
   password: string;
-  phone: string;
+  /** Opcional desde el 3/11/2026. */
+  phone?: string;
   referralCode?: string;
 }
 
@@ -498,7 +499,8 @@ export interface CustomerProfile {
   name: string;
   email: string;
   username: string;
-  phone: string;
+  /** Null si no lo dio: es opcional. */
+  phone?: string | null;
   profileImageUrl?: string;
   city?: string;
   province?: string;
@@ -512,7 +514,8 @@ export interface MeResponse {
   username: string;
   email: string;
   name: string;
-  phone: string;
+  /** Null en un cliente que no lo dio. */
+  phone?: string | null;
   role: string;
   emailVerified?: boolean;
   /** Cómo se creó la cuenta: `LOCAL` (correo + contraseña) o `GOOGLE`. */
@@ -855,8 +858,6 @@ export interface GuestBookingResponse {
   priceCents: number;
   servicePlace?: string;
   address?: string;
-  /** Si ya dijo que iria. Es un acuse, no un requisito. */
-  acknowledged: boolean;
   cancelReason?: string;
   /** Lo decide el servidor: el navegador puede estar en otra zona horaria. */
   past: boolean;

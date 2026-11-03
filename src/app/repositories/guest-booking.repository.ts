@@ -23,12 +23,6 @@ export class GuestBookingRepository {
     return this.api.get<GuestBookingResponse>(`/citas/${encodeURIComponent(token)}`, undefined, false);
   }
 
-  /** Dice que sí va. Es un acuse: su cita vale igual sin esto. */
-  confirm(token: string): Promise<GuestBookingResponse> {
-    return this.api.post<GuestBookingResponse>(
-      `/citas/${encodeURIComponent(token)}/confirmar`, {}, false);
-  }
-
   /**
    * Dice que no puede ir.
    *

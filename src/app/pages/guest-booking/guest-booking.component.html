@@ -85,13 +85,6 @@
           </div>
         </div>
 
-        @if (booking.acknowledged && !booking.past) {
-          <p class="gb__ack">
-            <span class="material-symbols-rounded fill" aria-hidden="true">task_alt</span>
-            Ya has dicho que irás. Te esperan.
-          </p>
-        }
-
         @if (booking.policyText && !booking.past) {
           <p class="form-group__footer">{{ booking.policyText }}</p>
         }
@@ -105,19 +98,10 @@
         @if (booking.cancellable) {
           <div class="flow__actions">
             <app-button
-              variant="primary"
+              variant="secondary"
               size="large"
               [fullWidth]="true"
               [loading]="busy"
-              (onClick)="confirm()"
-            >
-              {{ booking.acknowledged ? 'Sigo confirmando que iré' : 'Sí, allí estaré' }}
-            </app-button>
-            <app-button
-              variant="text"
-              size="medium"
-              [fullWidth]="true"
-              [disabled]="busy"
               (onClick)="cancel()"
             >
               No puedo ir
