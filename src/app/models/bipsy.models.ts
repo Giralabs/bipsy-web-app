@@ -855,8 +855,6 @@ export interface GuestBookingResponse {
   priceCents: number;
   servicePlace?: string;
   address?: string;
-  /** Si ya dijo que iria. Es un acuse, no un requisito. */
-  acknowledged: boolean;
   cancelReason?: string;
   /** Lo decide el servidor: el navegador puede estar en otra zona horaria. */
   past: boolean;

@@ -57,21 +57,6 @@
 .gb__row strong { color: var(--clr-text); font-weight: 600; text-align: right; }
 .gb__row--total strong { font-size: 1.125rem; font-weight: 800; }
 
-.gb__ack {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 4px 0 0;
-  padding: 10px 14px;
-  border-radius: var(--r-pill);
-  background: var(--clr-mint-dim);
-  color: var(--clr-text-2);
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.gb__ack .material-symbols-rounded { font-size: 18px; color: var(--clr-mint); }
-
 .gb__note {
   margin: 16px auto 0;
   max-width: 38ch;

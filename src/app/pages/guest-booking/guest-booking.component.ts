@@ -21,6 +21,10 @@ import { euros, longDate } from '../../shared/dates';
  * IP: con HTML, el 429 del limitador le habría soltado un volcado JSON en el
  * navegador.
  *
+ * No hay «sí, iré»: la cita ya está reservada y lo único que puede hacer falta
+ * es avisar de que no. Hubo ese botón hasta el 3/11/2026 y se quitó porque al
+ * negocio le enseñaba como pendiente una cita que no lo estaba.
+ *
  * ⚠️ Cancelar es un POST, no un enlace. Gmail y Outlook **pre-cargan** los
  * enlaces de un correo para la vista previa, así que con un GET la cita se
  * cancelaría sola con solo abrirlo.
@@ -73,20 +77,6 @@ export class GuestBookingComponent implements OnInit {
       this.error = this.invalidLink ? null : error.message;
     } finally {
       this.loading = false;
-    }
-  }
-
-  /** Dice que sí va. Es un acuse: su cita vale igual sin esto. */
-  async confirm(): Promise<void> {
-    if (this.busy) return;
-    this.busy = true;
-    this.error = null;
-    try {
-      this.booking = await this.guest.confirm(this.token);
-    } catch (raw) {
-      this.error = ApiError.from(raw).message;
-    } finally {
-      this.busy = false;
     }
   }
 
