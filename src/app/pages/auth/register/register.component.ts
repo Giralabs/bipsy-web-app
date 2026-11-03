@@ -79,6 +79,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private identity: SocialIdentity | null = null;
 
   ngOnInit(): void {
+    // Para que la ventana de Google o Apple se abra al primer clic.
+    this.social.warmUp();
     const params = this.route.snapshot.queryParams;
     this.email = params['email'] ?? '';
     this.returnTo = params['returnTo'] ?? this.session.takeReturnTo() ?? '/';

@@ -69,8 +69,9 @@ export function isGoogleSignInConfigured(): boolean {
  *  1. **Apple Developer → Identifiers → Services IDs**: un Services ID con
  *     *Sign in with Apple* activado.
  *  2. En ese Services ID, «Return URLs» tiene que incluir
- *     `https://<authDomain>/__/auth/handler` — hoy
- *     `https://gipsi-6806c.firebaseapp.com/__/auth/handler`.
+ *     `https://<authDomain>/__/auth/handler` de los dos entornos:
+ *     `https://bipsy.es/__/auth/handler` (producción) y
+ *     `https://gipsi-6806c.firebaseapp.com/__/auth/handler` (desarrollo).
  *  3. **Firebase Console → Authentication → Sign-in method → Apple**:
  *     el proveedor activado, con ese Services ID y la clave `.p8` (Key ID +
  *     Team ID).
