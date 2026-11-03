@@ -66,6 +66,12 @@ export class SocialSignInUnavailable extends Error {
 }
 
 /** Códigos de Firebase que significan "ha cerrado la ventana". */
+/** Lo que hace falta de Firebase para abrir la ventana del proveedor. */
+interface FirebaseAuthKit {
+  auth: typeof import('firebase/auth');
+  firebaseAuth: import('firebase/auth').Auth;
+}
+
 const CANCELLED = [
   'auth/popup-closed-by-user',
   'auth/cancelled-popup-request',
@@ -113,22 +119,52 @@ export class SocialAuthService {
     return this.isAvailable('apple');
   }
 
+  /** Firebase ya cargado e inicializado. Se pide una vez y se reutiliza. */
+  private firebase?: Promise<FirebaseAuthKit>;
+
+  /**
+   * Carga Firebase de antemano. Lo llaman las pantallas con los botones de
+   * Google y Apple al aparecer.
+   *
+   * ⚠️ No es una optimización: sin esto el primer clic fallaba. La ventana
+   * tiene que abrirse en respuesta directa al clic, y si antes hay que
+   * descargar Firebase, el navegador ya no lo cuenta como tal y la bloquea
+   * como emergente —«No se pudo continuar con Google»—. El segundo clic
+   * funcionaba porque el código ya estaba descargado.
+   */
+  warmUp(): void {
+    if (this.socialAvailable()) {
+      void this.loadFirebase().catch(() => {
+        // Si no carga ahora, el clic lo vuelve a intentar y ahí se cuenta.
+        this.firebase = undefined;
+      });
+    }
+  }
+
+  private socialAvailable(): boolean {
+    return this.googleAvailable || this.appleAvailable;
+  }
+
+  private loadFirebase(): Promise<FirebaseAuthKit> {
+    this.firebase ??= Promise.all([import('firebase/app'), import('firebase/auth')])
+      .then(([{ initializeApp, getApps }, auth]) => {
+        const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
+        const firebaseAuth = auth.getAuth(app);
+        // La ventana del proveedor sale en el idioma del navegador y no en inglés.
+        firebaseAuth.useDeviceLanguage();
+        return { auth, firebaseAuth };
+      });
+    return this.firebase;
+  }
+
   /** Abre la ventana del proveedor y devuelve el ID token de Firebase. */
   async obtainIdentity(provider: SocialProvider): Promise<SocialIdentity> {
     if (!this.isAvailable(provider)) {
       throw new SocialSignInUnavailable(provider);
     }
 
-    const [{ initializeApp, getApps }, auth] = await Promise.all([
-      import('firebase/app'),
-      import('firebase/auth'),
-    ]);
-    const { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup } = auth;
-
-    const app = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig);
-    const firebaseAuth = getAuth(app);
-    // La ventana del proveedor sale en el idioma del navegador y no en inglés.
-    firebaseAuth.useDeviceLanguage();
+    const { auth, firebaseAuth } = await this.loadFirebase();
+    const { GoogleAuthProvider, OAuthProvider, signInWithPopup } = auth;
 
     try {
       const credential = await signInWithPopup(
@@ -164,6 +200,9 @@ export class SocialAuthService {
         );
         throw new SocialSignInUnavailable(provider);
       }
+      // El usuario ve un mensaje genérico; el código es lo único que dice qué
+      // ha pasado (una ventana bloqueada, la red...).
+      console.warn(`[Bipsy] ${provider === 'apple' ? 'Apple' : 'Google'} falló: ${code || error}`);
       throw error;
     }
   }

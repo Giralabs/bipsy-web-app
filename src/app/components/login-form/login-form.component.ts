@@ -80,6 +80,8 @@ export class LoginFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.username = this.email;
+    // Para que la ventana de Google o Apple se abra al primer clic.
+    this.social.warmUp();
   }
 
   get googleAvailable(): boolean {
