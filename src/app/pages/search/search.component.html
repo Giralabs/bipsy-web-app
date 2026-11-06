@@ -147,7 +147,7 @@
         }
         @if (openNow) {
           <button type="button" class="active-filter" (click)="toggleSwitch('openNow')">
-            Disponibles <span class="material-symbols-rounded active-filter__x">close</span>
+            Abierto ahora <span class="material-symbols-rounded active-filter__x">close</span>
           </button>
         }
         @if (topRated) {
@@ -187,8 +187,14 @@
       <!-- Sin contador cuando no hay nada: «0 resultados» encima de «Sin
            resultados» decía lo mismo dos veces, y la app tampoco lo pinta. -->
       <p class="results-count" aria-live="polite">
+        <!-- El total del servidor; con los filtros propios de la web
+             (foto, franja) solo se sabe lo que ya ha llegado. -->
         @if (businesses.length > 0) {
-          {{ businesses.length }} resultado{{ businesses.length !== 1 ? 's' : '' }}
+          @if (withPhoto || slot !== 'any') {
+            {{ businesses.length }} resultado{{ businesses.length !== 1 ? 's' : '' }}
+          } @else {
+            {{ total }} resultado{{ total !== 1 ? 's' : '' }}
+          }
         }
       </p>
 
@@ -219,6 +225,13 @@
                 />
               }
             </div>
+            @if (hasMore) {
+              <div class="results-more">
+                <app-button variant="secondary" icon="expand_more" [loading]="loadingMore" (onClick)="loadMore()">
+                  Ver más
+                </app-button>
+              </div>
+            }
           }
         </div>
 
@@ -304,7 +317,7 @@
           <app-grouped-row label="A domicilio" icon="directions_car" (action)="toggleSwitch('atHomeOnly')">
             <input type="checkbox" class="sheet__switch" [checked]="atHomeOnly" tabindex="-1" />
           </app-grouped-row>
-          <app-grouped-row label="Disponibles" icon="event_available" (action)="toggleSwitch('openNow')">
+          <app-grouped-row label="Abierto ahora" icon="schedule" (action)="toggleSwitch('openNow')">
             <input type="checkbox" class="sheet__switch" [checked]="openNow" tabindex="-1" />
           </app-grouped-row>
           <app-grouped-row label="Mejor valorados" icon="star" (action)="toggleSwitch('topRated')">

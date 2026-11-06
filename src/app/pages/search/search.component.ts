@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ApiError } from '../../core/api-error';
 import { BipsyService } from '../../services/bipsy.service';
 import { BusinessResponse, CategoryResponse, ScheduleDayResponse } from '../../models/bipsy.models';
-import { CatalogRepository } from '../../repositories/catalog.repository';
+import { BusinessSearchQuery, CatalogRepository } from '../../repositories/catalog.repository';
 import { BusinessCardComponent } from '../../components/business-card/business-card.component';
 import { ChipComponent } from '../../components/chip/chip.component';
 import { ButtonComponent } from '../../components/button/button.component';
@@ -96,12 +96,21 @@ export class SearchComponent implements OnInit, OnDestroy {
   areaLabel: string | null = null;
   atHomeOnly = false;
   /**
-   * Solo los que aceptan reservas ya (`setupComplete`: horario y servicios),
-   * como «Disponibles» en la app. Va en la URL (`disponibles=1`) para que el
-   * enlace de una búsqueda lo conserve.
+   * Abiertos ahora mismo, según su horario de apertura y sus cierres: lo
+   * calcula el servidor. Hasta el 6/11/2026 miraba solo `setupComplete`, que
+   * tienen todos los que salen, así que no filtraba nada. Va en la URL
+   * (`disponibles=1`) para que el enlace de una búsqueda lo conserve.
    */
   openNow = false;
   topRated = false;
+
+  /** Cuántos hay en total, según el servidor: el contador de la cabecera. */
+  total = 0;
+  /** Queda alguna página por traer. */
+  hasMore = false;
+  /** Se está trayendo la página siguiente. */
+  loadingMore = false;
+  private page = 0;
   withPhoto = false;
 
   showMap = false;
@@ -156,23 +165,14 @@ export class SearchComponent implements OnInit, OnDestroy {
   // ----- RESULTADOS --------------------
 
   /**
-   * Los interruptores, aplicados en el navegador.
+   * Lo que se pinta. «A domicilio», «Abierto ahora» y «Mejor valorados» ya
+   * vienen filtrados del servidor; aquí solo quedan los dos propios de la web.
    *
-   * `withPhoto` es propio de la web: en una rejilla de cinco columnas, los que
-   * no han subido portada se distinguen de un vistazo y a veces se quieren
-   * fuera.
+   * `withPhoto`: en una rejilla de cinco columnas, los que no han subido
+   * portada se distinguen de un vistazo y a veces se quieren fuera.
    */
   get businesses(): BusinessResponse[] {
     let result = this.raw;
-    if (this.atHomeOnly) {
-      result = result.filter(b => b.worksAtHome);
-    }
-    if (this.openNow) {
-      result = result.filter(b => b.setupComplete);
-    }
-    if (this.topRated) {
-      result = result.filter(b => (b.averageRating ?? 0) >= 4);
-    }
     if (this.withPhoto) {
       result = result.filter(b => !!b.coverImageUrl || !!b.profileImageUrl);
     }
@@ -376,12 +376,15 @@ export class SearchComponent implements OnInit, OnDestroy {
     if (name === 'openNow') {
       this.syncOpenNowParam();
     }
+    // Los tres primeros los aplica el servidor: hay que volver a pedir.
+    if (name !== 'withPhoto') {
+      void this.doSearch();
+    }
   }
 
   /**
    * Escribe `disponibles` en la URL sin navegar: con `router.navigate` se
-   * relanzaba la búsqueda entera para un filtro que se aplica aquí, sobre lo
-   * que ya hay.
+   * relanzaría la búsqueda por la URL además de la que ya lanza el interruptor.
    */
   private syncOpenNowParam(): void {
     const tree = this.router.createUrlTree([], {
@@ -430,17 +433,12 @@ export class SearchComponent implements OnInit, OnDestroy {
       // esa zona; sin él, solo sirve para que el servidor ordene por franjas
       // de distancia. **El orden lo decide siempre el servidor** y aquí no se
       // retoca.
-      const raw = await this.bipsy.searchBusinesses({
-        q: this.searchQuery.trim() || undefined,
-        categoryId: this.selectedCategoryId,
-        availableOn: this.date ?? undefined,
-        city: this.cityQuery ?? undefined,
-        lat: this.area?.lat,
-        lng: this.area?.lng,
-        radiusKm: this.area?.radiusKm,
-      });
+      const pagina = await this.bipsy.searchBusinessesPage(this.query(0));
       if (seq !== this.searchSeq) return;
-      this.raw = raw;
+      this.page = 0;
+      this.raw = pagina.content ?? [];
+      this.total = pagina.totalElements;
+      this.hasMore = !pagina.last;
       await this.applySlot();
     } catch (error) {
       if (seq !== this.searchSeq) return;
@@ -452,6 +450,45 @@ export class SearchComponent implements OnInit, OnDestroy {
         this.slotLoading = false;
       }
     }
+  }
+
+  /** «Ver más»: la página siguiente, con los mismos filtros. */
+  async loadMore(): Promise<void> {
+    if (!this.hasMore || this.loadingMore) return;
+    const seq = this.searchSeq;
+    this.loadingMore = true;
+    try {
+      const pagina = await this.bipsy.searchBusinessesPage(this.query(this.page + 1));
+      if (seq !== this.searchSeq) return;
+      this.page++;
+      this.raw = [...this.raw, ...(pagina.content ?? [])];
+      this.hasMore = !pagina.last;
+      await this.applySlot();
+    } catch (error) {
+      // Lo que ya se ve se queda: solo se deja de ofrecer más.
+      console.warn('[Bipsy] No se pudo cargar la página siguiente', error);
+      this.hasMore = false;
+    } finally {
+      this.loadingMore = false;
+    }
+  }
+
+  /** La petición de una página con todo lo elegido. */
+  private query(page: number): BusinessSearchQuery {
+    return {
+      q: this.searchQuery.trim() || undefined,
+      categoryId: this.selectedCategoryId,
+      availableOn: this.date ?? undefined,
+      city: this.cityQuery ?? undefined,
+      lat: this.area?.lat,
+      lng: this.area?.lng,
+      radiusKm: this.area?.radiusKm,
+      atHome: this.atHomeOnly || undefined,
+      openNow: this.openNow || undefined,
+      minRating: this.topRated ? TOP_RATED_MIN_RATING : undefined,
+      page,
+      size: SEARCH_PAGE_SIZE,
+    };
   }
 
   ngOnDestroy(): void {
@@ -477,6 +514,12 @@ export class SearchComponent implements OnInit, OnDestroy {
 }
 
 /** `Date.getDay()` → el nombre con el que el backend manda cada día. */
+/** De cuántos en cuántos se piden los resultados. Cabe en una rejilla de cinco o cuatro. */
+const SEARCH_PAGE_SIZE = 40;
+
+/** La nota mínima de «Mejor valorados», la misma que en la app. */
+const TOP_RATED_MIN_RATING = 4;
+
 const WEEKDAYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 
 /** «09:30:00» → 570. */

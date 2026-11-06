@@ -11,6 +11,7 @@ import {
   BusinessResponse,
   CategoryResponse,
   CreateBookingRequest,
+  PageResponse,
   ReviewResponse,
   ScheduleDayResponse,
   ServiceResponse,
@@ -101,11 +102,24 @@ export class BipsyService {
   }
 
   async searchBusinesses(query: BusinessSearchQuery): Promise<BusinessResponse[]> {
+    return (await this.searchBusinessesPage(query)).content ?? [];
+  }
+
+  /** Lo mismo con los datos de la página: para paginar y contar el total. */
+  async searchBusinessesPage(query: BusinessSearchQuery): Promise<PageResponse<BusinessResponse>> {
     try {
-      const page = await this.catalog.searchBusinesses({ size: 40, ...query });
-      return page.content ?? [];
+      return await this.catalog.searchBusinesses({ size: 40, ...query });
     } catch (error) {
-      return this.orDemo(error, DEMO_BUSINESSES);
+      const demo = this.orDemo(error, DEMO_BUSINESSES);
+      return {
+        content: demo,
+        page: 0,
+        size: demo.length,
+        totalElements: demo.length,
+        totalPages: 1,
+        first: true,
+        last: true,
+      };
     }
   }
 
