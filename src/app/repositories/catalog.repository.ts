@@ -27,6 +27,14 @@ export interface BusinessSearchQuery {
   lat?: number;
   lng?: number;
   radiusKm?: number;
+  /**
+   * Los interruptores de la hoja de filtros. Los aplica el servidor: aplicados
+   * aquí, sobre una página, dejaban huecos y lo que no había llegado no salía.
+   */
+  atHome?: boolean;
+  /** Abiertos ahora mismo, según su horario de apertura y sus cierres. */
+  openNow?: boolean;
+  minRating?: number;
   page?: number;
   size?: number;
   sort?: string;

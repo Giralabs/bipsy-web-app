@@ -204,6 +204,13 @@
   gap: 16px;
 }
 
+/* «Ver más», centrado bajo la rejilla. */
+.results-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
 .results-skeleton { height: 200px; border-radius: var(--r-xl); }
 
 /* ── Lista y mapa ──
