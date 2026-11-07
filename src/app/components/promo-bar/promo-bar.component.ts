@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { scrollToBusinessPromo } from '../../shared/business-promo';
+import { BUSINESS_URL } from '../../data/site.data';
 
 /**
  * Tira promocional sobre el header.
@@ -23,24 +22,23 @@ export class PromoBarComponent {
   private static readonly STORAGE_KEY = 'bipsy_promo_business';
 
   /**
-   * La duración que se anuncia. Es la misma que anuncia la web de negocios
-   * (`bipsy-business-web-app`): si cambia aquí, cambia allí.
+   * La prueba que se anuncia, con las mismas palabras que la web de negocios
+   * (`TRIAL_LABEL` en `bipsy-business-web-app`): si cambia allí, cambia aquí.
    *
-   * ⚠️ Hoy NO coincide con lo que da el backend: el plan «Bipsy Business»
-   * tiene `plan.trial_days = 14` y el alta regala `WELCOME_TRIAL_DAYS = 5`.
-   * Antes de encender el cobro hay que cuadrar las dos cosas —subir
-   * `trial_days` o bajar este texto— y crear la oferta de introducción en Play
-   * Console y App Store Connect, o se estará anunciando algo que no se cumple.
+   * Es lo que da el backend: el primer plan trae su primer mes gratis
+   * (`plan.trial_months = 1`, un mes natural). Decía «30 días gratis», que no
+   * es lo mismo que un mes natural y era publicidad que no se cumplía.
    */
-  readonly trialLabel = '30 días gratis';
+  readonly trialLabel = 'Primer mes gratis';
+
+  /**
+   * Lleva a la web de Bipsy Business, donde el negocio ve qué incluye y se da
+   * de alta. Antes bajaba al bloque de negocios de la portada, que no deja
+   * hacer nada más que leer.
+   */
+  readonly businessUrl = BUSINESS_URL;
 
   dismissed = this.readDismissed();
-
-  constructor(private router: Router) {}
-
-  goToBusiness(): void {
-    scrollToBusinessPromo(this.router);
-  }
 
   dismiss(): void {
     this.dismissed = true;
