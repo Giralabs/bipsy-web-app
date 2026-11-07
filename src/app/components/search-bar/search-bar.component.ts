@@ -1,4 +1,5 @@
 import { Component, HostListener, Input, inject } from '@angular/core';
+import { LocationService } from '../../core/location.service';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
@@ -57,6 +58,7 @@ export class SearchBarComponent {
   @Input() variant: 'header' | 'hero' = 'header';
 
   private readonly router = inject(Router);
+  private readonly userLocation = inject(LocationService);
 
   /** Qué panel está abierto. Solo uno a la vez. */
   open: 'none' | 'where' | 'when' = 'none';
@@ -119,32 +121,33 @@ export class SearchBarComponent {
    * El diálogo del permiso lo abre el propio `getCurrentPosition`; no hay forma
    * de preguntar antes sin provocarlo, así que el botón es literalmente eso.
    */
-  useMyLocation(): void {
-    if (!navigator.geolocation) {
-      this.placeError = 'Tu navegador no permite compartir la ubicación.';
-      return;
-    }
+  async useMyLocation(): Promise<void> {
+    if (this.placeBusy) return;
     this.placeBusy = true;
     this.placeError = null;
-    navigator.geolocation.getCurrentPosition(
-      async position => {
-        const { latitude, longitude } = position.coords;
-        const label = await describeCoordinates(latitude, longitude);
-        this.place = { label: label ?? 'Cerca de mí', lat: latitude, lng: longitude };
-        this.placeText = '';
-        this.placeResults = [];
-        this.placeBusy = false;
-        this.open = 'none';
-        this.submit();
-      },
-      error => {
-        this.placeBusy = false;
-        this.placeError = error.code === error.PERMISSION_DENIED
-          ? 'Has denegado el acceso a la ubicación. Escribe una dirección debajo.'
+    // Por `LocationService`, la misma que ordena Explorar: así lo que se
+    // concede aquí vale para toda la web y se recuerda en la próxima visita.
+    const result = await this.userLocation.request();
+    const me = this.userLocation.coords();
+    if (result !== 'granted' || !me) {
+      this.placeBusy = false;
+      // Cerró el diálogo sin elegir: no es un error que contar.
+      if (result === 'prompt') return;
+      this.placeError = result === 'denied'
+        ? 'Has bloqueado la ubicación para esta web. Escribe una dirección debajo, o permítela '
+          + 'desde el icono junto a la dirección del navegador.'
+        : result === 'unsupported'
+          ? 'Tu navegador no permite compartir la ubicación. Escribe una dirección debajo.'
           : 'No hemos podido obtener tu ubicación. Escribe una dirección debajo.';
-      },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
-    );
+      return;
+    }
+    const label = await describeCoordinates(me.lat, me.lng);
+    this.place = { label: label ?? 'Cerca de mí', lat: me.lat, lng: me.lng };
+    this.placeText = '';
+    this.placeResults = [];
+    this.placeBusy = false;
+    this.open = 'none';
+    this.submit();
   }
 
   /**

@@ -9,6 +9,7 @@ import {
   SocialIdentity,
   SocialProvider,
   SocialSignInCancelled,
+  missingProfile,
   socialMessageFor,
 } from '../../../core/social-auth.service';
 import { AuthRepository } from '../../../repositories/auth.repository';
@@ -76,7 +77,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // cuenta.
   socialLoading: SocialProvider | null = null;
   needsEmail = false;
+  /** Cuenta nueva sin nombre: el proveedor no lo dio (ver `missingProfile`). */
+  needsSocialName = false;
+  socialName = '';
   private identity: SocialIdentity | null = null;
+
+  /** Falta el correo o el nombre de la cuenta nueva: se pinta ese paso. */
+  get needsSocialProfile(): boolean {
+    return this.needsEmail || this.needsSocialName;
+  }
 
   ngOnInit(): void {
     // Para que la ventana de Google o Apple se abra al primer clic.
@@ -130,8 +139,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   async submitSocialEmail(): Promise<void> {
+    if (this.needsSocialName && this.socialName.trim().length < 2) {
+      this.error = this.socialName.trim() ? 'El nombre es demasiado corto' : 'Escribe tu nombre';
+      return;
+    }
     const email = this.email.trim().toLowerCase();
-    if (!isValidEmail(email)) {
+    if (this.needsEmail && !isValidEmail(email)) {
       this.error = 'Ese correo no parece válido';
       return;
     }
@@ -142,7 +155,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.socialLoading = provider;
     this.error = null;
     try {
-      await this.exchangeToken(email);
+      await this.exchangeToken(this.needsEmail ? email : undefined);
     } catch (raw) {
       this.error = socialMessageFor(raw, provider);
     } finally {
@@ -154,9 +167,15 @@ export class RegisterComponent implements OnInit, OnDestroy {
     if (!this.identity) {
       return;
     }
-    const res = await this.social.signIn(this.identity, email);
-    if (res.needsProfile) {
-      this.needsEmail = true;
+    const res = await this.social.signIn(
+      this.identity,
+      email,
+      this.needsSocialName ? this.socialName : undefined,
+    );
+    const missing = missingProfile(res, this.identity);
+    if (missing) {
+      this.needsEmail = missing.email;
+      this.needsSocialName = missing.name;
       return;
     }
     await this.session.onRegistered();

@@ -27,6 +27,7 @@ const PROFILE_TITLES: Record<string, string> = {
   direcciones: 'Mis direcciones',
   personas: 'Mis personas',
   seguridad: 'Contraseña y sesiones',
+  bloqueados: 'Negocios bloqueados',
   avisos: 'Avisos',
   ayuda: 'Ayuda',
   'acerca-de': 'Acerca de Bipsy',

@@ -10,25 +10,42 @@
       <img src="assets_web/bipsy-vertical-mint.webp" alt="Bipsy" class="flow__logo" width="108" height="108" />
     </picture>
 
-    @if (needsEmail) {
+    @if (needsSocialProfile) {
 
       <!-- Con Google o Apple la cuenta se crea a la primera. Solo se para aquí
-           si Apple no ha dado el correo. -->
-      <h1 class="flow__title">Solo un dato más</h1>
-      <p class="flow__subtitle">
-        Apple no nos ha dado tu correo —solo lo da la primera vez—, así que
-        escríbelo: es por donde te avisamos de tus citas.
-      </p>
+           si el proveedor no ha dado el correo o el nombre. -->
+      @if (needsEmail) {
+        <h1 class="flow__title">Solo un dato más</h1>
+        <p class="flow__subtitle">
+          Apple no nos ha dado tu correo —solo lo da la primera vez—, así que
+          escríbelo: es por donde te avisamos de tus citas.
+        </p>
+      } @else {
+        <h1 class="flow__title">¿Cómo te llamas?</h1>
+        <p class="flow__subtitle">
+          Es el nombre que verán los negocios en tus citas. Puedes cambiarlo luego en Ajustes.
+        </p>
+      }
 
       <form (submit)="submitSocialEmail(); $event.preventDefault()" novalidate>
         <div class="form-group">
           <div class="form-group__box">
-            <div class="form-row">
-              <label class="form-row__label" for="gsignup-email">Correo</label>
-              <input id="gsignup-email" class="form-row__input" type="email" name="email"
-                     autocomplete="email" inputmode="email" placeholder="tu@correo.com" maxlength="120"
-                     [disabled]="socialLoading !== null" [(ngModel)]="email" />
-            </div>
+            @if (needsSocialName) {
+              <div class="form-row">
+                <label class="form-row__label" for="gsignup-name">Nombre</label>
+                <input id="gsignup-name" class="form-row__input" type="text" name="socialName"
+                       autocomplete="name" autocapitalize="words" placeholder="Tu nombre" maxlength="80"
+                       [disabled]="socialLoading !== null" [(ngModel)]="socialName" />
+              </div>
+            }
+            @if (needsEmail) {
+              <div class="form-row">
+                <label class="form-row__label" for="gsignup-email">Correo</label>
+                <input id="gsignup-email" class="form-row__input" type="email" name="email"
+                       autocomplete="email" inputmode="email" placeholder="tu@correo.com" maxlength="120"
+                       [disabled]="socialLoading !== null" [(ngModel)]="email" />
+              </div>
+            }
           </div>
         </div>
 
@@ -47,7 +64,7 @@
       </form>
     }
 
-    @if (!needsEmail && step !== 'email') {
+    @if (!needsSocialProfile && step !== 'email') {
       <button type="button" class="flow__back" (click)="back()">
         <span class="material-symbols-rounded">arrow_back</span>
         Atrás
@@ -55,7 +72,7 @@
     }
 
     <!-- ══════════ PASO 1: CORREO ══════════ -->
-    @if (!needsEmail && step === 'email') {
+    @if (!needsSocialProfile && step === 'email') {
       <h1 class="flow__title">¿Cuál es tu correo?</h1>
       <p class="flow__subtitle">Te enviaremos un código para confirmar que es tuyo.</p>
 
@@ -111,7 +128,7 @@
     }
 
     <!-- ══════════ PASO 2: CÓDIGO ══════════ -->
-    @if (!needsEmail && step === 'code') {
+    @if (!needsSocialProfile && step === 'code') {
       <h1 class="flow__title">Revisa tu correo</h1>
       <p class="flow__subtitle">Lo hemos enviado a {{ email }}.</p>
 
@@ -159,7 +176,7 @@
     }
 
     <!-- ══════════ PASO 3: DATOS ══════════ -->
-    @if (!needsEmail && step === 'profile') {
+    @if (!needsSocialProfile && step === 'profile') {
       <h1 class="flow__title">Solo un poco más</h1>
       <p class="flow__subtitle">Ya está casi. Estos son los datos de tu cuenta.</p>
 

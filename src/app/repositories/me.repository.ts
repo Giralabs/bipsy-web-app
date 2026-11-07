@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../core/api.service';
-import { CustomerProfile, MeResponse, PrivacySettings } from '../models/bipsy.models';
+import { BlockedBusiness, CustomerProfile, MeResponse, PrivacySettings } from '../models/bipsy.models';
 
 /** Cuerpo de `PUT /customers/me`. El usuario no es editable desde aquí. */
 /**
@@ -101,5 +101,25 @@ export class MeRepository {
 
   removeFavoriteBusiness(businessId: number): Promise<CustomerProfile> {
     return this.api.delete<CustomerProfile>(`/customers/me/favorites/businesses/${businessId}`);
+  }
+
+  // ----- NEGOCIOS BLOQUEADOS --------------------
+
+  /** Los negocios bloqueados, del último al primero. */
+  blockedBusinesses(): Promise<BlockedBusiness[]> {
+    return this.api.get<BlockedBusiness[]>('/customers/me/blocked-businesses');
+  }
+
+  /**
+   * Bloquea un negocio: cierra el chat en los dos sentidos, deja de salir en
+   * Explorar y no puede darle cita. Las citas que ya hay no cambian. Idempotente.
+   */
+  blockBusiness(businessId: number): Promise<void> {
+    return this.api.put<void>(`/customers/me/blocked-businesses/${businessId}`, {});
+  }
+
+  /** Desbloquea un negocio. Idempotente. */
+  unblockBusiness(businessId: number): Promise<void> {
+    return this.api.delete<void>(`/customers/me/blocked-businesses/${businessId}`);
   }
 }

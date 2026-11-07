@@ -41,3 +41,13 @@
     </button>
   }
 </div>
+
+<!-- `TermsNotice` (guía 1.2 de Apple): con Google o Apple la cuenta se crea a
+     la primera, así que lo que se acepta tiene que decirse aquí, y poder leerse. -->
+@if (available) {
+  <p class="flow__foot">
+    Si continúas con Google o Apple, aceptas los
+    <a class="flow__link" routerLink="/legal/terminos">Términos de uso</a> y la
+    <a class="flow__link" routerLink="/legal/privacidad">Política de privacidad</a>.
+  </p>
+}

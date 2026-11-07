@@ -233,11 +233,16 @@
               @if (locationAccess && locationAccess !== 'unsupported') {
                 <h3 class="group__head">Tu ubicación</h3>
                 <section class="card card--list">
-                  @if (locationAccess === 'prompt') {
+                  <!-- Sin conceder, la fila se toca: sin decidir saca el diálogo
+                       del navegador; denegada, explica cómo reactivarla (el
+                       navegador no vuelve a preguntar), como la app manda a Ajustes. -->
+                  @if (locationAccess !== 'granted') {
                     <button type="button" class="linkrow" [disabled]="locationAsking" (click)="activateLocation()">
                       <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">location_off</span></span>
                       <strong>Ubicación</strong>
-                      <span class="linkrow__value loc--off">{{ locationAsking ? 'Preguntando…' : 'Activar' }}</span>
+                      <span class="linkrow__value loc--off">
+                        {{ locationAsking ? 'Preguntando…' : locationAccess === 'prompt' ? 'Activar' : 'Desactivada' }}
+                      </span>
                       <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
                     </button>
                   } @else {
@@ -260,6 +265,9 @@
                   } @else {
                     La usamos para recomendarte los negocios que tienes cerca. Sin ella la web funciona igual,
                     pero los resultados no salen ordenados por cercanía.
+                  }
+                  @if (approxCity) {
+                    Mientras tanto ordenamos con una ubicación aproximada por tu conexión: cerca de {{ approxCity }}.
                   }
                 </p>
               }
@@ -290,6 +298,7 @@
 
             <!-- ── Seguridad ── -->
             @case ('security') {
+              @if (canHavePassword) {
               <section class="card">
                 <h3 class="card__title">{{ passwordRowLabel }}</h3>
                 <p class="card__text">
@@ -327,6 +336,7 @@
                   </button>
                 </div>
               </section>
+              }
 
               <!-- Google: vinculada, o la opción de vincularla si el acceso con
                    Google está configurado en esta web. Mientras /me no
@@ -367,6 +377,41 @@
                 </div>
                 <button type="button" class="pill-btn pill-btn--soft" [disabled]="saving" (click)="revokeAllSessions()">Cerrar sesiones</button>
               </section>
+            }
+
+            <!-- ── Negocios bloqueados ──
+                 `BlockedBusinessesScreen`: la única vuelta a ellos. Tocar uno
+                 abre su ficha, donde está «Desbloquear». -->
+            @case ('blocked') {
+              @if (blockedList; as list) {
+                @if (list.length === 0) {
+                  <section class="card">
+                    <h3 class="card__title">No has bloqueado ningún negocio</h3>
+                    <p class="card__text">Si un negocio te molesta, puedes bloquearlo desde la bandera de su ficha o de su chat.</p>
+                  </section>
+                } @else {
+                  <section class="card card--list">
+                    @for (b of list; track b.id) {
+                      <a class="linkrow" [routerLink]="blockedPath(b)">
+                        <span class="card__icon" aria-hidden="true"><span class="material-symbols-rounded">storefront</span></span>
+                        <strong>{{ b.name }}</strong>
+                        <span class="material-symbols-rounded linkrow__go" aria-hidden="true">chevron_right</span>
+                      </a>
+                    }
+                  </section>
+                  <p class="pane__foot">
+                    Toca uno para abrir su ficha y desbloquearlo. Al desbloquearlo vuelve a salir en Explorar y puedes
+                    reservar y escribirle.
+                  </p>
+                }
+              } @else if (blockedError) {
+                <section class="card card--row">
+                  <div class="card__body"><p class="card__text">No se han podido cargar los negocios bloqueados.</p></div>
+                  <button type="button" class="pill-btn pill-btn--soft" (click)="loadBlocked()">Reintentar</button>
+                </section>
+              } @else {
+                <div class="skeleton skel-group" aria-busy="true" aria-label="Cargando"></div>
+              }
             }
 
             <!-- ── Avisos ──

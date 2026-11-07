@@ -8,6 +8,7 @@ import { BipsyService } from '../../services/bipsy.service';
 import { CatalogRepository } from '../../repositories/catalog.repository';
 import { ChatRepository } from '../../repositories/chat.repository';
 import { DialogService } from '../../core/dialog.service';
+import { BusinessSafetyService } from '../../core/business-safety.service';
 import { BookingRepository } from '../../repositories/booking.repository';
 import {
   PortfolioViewerComponent,
@@ -29,6 +30,7 @@ import {
 import { isAwaitingCustomer } from '../../models/confirm.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { ReportSheetComponent } from '../../components/report-sheet/report-sheet.component';
+import { BlockedBannerComponent } from '../../components/blocked-banner/blocked-banner.component';
 import { SocialLink, businessSocialLinks } from '../../models/business-social.models';
 import { duration, euros, parseLocal } from '../../shared/dates';
 import { fixImageUrl } from '../../shared/image-url';
@@ -88,7 +90,7 @@ const WEEKDAYS: { code: string; label: string }[] = [
 @Component({
   selector: 'app-business-detail',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, ReportSheetComponent, PortfolioViewerComponent],
+  imports: [CommonModule, ButtonComponent, ReportSheetComponent, PortfolioViewerComponent, BlockedBannerComponent],
   templateUrl: './business-detail.component.html',
   styleUrl: './business-detail.component.css',
 })
@@ -110,6 +112,7 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(DialogService);
   private readonly bookings = inject(BookingRepository);
+  private readonly safety = inject(BusinessSafetyService);
   /** Para descartar respuestas de una ficha que ya no es la abierta. */
   private loadGeneration = 0;
   /**
@@ -145,6 +148,8 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
   /** El horario en hoja (móvil y tableta, desde la fila de acciones). */
   scheduleSheetOpen = false;
   reportOpen = false;
+  /** Desbloqueando desde la banda: el botón no admite un segundo clic. */
+  blockBusy = false;
   /** La hoja con todas las fotos, que abre «Galería ›» (`showGipsiPortfolioSheet`). */
   galleryOpen = false;
   /** Enseña 5 normas como mucho: la ficha ya es larga. */
@@ -338,7 +343,15 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
    * otro negocio. Sin sesión sí se ofrece; al pulsarlo se pide entrar.
    */
   get canWrite(): boolean {
-    return !!this.business && this.business.chatEnabled !== false && this.isCustomerOrGuest;
+    return !!this.business && this.business.chatEnabled !== false && this.isCustomerOrGuest && !this.blocked;
+  }
+
+  /**
+   * El cliente tiene bloqueado este negocio: ni reservar ni escribir, y la
+   * banda de arriba dice por qué. El servidor tampoco lo admitiría.
+   */
+  get blocked(): boolean {
+    return !!this.business?.blockedByMe;
   }
 
   /** Reportar es cosa de clientes, como en la app. Sin sesión, se pide entrar. */
@@ -579,15 +592,53 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     this.toastTimer = setTimeout(() => (this.toast = null), isError ? 4000 : 2400);
   }
 
-  // ----- REPORTAR --------------------
+  // ----- REPORTAR O BLOQUEAR --------------------
 
-  /** Abre la hoja de reportar, o manda a entrar y vuelve aquí después. */
-  openReport(): void {
+  /**
+   * La bandera: «Reportar» o «Bloquear»/«Desbloquear» (`showBusinessSafetyMenu`).
+   * Sin sesión se pide entrar y se vuelve aquí después.
+   */
+  async openSafetyMenu(): Promise<void> {
+    const business = this.business;
+    if (!business) return;
     if (!this.session.isAuthenticated) {
       this.router.navigate(['/acceder'], { queryParams: { returnTo: this.router.url } });
       return;
     }
-    this.reportOpen = true;
+    const choice = await this.safety.openMenu({
+      businessId: business.id,
+      businessName: business.name,
+      blocked: this.blocked,
+    });
+    if (choice === 'report') {
+      this.reportOpen = true;
+    } else if (choice) {
+      this.applyBlocked(business, choice === 'blocked');
+    }
+  }
+
+  /** «Desbloquear» de la banda de arriba: directo, sin menú. */
+  async unblock(): Promise<void> {
+    const business = this.business;
+    if (!business || this.blockBusy) return;
+    this.blockBusy = true;
+    try {
+      const choice = await this.safety.setBlocked({
+        businessId: business.id,
+        businessName: business.name,
+        block: false,
+      });
+      if (choice === 'unblocked') this.applyBlocked(business, false);
+    } finally {
+      this.blockBusy = false;
+    }
+  }
+
+  /** Solo cambia la marca: el resto de la ficha es la misma. */
+  private applyBlocked(business: BusinessResponse, blocked: boolean): void {
+    if (this.business?.id === business.id) {
+      this.business = { ...this.business, blockedByMe: blocked };
+    }
   }
 
   onReportSent(): void {
@@ -648,13 +699,24 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     return prices.length ? euros(Math.min(...prices)) : '';
   }
 
+  /**
+   * Atrás, o a Explorar si no hay nada detrás dentro de la web: al llegar por
+   * un enlace compartido, `history.back()` sacaba de Bipsy o no hacía nada.
+   * Angular guarda `navigationId` en el estado del historial: 1 es la primera
+   * página de la visita.
+   */
   goBack(): void {
-    this.location.back();
+    const state = this.location.getState() as { navigationId?: number } | null;
+    if ((state?.navigationId ?? 1) > 1) {
+      this.location.back();
+    } else {
+      this.router.navigateByUrl('/');
+    }
   }
 
   async book(service?: ServiceResponse): Promise<void> {
     const business = this.business;
-    if (!business) {
+    if (!business || this.blocked) {
       return;
     }
     // El tope se mira ANTES de entrar, no al confirmar. El servidor lo

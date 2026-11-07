@@ -37,6 +37,17 @@ export class BookingRepository {
   }
 
   /**
+   * Suelta la cita que el cliente no llegó a pagar en un negocio que lo exige:
+   * lo que se llama al cerrar la hoja de pago justo después de reservar. **Sin
+   * penalización**, al contrario que `cancel`, que cerca de la hora cobraba la
+   * tarifa de algo que nunca se tuvo. 204, o 409 si ya está pagada o no es
+   * reciente.
+   */
+  releaseUnpaid(id: number): Promise<void> {
+    return this.api.put<void>(`/bookings/${id}/release-unpaid`, {});
+  }
+
+  /**
    * Cambiar de hora repite la validación completa de disponibilidad —es una
    * reserva nueva en todo salvo en el id— y se penaliza igual que cancelar,
    * calculando sobre la hora original.

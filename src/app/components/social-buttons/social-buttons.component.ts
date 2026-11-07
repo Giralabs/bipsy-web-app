@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { SocialAuthService, SocialProvider } from '../../core/social-auth.service';
 
 /**
@@ -24,7 +25,7 @@ import { SocialAuthService, SocialProvider } from '../../core/social-auth.servic
 @Component({
   selector: 'app-social-buttons',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './social-buttons.component.html',
 })
 export class SocialButtonsComponent {

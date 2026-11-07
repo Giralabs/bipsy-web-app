@@ -23,3 +23,11 @@ export const HELP_URL = onLocalhost ? HELP_DEV_URL : HELP_PROD_URL;
 export const HELP_CLIENTS_URL = `${HELP_URL}/clientes`;
 /** The half for business owners: what Bipsy Business is and how to start. */
 export const HELP_BUSINESS_URL = `${HELP_URL}/negocios`;
+
+/**
+ * The Bipsy Business site (bipsy-business-web-app): what it offers businesses
+ * and where they sign up. Always the real one, also locally: there is no fixed
+ * port for its dev server, and this is a link out, not something to develop
+ * against.
+ */
+export const BUSINESS_URL = 'https://business.bipsy.es';

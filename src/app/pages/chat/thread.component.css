@@ -87,6 +87,23 @@
 
 .th__back .material-symbols-rounded { font-size: 20px; }
 .th__back:hover { background: var(--clr-surface); }
+
+/* La bandera de reportar o bloquear: el mismo botón redondo que «atrás». */
+.th__flag {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--clr-text-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.th__flag .material-symbols-rounded { font-size: 20px; }
+.th__flag:hover { background: var(--clr-surface); color: var(--clr-text); }
+.th__flag:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 /* Con la bandeja al lado no hay «atrás»: se cambia de hilo en la lista. */
 .th-layout--split .th__back { display: none; }
 .th-layout--split .th__head { padding-left: 16px; }

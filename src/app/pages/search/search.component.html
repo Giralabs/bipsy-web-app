@@ -64,7 +64,7 @@
         </button>
 
         @if (mapAvailable) {
-          <button type="button" class="tool-btn only-desk" [class.tool-btn--on]="showMap" (click)="showMap = !showMap">
+          <button type="button" class="tool-btn only-desk" [class.tool-btn--on]="showMap" (click)="toggleMap()">
             <span class="material-symbols-rounded" aria-hidden="true">{{ showMap ? 'view_list' : 'map' }}</span>
             <span class="tool-btn__label">{{ showMap ? 'Lista' : 'Mapa' }}</span>
           </button>
@@ -79,6 +79,18 @@
          las categorías se ven igual en las dos. Sin cuadro «Todas»: se vuelve
          a todo tocando otra vez la que está elegida. -->
     <div class="tiles-row only-touch" appDragScroll>
+      <!-- «Todas» delante, como la app desde el 06/11/2026: quita solo la
+           categoría y deja el resto de filtros. -->
+      <button
+        type="button"
+        class="tile"
+        [class.tile--on]="selectedCategoryId === undefined"
+        [attr.aria-pressed]="selectedCategoryId === undefined"
+        (click)="selectCategoryFilter(undefined)"
+      >
+        <span class="material-symbols-rounded" [class.fill]="selectedCategoryId === undefined">apps</span>
+        <span class="tile__label">Todas</span>
+      </button>
       @for (c of tileCategories; track c.id) {
         <button
           type="button"
@@ -220,7 +232,7 @@
                   [business]="biz"
                   [previouslyBooked]="!!biz.discovery?.previouslyBooked"
                   [isNew]="!!biz.discovery?.recentlyOpened"
-                  [distanceKm]="biz.discovery?.distanceKm ?? null"
+                  [distanceKm]="showDistances ? biz.discovery?.distanceKm ?? null : null"
                   (rebook)="onRebook($event)"
                 />
               }
@@ -357,7 +369,7 @@
   <button
     type="button"
     class="map-fab only-touch"
-    (click)="showMap = !showMap"
+    (click)="toggleMap()"
     [attr.aria-label]="showMap ? 'Ver la lista' : 'Ver el mapa'"
   >
     <span class="material-symbols-rounded">{{ showMap ? 'format_list_bulleted' : 'map' }}</span>

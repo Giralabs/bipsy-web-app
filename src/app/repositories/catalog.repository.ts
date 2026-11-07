@@ -97,8 +97,13 @@ export class CatalogRepository {
     return this.api.get<PageResponse<BusinessResponse>>('/businesses', { ...query }, false);
   }
 
+  /**
+   * Con la sesión si la hay: solo así llega `blockedByMe`, que decide si la
+   * ficha deja reservar y si la bandera ofrece bloquear o desbloquear. Sin
+   * sesión no hay token y la petición sale igual de anónima que antes.
+   */
   business(id: number | string): Promise<BusinessResponse> {
-    return this.api.get<BusinessResponse>(`/businesses/${id}`, undefined, false);
+    return this.api.get<BusinessResponse>(`/businesses/${id}`);
   }
 
   businessServices(id: number | string): Promise<ServiceResponse[]> {

@@ -16,6 +16,7 @@ import { Router } from '@angular/router';
 import { BusinessResponse, businessLocationDisplay } from '../../models/bipsy.models';
 import { businessPath } from '../../shared/slug';
 import { loadGoogleMaps, googleMapsAuthFailed } from '../../core/google-maps-loader';
+import { LocationService } from '../../core/location.service';
 import {
   MAP_STYLE_DARK,
   MAP_STYLE_LIGHT,
@@ -53,6 +54,7 @@ export interface SearchArea {
 })
 export class BusinessMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private readonly router = inject(Router);
+  private readonly userLocation = inject(LocationService);
 
   @ViewChild('canvas') canvas?: ElementRef<HTMLElement>;
 
@@ -89,7 +91,9 @@ export class BusinessMapComponent implements AfterViewInit, OnChanges, OnDestroy
       return;
     }
 
-    const start = this.area ?? this.firstBusinessPoint() ?? BusinessMapComponent.FALLBACK;
+    // Sin zona, donde está quien mira, como `_cameraStart` en la app; si no se
+    // sabe, el primer negocio con coordenadas.
+    const start = this.area ?? this.userLocation.coords() ?? this.firstBusinessPoint() ?? BusinessMapComponent.FALLBACK;
 
     try {
       this.buildMap(start);

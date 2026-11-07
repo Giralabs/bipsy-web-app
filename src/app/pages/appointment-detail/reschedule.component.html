@@ -116,6 +116,14 @@
 
           @if (feeLoading) {
             <div class="skeleton rs__fee-skel"></div>
+          } @else if (feeFailed) {
+            <!-- Sin saber lo que cuesta no se deja cambiar: el servidor cobra la
+                 tarifa igual, y antes se daba por gratis. -->
+            <p class="rs__fee rs__fee--charge" role="alert">
+              No sabemos si cambiarla tiene coste. Antes de moverla tenemos que comprobar si se te
+              cobraría algo.
+              <button type="button" class="flow__link" (click)="refreshFee()">Reintentar</button>
+            </p>
           } @else {
             <!-- Cambiar dentro de la ventana cuesta lo mismo que cancelar. -->
             <p class="rs__fee" [class.rs__fee--charge]="willCharge" role="status">
@@ -142,6 +150,7 @@
               [fullWidth]="true"
               icon="event_repeat"
               [loading]="saving || feeLoading"
+              [disabled]="feeFailed"
               (onClick)="confirmOrCharge()"
             >{{ confirmLabel }}</app-button>
           </div>

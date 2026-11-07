@@ -1,4 +1,6 @@
-import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { ConfirmRequestGateService } from './core/confirm-request-gate.service';
+import { LocationService } from './core/location.service';
 import { ViewportScroller } from '@angular/common';
 import { NavigationEnd, Router, RouterOutlet, Scroll } from '@angular/router';
 import { filter } from 'rxjs';
@@ -22,6 +24,9 @@ import { STORE_LINKS_READY } from './data/app-links';
 
 /** Páginas con pie: las públicas de descubrir. `negocio/:id` sí; su `/reservar`, no. */
 const FOOTER_PAGES = /^(\/|\/buscar|\/negocio\/[^/]+|\/legal(\/[^/]+)?|\/descargar(\/negocio)?)$/;
+
+/** Donde se «entra» a la web: aquí se busca la ubicación, sin diálogo (`LocationService.start`). */
+const DISCOVERY_PAGES = /^(\/|\/buscar|\/negocio\/[^/]+)$/;
 
 /** La puerta del equipo: sigue sirviéndose en mantenimiento. */
 const ADMIN_PATH = '/admin';
@@ -96,6 +101,7 @@ export class AppComponent {
   private readonly router = inject(Router);
   private readonly session = inject(SessionService);
   private readonly socket = inject(ChatSocketService);
+  private readonly location = inject(LocationService);
 
   /** Escritorio o app: solo se monta el armazón del tamaño en el que se está. */
   readonly desktop = inject(BreakpointService).desktop;
@@ -132,6 +138,10 @@ export class AppComponent {
   @ViewChild('main') private main?: ElementRef<HTMLElement>;
 
   constructor() {
+    // La cita que el negocio te ha dado y espera tu respuesta se abre sola al
+    // entrar y al volver a la pestaña, como `ConfirmRequestGate` en la app.
+    inject(ConfirmRequestGateService).start(inject(DestroyRef));
+
     let first = true;
     this.router.events
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
@@ -139,6 +149,14 @@ export class AppComponent {
         const path = pathOf(e.urlAfterRedirects);
         const changedPage = path !== this.path();
         this.path.set(path);
+        // La ubicación se busca al entrar, sin preguntar nada: la precisa si el
+        // permiso ya estaba concedido, si no la aproximada por la IP. De ella
+        // depende el orden de todas las listas. «Entrar» es llegar a descubrir
+        // (Explorar, Buscar, una ficha), no a una página legal, a /admin o a
+        // una invitación.
+        if (DISCOVERY_PAGES.test(path) && !this.maintenance.blocked()) {
+          this.location.start();
+        }
         // Al cambiar de página, el foco va al contenido nuevo: si no, quien
         // navega con teclado o lector se queda en el enlace que pulsó, en una
         // página que ya no existe, y no se entera de que ha cambiado. Solo

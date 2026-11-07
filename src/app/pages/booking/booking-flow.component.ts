@@ -610,7 +610,9 @@ export class BookingFlowComponent implements OnInit {
     if (id === undefined) {
       return 'Cualquiera disponible';
     }
-    return this.workers.find(w => w.id === id)?.name ?? `Profesional #${id}`;
+    // Nunca el id: «Profesional #7» es un número interno que al cliente no le
+    // dice nada (la app lo quitó el 03/11/2026).
+    return this.workers.find(w => w.id === id)?.name ?? 'Profesional asignado';
   }
 
   get chargesHomeSurcharge(): boolean {
@@ -857,9 +859,11 @@ export class BookingFlowComponent implements OnInit {
       return true;
     }
 
-    // No pagó: se suelta el hueco en el momento y se le dice por qué.
+    // No pagó: se suelta el hueco en el momento y se le dice por qué. Por su
+    // propia ruta y no por cancel(): aquella podía cobrarle la penalización de
+    // una cita que no llegó a tener.
     try {
-      await this.bookingRepo.cancel(booking.id);
+      await this.bookingRepo.releaseUnpaid(booking.id);
     } catch {
       // Si falla, lo hará el job en 15 minutos. No se le cuenta: para él la
       // cita no ha llegado a existir.
