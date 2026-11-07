@@ -105,6 +105,19 @@ export interface BusinessResponse {
   cancellationWindowHours?: number;
   branding?: BusinessBranding;
   discovery?: BusinessDiscovery;
+  /**
+   * Si el cliente en sesión tiene bloqueado a este negocio. Solo llega en la
+   * ficha (`GET /businesses/{id}`) y con sesión de cliente; decide si la
+   * bandera ofrece «Bloquear» o «Desbloquear».
+   */
+  blockedByMe?: boolean;
+}
+
+/** Un negocio bloqueado, de `GET /customers/me/blocked-businesses`. */
+export interface BlockedBusiness {
+  id: number;
+  name: string;
+  profileImageUrl?: string;
 }
 
 /** Categoría principal, o la primera si ninguna viene marcada. */
@@ -522,6 +535,11 @@ export interface MeResponse {
   authProvider?: 'LOCAL' | 'GOOGLE';
   googleLinked?: boolean;
   /**
+   * Entra con Apple. Si es su ÚNICA forma de entrar (sin contraseña ni
+   * Google), no se le ofrece crear contraseña: el servidor no lo admite.
+   */
+  appleLinked?: boolean;
+  /**
    * Si la cuenta tiene contraseña propia, y por tanto puede cambiarla en vez
    * de crearla. Lo dice el servidor: no se deduce del proveedor, porque quien
    * entró con Google puede haberse creado una después.
@@ -626,6 +644,11 @@ export interface ConversationResponse {
    * bloqueado en vez de dejar escribir algo que va a rebotar.
    */
   canWrite?: boolean;
+  /**
+   * Solo para el cliente: el hilo está cerrado porque él ha bloqueado al
+   * negocio, no porque falte una cita. Separa los dos avisos.
+   */
+  blockedByMe?: boolean;
   createdAt: string;
   /**
    * El trabajador que contestó el último, para ponerle cara en el hilo y en

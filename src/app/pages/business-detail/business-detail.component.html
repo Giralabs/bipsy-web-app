@@ -49,11 +49,11 @@
             <span class="material-symbols-rounded cover__heart" [class.fill]="isFavorite"
                   [class.cover__heart--on]="isFavorite" aria-hidden="true">favorite</span>
           </button>
-          <!-- Reportar: solo clientes, como en la app. Sin sesión sí sale, y
-               al pulsar se pide entrar. -->
+          <!-- Reportar o bloquear (guía 1.2 de Apple): solo clientes, como en
+               la app. Sin sesión sí sale, y al pulsar se pide entrar. -->
           @if (canReport) {
-            <button type="button" class="cover__btn" aria-label="Reportar este negocio" title="Reportar"
-                    aria-haspopup="dialog" (click)="openReport()">
+            <button type="button" class="cover__btn" aria-label="Reportar o bloquear" title="Reportar o bloquear"
+                    aria-haspopup="dialog" (click)="openSafetyMenu()">
               <span class="material-symbols-rounded fill" aria-hidden="true">flag</span>
             </button>
           }
@@ -79,6 +79,12 @@
     <!-- ══════════ CUERPO ══════════ -->
     <div class="detail__body">
       <div class="detail__main">
+
+        <!-- `BlockedBanner`: explica por qué no se puede reservar ni escribir,
+             y desbloquea desde aquí. Sin ella la ficha parecería rota. -->
+        @if (blocked) {
+          <app-blocked-banner [busy]="blockBusy" (unblock)="unblock()" />
+        }
 
         <!-- ── Cabecera: `_NameRow`, valoración y dirección, descripción,
              `_InfoActions` y `_SocialRow`, en ese orden. ── -->
@@ -269,7 +275,7 @@
                   <ul class="services">
                     @for (srv of services; track srv.id) {
                       <li>
-                        <button type="button" class="service" (click)="book(srv)"
+                        <button type="button" class="service" (click)="book(srv)" [disabled]="blocked"
                                 [attr.aria-label]="'Reservar ' + srv.name + ', ' + durationLabel(srv) + ', ' + price(srv)">
                           @if (serviceImage(srv); as img) {
                             <img class="service__thumb" [src]="img" alt="" loading="lazy" />
@@ -423,7 +429,7 @@
               }
             </p>
             <app-button variant="primary" size="large" [fullWidth]="true" icon="event_available"
-                        [overCard]="true" (onClick)="book()">
+                        [overCard]="true" [disabled]="blocked" (onClick)="book()">
               Pedir cita
             </app-button>
             @if (chargesCancellation) {
@@ -495,7 +501,8 @@
 @if (!isLoading && !loadError && business) {
     <!-- ══════════ BARRA DE RESERVA (móvil y tableta) ══════════ -->
     <div class="bookbar">
-      <app-button variant="primary" size="large" [fullWidth]="true" icon="event_available" (onClick)="book()">
+      <app-button variant="primary" size="large" [fullWidth]="true" icon="event_available" [disabled]="blocked"
+                  (onClick)="book()">
         Pedir cita
       </app-button>
     </div>

@@ -479,13 +479,18 @@ export class BookingDetailComponent implements OnInit {
     // La tarifa se vuelve a pedir justo ahora: la de la carga puede ser de hace
     // un rato —quien deja la ficha abierta puede haber entrado ya en la
     // ventana— o haber fallado, y en los dos casos se le diría «cancelar» sin
-    // importe y el servidor cobraría igual. Si falla otra vez, se queda la que
-    // había.
+    // importe y el servidor cobraría igual.
+    //
+    // Si no llega, NO se cancela (la app, 03/11/2026): antes se seguía con lo
+    // que se sabía, que podía ser «gratis», y el servidor cargaba en la
+    // tarjeta un importe que el cliente no había visto.
     this.busy = true;
+    this.actionError = null;
     try {
       this.fee = await this.bookings.cancellationFee(this.booking.id);
     } catch {
-      // Sin respuesta se sigue con lo que se sabía.
+      this.actionError = 'No hemos podido comprobar si cancelar tiene coste. Inténtalo de nuevo.';
+      return;
     } finally {
       this.busy = false;
     }

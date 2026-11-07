@@ -46,6 +46,13 @@
           }
         </span>
       </button>
+      <!-- Reportar o bloquear, como la bandera de la ficha. -->
+      @if (conversation) {
+        <button type="button" class="th__flag" (click)="openSafetyMenu()" aria-haspopup="dialog"
+                aria-label="Reportar o bloquear" title="Reportar o bloquear">
+          <span class="material-symbols-rounded fill" aria-hidden="true">flag</span>
+        </button>
+      }
     </header>
 
     @if (isLoading) {
@@ -258,6 +265,11 @@
             <span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span>
           </button>
         </form>
+      } @else if (blocked) {
+        <p class="closed">
+          <span class="material-symbols-rounded" aria-hidden="true">block</span>
+          <span>Has bloqueado a este negocio. Desbloquéalo para volver a escribirle.</span>
+        </p>
       } @else {
         <p class="closed">
           <span class="material-symbols-rounded" aria-hidden="true">lock</span>
@@ -270,4 +282,13 @@
 
 @if (viewer; as v) {
   <app-chat-viewer [url]="v.url" [filename]="v.filename" (closed)="viewer = null" />
+}
+
+@if (reportOpen && conversation) {
+  <app-report-sheet
+    [businessId]="conversation.businessId"
+    [businessName]="conversation.otherPartyName"
+    (closed)="reportOpen = false"
+    (sent)="onReportSent()"
+  />
 }

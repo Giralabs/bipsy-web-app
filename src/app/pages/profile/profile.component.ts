@@ -16,24 +16,25 @@ import { ToastService } from '../../core/toast.service';
 import { confirmPhone } from '../../shared/confirm-phone';
 import { newPasswordError } from '../../shared/password-policy';
 import { PasswordRulesComponent } from '../../shared/password-rules.component';
-import { UserProfileDto } from '../../models/bipsy.models';
+import { BlockedBusiness, UserProfileDto } from '../../models/bipsy.models';
+import { businessSlug } from '../../shared/slug';
+import { LocationAccess, LocationService } from '../../core/location.service';
 import { CUSTOMER_NOTIF_KEYS } from '../../models/profile-extras.models';
 import { ButtonComponent } from '../../components/button/button.component';
 import { ProfileAddressesComponent } from './addresses/profile-addresses.component';
 import { ProfilePeopleComponent } from './people/profile-people.component';
 
 /** Cada apartado de los ajustes. En escritorio se ve uno a la derecha del menú. */
-type Section = 'profile' | 'addresses' | 'people' | 'security' | 'notices' | 'help' | 'about' | 'legal' | 'account';
+type Section =
+  | 'profile' | 'addresses' | 'people' | 'security' | 'blocked' | 'notices' | 'help' | 'about' | 'legal' | 'account';
 
 /**
- * Lo que se enseña de la versión, igual que `info_sheets.dart` en la app: no
- * se lee sola, hay que tocarla aquí cuando suba.
+ * Lo que se enseña de la versión. La app la lee del binario (1.0.0 desde el
+ * 05/11/2026); aquí no hay binario y hay que tocarla a mano cuando suba. Sin
+ * «Beta» detrás, como la app desde el 03/11/2026.
  */
-const APP_VERSION = '0.1.0';
-const APP_PHASE = 'Beta';
+const APP_VERSION = '1.0.0';
 
-/** Estado del permiso de ubicación del navegador. `null` mientras se mira. */
-type LocationAccess = 'granted' | 'prompt' | 'denied' | 'unsupported';
 
 interface SectionInfo { id: Section; icon: string; label: string; hint: string }
 interface QuickLink { path: string; icon: string; label: string; hint: string }
@@ -43,6 +44,7 @@ const SECTIONS: SectionInfo[] = [
   { id: 'addresses', icon: 'home_work', label: 'Mis direcciones', hint: 'Para reservar a domicilio sin teclearla' },
   { id: 'people', icon: 'group', label: 'Mis personas', hint: 'Para quién pides cita' },
   { id: 'security', icon: 'lock', label: 'Contraseña y sesiones', hint: 'Contraseña, Google y dispositivos' },
+  { id: 'blocked', icon: 'block', label: 'Negocios bloqueados', hint: 'Los que no te salen en Explorar' },
   { id: 'notices', icon: 'notifications', label: 'Avisos', hint: 'Notificaciones y correos' },
   { id: 'help', icon: 'help', label: 'Ayuda', hint: 'Preguntas frecuentes' },
   { id: 'about', icon: 'info', label: 'Acerca de Bipsy', hint: 'Versión y documentos' },
@@ -74,7 +76,8 @@ const MENU: { label: string | null; sections: Section[]; links: QuickLink[] }[] 
     sections: ['addresses', 'people'],
     links: [{ path: '/pagos', icon: 'credit_card', label: 'Pagos', hint: 'Tarjetas y cobros' }],
   },
-  { label: 'Seguridad', sections: ['security'], links: [] },
+  // Negocios bloqueados va con Seguridad, como en `ProfileScreen`.
+  { label: 'Seguridad', sections: ['security', 'blocked'], links: [] },
   { label: 'General', sections: ['notices', 'about', 'help', 'legal'], links: [] },
   { label: null, sections: ['account'], links: [] },
 ];
@@ -97,6 +100,7 @@ const SECTION_SLUGS: Record<string, Section> = {
   direcciones: 'addresses',
   personas: 'people',
   seguridad: 'security',
+  bloqueados: 'blocked',
   avisos: 'notices',
   ayuda: 'help',
   'acerca-de': 'about',
@@ -233,15 +237,25 @@ export class ProfileComponent implements OnInit, OnDestroy {
   nameError: string | null = null;
   phoneError: string | null = null;
 
-  readonly appVersion = `${APP_VERSION} · ${APP_PHASE}`;
+  readonly appVersion = APP_VERSION;
 
-  // Ubicación del navegador (bloque «Tu ubicación»).
-  locationAccess: LocationAccess | null = null;
-  locationAsking = false;
-  private locationStatus: PermissionStatus | null = null;
-  private readonly onLocationChange = () => {
-    this.locationAccess = (this.locationStatus?.state as LocationAccess | undefined) ?? null;
-  };
+  // Ubicación del navegador (bloque «Tu ubicación»). La misma `LocationService`
+  // que ordena Explorar: lo que se concede aquí vale para toda la web.
+  private readonly userLocation = inject(LocationService);
+
+  /** Null mientras no se sabe: no se afirma «Desactivada» para corregirlo luego. */
+  get locationAccess(): LocationAccess | null {
+    return this.userLocation.access();
+  }
+
+  get locationAsking(): boolean {
+    return this.userLocation.asking();
+  }
+
+  /** La ciudad de la aproximada por la IP, mientras no hay la precisa. */
+  get approxCity(): string | null {
+    return this.userLocation.approxCity();
+  }
 
   // ----- FOTO DE PERFIL --------------------
   //
@@ -278,6 +292,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   // Cuenta de Google. Null mientras no se sabe: la fila no se pinta.
   googleLinked: boolean | null = null;
+  appleLinked: boolean | null = null;
+
+  // Negocios bloqueados. Null mientras no han llegado.
+  blockedList: BlockedBusiness[] | null = null;
+  blockedLoading = false;
+  blockedError = false;
 
   // Tus cifras. Null mientras no han llegado: se pinta un guion, no un cero.
   bookingsCount: number | null = null;
@@ -313,55 +333,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.notice = null;
       }
     }));
-    void this.watchLocation();
   }
 
   // ----- UBICACIÓN --------------------
 
   /**
-   * Port de `_LocationAccessBlock`. Se escucha el cambio del permiso: si lo
-   * concede o lo quita desde el candado de la barra, el bloque no se queda
-   * diciendo lo de antes (en la app es volver de los Ajustes del sistema).
+   * Port de `_LocationAccessBlock._activar`: el diálogo del navegador y, si
+   * ya no sale, cómo reactivarla. El estado lo escucha `LocationService`: si
+   * se concede o se quita desde el candado de la barra, el bloque se entera.
    */
-  private async watchLocation(): Promise<void> {
-    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-      this.locationAccess = 'unsupported';
-      return;
-    }
-    try {
-      this.locationStatus = await navigator.permissions.query({ name: 'geolocation' });
-      this.onLocationChange();
-      this.locationStatus.addEventListener('change', this.onLocationChange);
-    } catch {
-      // Safari antiguo no tiene `permissions.query` para la ubicación: no se
-      // sabe el estado, pero pedirla sigue funcionando.
-      this.locationAccess = 'prompt';
-    }
-  }
-
-  /** Solo cuando aún se puede preguntar: denegada, ya no sale el diálogo. */
   activateLocation(): void {
-    if (this.locationAsking || this.locationAccess !== 'prompt') return;
-    this.locationAsking = true;
-    navigator.geolocation.getCurrentPosition(
-      () => {
-        this.locationAsking = false;
-        this.locationAccess = 'granted';
-      },
-      error => {
-        this.locationAsking = false;
-        // Lo que se enseña sale de volver a mirar, nunca de dar por hecho lo
-        // que se ha respondido: un fallo de señal no es un «no».
-        if (error.code === error.PERMISSION_DENIED) {
-          this.locationAccess = 'denied';
-        } else if (!this.locationStatus) {
-          this.locationAccess = 'prompt';
-        } else {
-          this.onLocationChange();
-        }
-      },
-      { maximumAge: 300_000, timeout: 15_000 },
-    );
+    if (this.locationAsking || this.locationAccess === 'granted') return;
+    void this.userLocation.activate();
   }
 
   /** Ninguna de las dos puede romper los ajustes: sin cifra, un guion. */
@@ -374,7 +357,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subs.unsubscribe();
     this.discardPendingPhoto();
-    this.locationStatus?.removeEventListener('change', this.onLocationChange);
   }
 
   // ----- FOTO DE PERFIL --------------------
@@ -469,6 +451,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
     if (section === 'security') {
       void this.loadGoogleLink();
+    }
+    if (section === 'blocked') {
+      void this.loadBlocked();
     }
     if (section === 'account') {
       this.deletePassword = '';
@@ -730,9 +715,44 @@ export class ProfileComponent implements OnInit, OnDestroy {
     try {
       const me = await this.meRepo.me();
       this.googleLinked = !!me.googleLinked;
+      this.appleLinked = !!me.appleLinked;
     } catch {
       this.googleLinked = null;
+      this.appleLinked = null;
     }
+  }
+
+  /**
+   * Crear o cambiar contraseña. Quien entra SOLO con Apple no (la app lo
+   * decidió el 04/11/2026): la tarjeta no sale y el servidor tampoco lo
+   * admite. Sin contraseña, mientras `/me` no ha dicho cómo entra, tampoco se
+   * pinta: salir y desaparecer al momento es peor que esperar.
+   */
+  get canHavePassword(): boolean {
+    if (this.profile?.hasPassword) return true;
+    return this.googleLinked === true || this.appleLinked === false;
+  }
+
+  // ----- NEGOCIOS BLOQUEADOS --------------------
+
+  /**
+   * La única vuelta a un negocio bloqueado: no sale en Explorar ni en Buscar.
+   * Tocar uno abre su ficha, que es donde se desbloquea (`BlockedBusinessesScreen`).
+   */
+  async loadBlocked(): Promise<void> {
+    this.blockedLoading = true;
+    this.blockedError = false;
+    try {
+      this.blockedList = await this.meRepo.blockedBusinesses();
+    } catch {
+      this.blockedError = true;
+    } finally {
+      this.blockedLoading = false;
+    }
+  }
+
+  blockedPath(business: BlockedBusiness): string[] {
+    return ['/negocio', businessSlug(business)];
   }
 
   /** Vincular solo se ofrece si el acceso con Google está configurado en esta web. */

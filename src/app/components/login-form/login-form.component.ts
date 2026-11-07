@@ -9,6 +9,7 @@ import {
   SocialIdentity,
   SocialProvider,
   SocialSignInCancelled,
+  missingProfile,
   socialMessageFor,
 } from '../../core/social-auth.service';
 import { ButtonComponent } from '../button/button.component';
@@ -76,7 +77,19 @@ export class LoginFormComponent implements OnInit {
    * Si esa vez fue en otro sitio, el token llega sin él.
    */
   needsEmail = false;
+  /**
+   * Cuenta nueva sin nombre: Apple solo lo da la primera vez, o se borró en su
+   * hoja. Antes el servidor lo sacaba del correo («nnbwycc8wz» con el oculto
+   * de Apple); ahora lo pide (`SocialNameSheet`).
+   */
+  needsName = false;
+  socialName = '';
   private identity: SocialIdentity | null = null;
+
+  /** Falta algo de la cuenta nueva: se pinta el paso que lo pide. */
+  get needsProfile(): boolean {
+    return this.needsEmail || this.needsName;
+  }
 
   ngOnInit(): void {
     this.username = this.email;
@@ -148,9 +161,13 @@ export class LoginFormComponent implements OnInit {
     }
   }
 
-  /** Segundo intento, ya con el correo que Apple no dio. */
+  /** Segundo intento, ya con el correo o el nombre que el proveedor no dio. */
   async submitProfile(): Promise<void> {
-    if (!isValidEmail(this.username.trim())) {
+    if (this.needsName && this.socialName.trim().length < 2) {
+      this.error = this.socialName.trim() ? 'El nombre es demasiado corto.' : 'Escribe tu nombre.';
+      return;
+    }
+    if (this.needsEmail && !isValidEmail(this.username.trim())) {
       this.error = 'Ese correo no parece válido.';
       return;
     }
@@ -184,10 +201,13 @@ export class LoginFormComponent implements OnInit {
     const res = await this.social.signIn(
       this.identity,
       this.username.trim() || undefined,
+      this.needsName ? this.socialName : undefined,
     );
 
-    if (res.needsProfile) {
-      this.needsEmail = true;
+    const missing = missingProfile(res, this.identity);
+    if (missing) {
+      this.needsEmail = missing.email;
+      this.needsName = missing.name;
       return;
     }
 
@@ -199,6 +219,8 @@ export class LoginFormComponent implements OnInit {
   private done(): void {
     this.password = '';
     this.needsEmail = false;
+    this.needsName = false;
+    this.socialName = '';
     this.identity = null;
     this.signedIn.emit();
   }

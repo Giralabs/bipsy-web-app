@@ -63,18 +63,60 @@ export class ChatSocketService {
   private static readonly MIN_BACKOFF = 1000;
   private static readonly MAX_BACKOFF = 30_000;
 
+  /**
+   * Ya se renovó la sesión tras el último rechazo: si vuelve a fallar no es el
+   * token, y se sigue con la espera normal en vez de pedir otro refresco.
+   */
+  private renewed = false;
+
+  /** Cerrado por `suspend()` con la sesión viva: `resume()` lo reabre. */
+  private suspended = false;
+
+  constructor() {
+    // Pestaña al fondo: se cierra; al volver, se reabre (la app hace lo mismo
+    // desde el 06/11/2026). En el móvil el navegador congela la pestaña y deja
+    // la conexión medio abierta: el servidor la da por viva, le «entrega» los
+    // mensajes y no manda el aviso. Las pantallas recargan con
+    // `socket.connected`, así que lo llegado entre medias aparece al volver.
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') this.suspend();
+        else this.resume();
+      });
+    }
+  }
+
   connect(): void {
+    this.suspended = false;
     this.wantConnected = true;
     this.open();
   }
 
   disconnect(): void {
+    this.suspended = false;
+    this.stop();
+  }
+
+  private stop(): void {
     this.wantConnected = false;
     this.clearTimer();
     // `onclose` se dispara igual, pero con `wantConnected` en false no
     // reintenta: es lo que distingue un cierre nuestro de una caída.
     this.socket?.close();
     this.socket = null;
+  }
+
+  private suspend(): void {
+    if (!this.wantConnected) return;
+    this.suspended = true;
+    this.stop();
+  }
+
+  /** Sin esperar al backoff: se vuelve a la pestaña y se quiere ya. */
+  private resume(): void {
+    if (!this.suspended) return;
+    this.backoffMs = ChatSocketService.MIN_BACKOFF;
+    this.connect();
   }
 
   get isConnected(): boolean {
@@ -102,8 +144,11 @@ export class ChatSocketService {
     }
 
     this.socket = socket;
+    let opened = false;
 
     socket.onopen = () => {
+      opened = true;
+      this.renewed = false;
       this.backoffMs = ChatSocketService.MIN_BACKOFF;
       this.eventsSubject.next({ type: 'socket.connected' });
     };
@@ -115,15 +160,18 @@ export class ChatSocketService {
       }
     };
 
-    // El caso típico es un access token caducado: el handshake responde 403.
-    // No se refresca aquí a propósito — de eso ya se encarga `ApiService` en
-    // la primera petición REST, y para entonces el siguiente reintento cogerá
-    // el token nuevo.
-    socket.onclose = () => this.onClosed(socket);
-    socket.onerror = () => this.onClosed(socket);
+    // El caso típico es un access token caducado: el handshake responde 401 o
+    // 403. Antes se esperaba a que una petición REST lo renovara de paso, pero
+    // quieto en un chat no se hace ninguna: el socket reintentaba cada 30 s
+    // con el token muerto y los mensajes dejaban de llegar en vivo (la app lo
+    // arregló el 04/11/2026). El navegador no deja ver el código del
+    // handshake, así que un cierre ANTES de abrir se trata como posible token
+    // caducado: se renueva una vez y se reintenta al momento.
+    socket.onclose = () => this.onClosed(socket, opened);
+    socket.onerror = () => this.onClosed(socket, opened);
   }
 
-  private onClosed(socket: WebSocket): void {
+  private onClosed(socket: WebSocket, opened: boolean): void {
     // El `onclose` de un socket viejo llega tarde: salir y volver a entrar
     // abre uno nuevo antes de que el anterior termine de cerrarse. Sin esta
     // comprobación, ese cierre tardío borraba la referencia al nuevo y
@@ -133,9 +181,30 @@ export class ChatSocketService {
       return;
     }
     this.socket = null;
-    if (this.wantConnected) {
-      this.scheduleReconnect();
+    if (!this.wantConnected) {
+      return;
     }
+    if (!opened && !this.renewed) {
+      this.renewed = true;
+      void this.renewAndReopen();
+      return;
+    }
+    this.scheduleReconnect();
+  }
+
+  /**
+   * Una petición barata que, ante un 401, pasa por el refresco de `ApiService`
+   * y su cerrojo como cualquier otra. Si falla (sin red, refresco rechazado),
+   * `ApiService` ya decide si la sesión muere; aquí se vuelve a la espera.
+   */
+  private async renewAndReopen(): Promise<void> {
+    try {
+      await this.api.get('/me');
+    } catch {
+      if (this.wantConnected) this.scheduleReconnect();
+      return;
+    }
+    this.open();
   }
 
   private scheduleReconnect(): void {

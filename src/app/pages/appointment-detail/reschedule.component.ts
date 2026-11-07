@@ -207,19 +207,26 @@ export class RescheduleComponent implements OnInit {
   /**
    * El importe se vuelve a pedir al llegar al resumen: el de la carga puede ser
    * de antes de entrar en la ventana —elegir día y hora lleva su rato— y el
-   * servidor cobra con la hora de AHORA. Si falla, se queda el que había.
+   * servidor cobra con la hora de AHORA.
+   *
+   * Si falla, no se deja confirmar (la app, 03/11/2026): seguir con el de la
+   * carga podía dar por gratis un cambio que el servidor sí cobraba.
    */
-  private async refreshFee(): Promise<void> {
+  async refreshFee(): Promise<void> {
     if (!this.booking) return;
     this.feeLoading = true;
     try {
       this.fee = await this.bookings.cancellationFee(this.booking.id);
+      this.feeFailed = false;
     } catch {
-      // Se sigue con el de la carga.
+      this.feeFailed = true;
     } finally {
       this.feeLoading = false;
     }
   }
+
+  /** No se ha podido saber lo que cuesta el cambio: se ofrece reintentar. */
+  feeFailed = false;
 
   // ----- CONFIRMAR --------------------
 
@@ -267,7 +274,7 @@ export class RescheduleComponent implements OnInit {
    * antes de saber si el banco lo ha aceptado.
    */
   confirmOrCharge(): void {
-    if (this.saving || !this.day || !this.startTime) return;
+    if (this.saving || this.feeLoading || this.feeFailed || !this.day || !this.startTime) return;
     if (this.willCharge) {
       this.error = null;
       this.chargeSheetOpen = true;

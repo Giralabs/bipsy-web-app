@@ -30,14 +30,49 @@ export interface SocialIdentity {
 /**
  * Respuesta de `POST /auth/google` y `POST /auth/apple`.
  *
- * Con `needsProfile` la cuenta es nueva y Apple no ha dado el correo: se pide y
- * se reintenta con él. Si no, `auth` trae la sesión.
+ * Con `needsProfile` la cuenta es nueva y le falta el correo (Apple no lo dio)
+ * o el nombre (el proveedor no lo dio): el servidor manda a null el que falta.
+ * Se pide y se reintenta con él. Si no, `auth` trae la sesión.
  */
 export interface SocialSignInResponse {
   needsProfile: boolean;
   name?: string;
   email?: string;
   auth?: AuthResponse;
+}
+
+/** Lo que hay que pedir antes de crear la cuenta. */
+export interface MissingProfile {
+  email: boolean;
+  name: boolean;
+}
+
+/**
+ * Qué falta tras un `needsProfile`. Null si ya hay sesión.
+ *
+ * Sin correo, se pide el correo, y también el nombre si nadie lo tiene (Apple
+ * puede no dar ninguno de los dos). Con correo, lo que falta es el nombre: antes
+ * el servidor lo sacaba del correo y con el oculto de Apple la cuenta nacía
+ * llamándose «nnbwycc8wz».
+ */
+export function missingProfile(res: SocialSignInResponse, identity: SocialIdentity): MissingProfile | null {
+  if (!res.needsProfile) return null;
+  if (!res.email) {
+    const known = !!(identity.name?.trim() || res.name?.trim());
+    return { email: true, name: !known };
+  }
+  return { email: false, name: true };
+}
+
+/**
+ * El nombre que guarda Firebase puede traer los espacios como «+»
+ * («Jose+Manuel+Jimenez»), codificado como en un formulario. Pasó con Apple en
+ * TestFlight el 06/11/2026, y como ese nombre rellena el alta, la cuenta nacía
+ * llamándose así. Ningún nombre de persona lleva un «+».
+ */
+export function withoutFormEncodedSpaces(name: string | null | undefined): string | null {
+  const clean = name?.replace(/\+/g, ' ').trim().replace(/\s+/g, ' ');
+  return clean ? clean : null;
 }
 
 /** El usuario cerró la ventana del proveedor. No es un error que contar. */
@@ -178,7 +213,7 @@ export class SocialAuthService {
         idToken: await credential.user.getIdToken(),
         // En minúsculas y sin espacios, que es como lo guarda el servidor.
         email: credential.user.email?.trim().toLowerCase() ?? null,
-        name: credential.user.displayName?.trim() || null,
+        name: withoutFormEncodedSpaces(credential.user.displayName),
       };
     } catch (error) {
       const code = (error as { code?: string }).code ?? '';
@@ -221,13 +256,16 @@ export class SocialAuthService {
   async signIn(
     identity: SocialIdentity,
     email?: string,
+    /** El que ha escrito la persona cuando el proveedor no dio ninguno. */
+    name?: string,
   ): Promise<SocialSignInResponse> {
+    const finalName = name?.trim() || identity.name;
     const res = await this.api.post<SocialSignInResponse>(
       identity.provider === 'apple' ? '/auth/apple' : '/auth/google',
       {
         idToken: identity.idToken,
         ...(email ? { email } : {}),
-        ...(identity.name ? { name: identity.name } : {}),
+        ...(finalName ? { name: finalName } : {}),
       },
       false,
     );

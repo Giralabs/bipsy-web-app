@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, untracked } from '@angular/core';
+import { Coords, LocationService, distanceKm } from '../../core/location.service';
 import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -52,6 +53,26 @@ export class SearchComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
+  /** Dónde está quien busca: ordena los resultados cuando no hay zona marcada. */
+  private readonly userLocation = inject(LocationService);
+  /** La posición con la que se pidió lo que se ve (null si ninguna). */
+  private searchedWith: Coords | null = null;
+  private searchStarted = false;
+
+  constructor() {
+    // Llega la posición —o se mueve— con la búsqueda abierta: se vuelve a
+    // pedir, ahora ordenada desde ahí (la app observa `userPositionOnlyProvider`).
+    // Con zona marcada no cambia nada: manda el punto de la zona.
+    effect(() => {
+      const me = this.userLocation.coords();
+      untracked(() => {
+        // Antes de la primera búsqueda no hace falta: ya saldrá con ella.
+        if (!me || this.area || !this.searchStarted) return;
+        if (this.searchedWith && distanceKm(this.searchedWith, me) < 1) return;
+        void this.doSearch();
+      });
+    });
+  }
 
   searchQuery = '';
   selectedCategoryId?: number;
@@ -144,7 +165,7 @@ export class SearchComponent implements OnInit, OnDestroy {
       }
       // El bloque del mapa de la portada entra directo a la vista de mapa.
       if (params['mapa']) {
-        this.showMap = true;
+        this.openMap();
       }
       this.date = params['date'] ?? null;
       this.slot = (params['slot'] as DaySlot) ?? 'any';
@@ -266,14 +287,17 @@ export class SearchComponent implements OnInit, OnDestroy {
   }
 
   selectCategoryFilter(catId?: number): void {
-    this.selectedCategoryId = this.selectedCategoryId === catId ? undefined : catId;
+    const next = this.selectedCategoryId === catId ? undefined : catId;
+    // «Todas» con nada elegido no cambia nada: no se repite la búsqueda.
+    if (next === undefined && this.selectedCategoryId === undefined) return;
+    this.selectedCategoryId = next;
     void this.doSearch();
   }
 
-  /** Quita la zona escrita a mano que no se pudo geocodificar. */
   /**
    * Las categorías como las pinta Android: barbería primero, que es la que más
-   * negocios tiene. Sin «Todas»: en la app no existe esa tarjeta.
+   * negocios tiene. «Todas» va delante, en la plantilla (la app la añadió el
+   * 06/11/2026).
    */
   get tileCategories(): CategoryResponse[] {
     const isBarber = (code: string) => code === 'BARBER' || code === 'BARBERSHOP';
@@ -368,7 +392,35 @@ export class SearchComponent implements OnInit, OnDestroy {
   /** La zona se marca sobre el mapa, así que la hoja se aparta. */
   pickZone(): void {
     this.filtersOpen = false;
+    this.openMap();
+  }
+
+  /** Lista ↔ mapa. */
+  toggleMap(): void {
+    if (this.showMap) {
+      this.showMap = false;
+    } else {
+      this.openMap();
+    }
+  }
+
+  /**
+   * Abrir el mapa es uno de los gestos que piden la ubicación precisa: ahí sí
+   * se entiende para qué (centrarlo donde estás). Solo si aún no se ha
+   * decidido; denegada no se insiste.
+   */
+  private openMap(): void {
     this.showMap = true;
+    this.userLocation.requestIfUndecided();
+  }
+
+  /**
+   * Los kilómetros de cada tarjeta, solo si significan algo: desde la zona
+   * marcada o desde la posición precisa. Con la de la IP (el centro de una
+   * ciudad) serían una cifra inventada.
+   */
+  get showDistances(): boolean {
+    return !!this.area || this.userLocation.precise();
   }
 
   toggleSwitch(name: 'atHomeOnly' | 'openNow' | 'topRated' | 'withPhoto'): void {
@@ -426,6 +478,8 @@ export class SearchComponent implements OnInit, OnDestroy {
     // disparando búsquedas seguidas, una respuesta lenta de una búsqueda vieja
     // pisaba los resultados de la nueva.
     const seq = ++this.searchSeq;
+    this.searchStarted = true;
+    this.searchedWith = this.area ? null : this.userLocation.coords();
     this.isLoading = true;
     this.loadError = null;
     try {
@@ -475,13 +529,17 @@ export class SearchComponent implements OnInit, OnDestroy {
 
   /** La petición de una página con todo lo elegido. */
   private query(page: number): BusinessSearchQuery {
+    // Con zona marcada, del más cercano al punto marcado. Sin zona, desde
+    // donde está quien busca, como `SearchResultsNotifier`: el servidor ordena
+    // con el mismo criterio que Destacados.
+    const me = this.userLocation.coords();
     return {
       q: this.searchQuery.trim() || undefined,
       categoryId: this.selectedCategoryId,
       availableOn: this.date ?? undefined,
       city: this.cityQuery ?? undefined,
-      lat: this.area?.lat,
-      lng: this.area?.lng,
+      lat: this.area?.lat ?? me?.lat,
+      lng: this.area?.lng ?? me?.lng,
       radiusKm: this.area?.radiusKm,
       atHome: this.atHomeOnly || undefined,
       openNow: this.openNow || undefined,

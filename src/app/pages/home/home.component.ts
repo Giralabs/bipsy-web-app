@@ -1,4 +1,5 @@
-import { Component, DestroyRef, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, ViewChild, effect, inject, untracked } from '@angular/core';
+import { Coords, LocationService, distanceKm } from '../../core/location.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -31,7 +32,12 @@ import { ButtonComponent } from '../../components/button/button.component';
 import { APP_STORE_URL, PLAY_STORE_URL } from '../../data/app-links';
 import { HELP_BUSINESS_URL } from '../../data/site.data';
 
-type Coords = { lat: number; lng: number };
+/**
+ * Lo que tiene que moverse la posición para volver a pedir las filas. La
+ * guardada de la visita anterior y la de ahora casi siempre coinciden: sin
+ * esto, cada entrada pedía Destacados dos veces para el mismo orden.
+ */
+const MOVED_KM = 1;
 
 /**
  * Las tres filas de la app —favoritos, volver a reservar y destacados— van de
@@ -114,9 +120,54 @@ export class HomeComponent implements OnInit {
   categoryLoading = false;
   loadError: ApiError | null = null;
 
-  /** Dónde está quien mira, solo si ya dio permiso antes: no se pregunta al entrar. */
-  private coords?: Coords;
-  locationOn = false;
+  /**
+   * Dónde está quien mira (`userPositionOnlyProvider`). La busca la raíz al
+   * entrar, sin preguntar (precisa si ya había permiso, si no la de la IP);
+   * aquí solo se lee, y el aviso «Activa la ubicación» es lo que la pide.
+   */
+  private readonly location = inject(LocationService);
+  private get coords(): Coords | undefined {
+    return this.location.coords() ?? undefined;
+  }
+
+  /** Hay posición (precisa o la de la IP): Destacados va de más cerca a más lejos. */
+  get locationOn(): boolean {
+    return !!this.location.coords();
+  }
+
+  /**
+   * La del navegador, no la de la IP: solo entonces se enseñan kilómetros. Con
+   * la de la IP (el centro de una ciudad) serían una cifra inventada.
+   */
+  get preciseLocation(): boolean {
+    return this.location.precise();
+  }
+
+  /**
+   * Con la de la IP se dice la ciudad —«cerca de Madrid»—, nunca «tu
+   * ubicación»: es aproximada y quien mira tiene que saberlo.
+   */
+  get featuredSubtitle(): string {
+    if (this.location.precise()) return 'Los mejores, de más cerca a más lejos';
+    const city = this.location.approxCity();
+    if (city) return `Los mejores cerca de ${city}`;
+    return this.locationOn ? 'Los mejores, de más cerca a más lejos' : 'Los sitios que más gustan en Bipsy';
+  }
+
+  /**
+   * El aviso «Activa la ubicación». Como `_LocationBanner`: cuando falta el
+   * PERMISO, no la posición (con permiso y sin señal no hay nada que el
+   * usuario pueda hacer desde aquí), y solo cuando ya se sabe: mientras se
+   * resuelve aparecería y desaparecería. Sin ubicación en el navegador (o sin
+   * HTTPS) no se ofrece algo que no puede funcionar.
+   */
+  get askLocation(): boolean {
+    const access = this.location.access();
+    return access === 'prompt' || access === 'denied';
+  }
+
+  /** Las coordenadas con las que se cargó lo que se ve. */
+  private loadedWith: Coords | null = null;
 
   readonly skeletons = [1, 2, 3, 4, 5, 6];
 
@@ -162,14 +213,20 @@ export class HomeComponent implements OnInit {
           void this.loadFavorites(false);
         }
       });
+  }
 
-    void this.detectLocation();
+  constructor() {
+    effect(() => {
+      const coords = this.location.coords();
+      untracked(() => this.onCoordsChange(coords));
+    });
   }
 
   async loadData(): Promise<void> {
     this.isLoading = true;
     this.loadError = null;
     this.rowGeneration++;
+    this.loadedWith = this.coords ?? null;
 
     void this.loadFavorites(true);
     try {
@@ -204,6 +261,8 @@ export class HomeComponent implements OnInit {
     } finally {
       this.isLoading = false;
     }
+    // La posición pudo llegar mientras cargaba: entonces se reordena ahora.
+    if (!this.loadError) this.onCoordsChange(this.coords ?? null);
   }
 
   // ----- BLOQUES CALCULADOS --------------------
@@ -459,38 +518,27 @@ export class HomeComponent implements OnInit {
   }
 
   /**
-   * Destacados se ordena por distancia cuando se sabe dónde estás. Solo se
-   * pide la posición si el permiso YA está concedido: un diálogo del navegador
-   * nada más entrar es la forma más rápida de que lo deniegues.
+   * El aviso de ubicación: el diálogo del navegador y, si ya no sale (se
+   * denegó antes), cómo reactivarla. Al llegar la posición, el `effect` del
+   * constructor reordena.
    */
-  private async detectLocation(): Promise<void> {
-    try {
-      const status = await navigator.permissions?.query({ name: 'geolocation' as PermissionName });
-      if (status?.state === 'granted') {
-        this.requestLocation();
-      }
-    } catch {
-      // Navegadores sin Permissions API: sin distancia, la fila sale igual.
-    }
+  requestLocation(): void {
+    void this.location.activate();
   }
 
-  /** Lo pulsa quien quiere ver lo que tiene cerca. */
-  requestLocation(): void {
-    if (!navigator.geolocation) {
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        this.coords = { lat: position.coords.latitude, lng: position.coords.longitude };
-        this.locationOn = true;
-        void this.refreshNearby();
-      },
-      () => (this.locationOn = false),
-      { maximumAge: 10 * 60_000, timeout: 10_000 },
-    );
+  /**
+   * La posición ha llegado o ha cambiado: Destacados vuelve a empezar, ahora
+   * por distancia (en la app, las filas observan `userPositionOnlyProvider`).
+   * Con la portada aún cargando no hace falta: `loadData` ya la usa.
+   */
+  private onCoordsChange(coords: Coords | null): void {
+    if (!coords || this.isLoading || !this.sessionKnown || this.loadError) return;
+    if (this.loadedWith && distanceKm(this.loadedWith, coords) < MOVED_KM) return;
+    void this.refreshNearby();
   }
 
   private async refreshNearby(): Promise<void> {
+    this.loadedWith = this.coords ?? null;
     try {
       const [featured, sample] = await Promise.all([
         this.bipsyService.getFeaturedBusinesses(ROW_PAGE, this.coords),

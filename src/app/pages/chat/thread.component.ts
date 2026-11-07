@@ -19,6 +19,8 @@ import { ChatRepository } from '../../repositories/chat.repository';
 import { ChatSocketService } from '../../core/chat-socket.service';
 import { BreakpointService } from '../../core/breakpoint.service';
 import { ToastService } from '../../core/toast.service';
+import { BusinessSafetyService } from '../../core/business-safety.service';
+import { ReportSheetComponent } from '../../components/report-sheet/report-sheet.component';
 import {
   ChatHandler,
   ChatMessageResponse,
@@ -92,6 +94,7 @@ const PHOTO_QUALITY = 0.8;
     AvatarComponent,
     ChatConversationListComponent,
     ChatViewerComponent,
+    ReportSheetComponent,
   ],
   templateUrl: './thread.component.html',
   styleUrl: './thread.component.css',
@@ -102,6 +105,7 @@ export class ChatThreadComponent implements OnInit, OnDestroy, AfterViewChecked 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly safety = inject(BusinessSafetyService);
   private readonly zone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -178,7 +182,49 @@ export class ChatThreadComponent implements OnInit, OnDestroy, AfterViewChecked 
   }
 
   get canWrite(): boolean {
-    return this.conversation?.canWrite !== false;
+    return this.conversation?.canWrite !== false && !this.blocked;
+  }
+
+  /**
+   * El cliente ha bloqueado al negocio: el campo se cierra con su propio
+   * motivo, no con «reserva otra vez», que no le abriría el chat.
+   */
+  get blocked(): boolean {
+    return !!this.conversation?.blockedByMe;
+  }
+
+  /** La hoja de reportar, que abre «Reportar» del menú de la bandera. */
+  reportOpen = false;
+
+  /**
+   * La bandera de la cabecera: reportar o bloquear al negocio (guía 1.2 de
+   * Apple: el contenido de otros se denuncia donde se ve). El mismo menú que
+   * la ficha.
+   */
+  async openSafetyMenu(): Promise<void> {
+    const conversation = this.conversation;
+    if (!conversation) return;
+    const choice = await this.safety.openMenu({
+      businessId: conversation.businessId,
+      businessName: conversation.otherPartyName,
+      blocked: this.blocked,
+    });
+    if (choice === 'report') {
+      this.reportOpen = true;
+      return;
+    }
+    if (!choice) return;
+    // Al momento, sin esperar a la recarga; luego el servidor confirma
+    // `canWrite` (desbloquear no reabre un hilo que ya estaba caducado).
+    if (this.conversation?.id === conversation.id) {
+      this.conversation = { ...this.conversation, blockedByMe: choice === 'blocked' };
+    }
+    void this.refreshConversation();
+  }
+
+  onReportSent(): void {
+    this.reportOpen = false;
+    this.toast.success('Reporte enviado. Gracias por ayudarnos a mejorar.');
   }
 
   /** Hay algo saliendo: el sondeo no pisa la lista mientras tanto. */
@@ -279,6 +325,7 @@ export class ChatThreadComponent implements OnInit, OnDestroy, AfterViewChecked 
     this.draft = '';
     this.attachOpen = false;
     this.viewer = null;
+    this.reportOpen = false;
     this.announcement = '';
     await Promise.all([this.load(), this.loadInbox(this.inbox.length > 0)]);
   }

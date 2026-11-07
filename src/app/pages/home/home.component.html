@@ -186,6 +186,18 @@
             <div class="skeleton tile-skeleton"></div>
           }
         } @else {
+          <!-- «Todas» delante: quita la categoría. Volver a tocar la elegida
+               ya la quitaba, pero no se encontraba (la app, 06/11/2026). -->
+          <button
+            type="button"
+            class="tile"
+            [class.tile--on]="selectedCategoryCode === 'ALL'"
+            [attr.aria-pressed]="selectedCategoryCode === 'ALL'"
+            (click)="clearCategory()"
+          >
+            <span class="material-symbols-rounded" [class.fill]="selectedCategoryCode === 'ALL'">apps</span>
+            <span class="tile__label">Todas</span>
+          </button>
           @for (cat of tileCategories; track cat.id) {
             <button
               type="button"
@@ -207,6 +219,18 @@
             <div class="skeleton cat-card-skeleton"></div>
           }
         } @else {
+          <button
+            type="button"
+            class="cat-card"
+            [class.cat-card--on]="selectedCategoryCode === 'ALL'"
+            [attr.aria-pressed]="selectedCategoryCode === 'ALL'"
+            (click)="clearCategory()"
+          >
+            <span class="cat-card__icon">
+              <span class="material-symbols-rounded" [class.fill]="selectedCategoryCode === 'ALL'">apps</span>
+            </span>
+            <span class="cat-card__name">Todas</span>
+          </button>
           @for (cat of tileCategories; track cat.id) {
             <button
               type="button"
@@ -238,7 +262,7 @@
 
         <!-- Móvil: el aviso de ubicación de la app, lo primero tras las
              categorías, compacto y con su ✕. -->
-        @if (!desktop() && !locationOn && !isLoading && !locateDismissed) {
+        @if (!desktop() && askLocation && !isLoading && !locateDismissed) {
           <div class="mlocate">
             <button type="button" class="mlocate__go" (click)="requestLocation()">
               <span class="material-symbols-rounded fill">location_on</span>
@@ -284,7 +308,7 @@
           />
         }
 
-        @if (desktop() && !locationOn && !isLoading) {
+        @if (desktop() && askLocation && !isLoading) {
           <div class="locate">
             <span class="locate__icon"><span class="material-symbols-rounded fill">near_me</span></span>
             <p class="locate__text">
@@ -299,12 +323,12 @@
         <app-business-row
           title="Destacados"
           icon="workspace_premium"
-          [subtitle]="locationOn ? 'Los mejores, de más cerca a más lejos' : 'Los sitios que más gustan en Bipsy'"
+          [subtitle]="featuredSubtitle"
           [businesses]="featuredRow"
           [loading]="isLoading"
           [hasMore]="pagers.featured.hasMore"
           (loadMore)="loadMoreRow('featured')"
-          [showDistance]="true"
+          [showDistance]="preciseLocation"
           seeAllLink="/buscar"
           (rebook)="onRebook($event)"
         />
@@ -319,7 +343,7 @@
             icon="today"
             [subtitle]="'Atienden hoy, ' + todayName + '. Reserva para hoy mismo'"
             [businesses]="openTodayRow"
-            [showDistance]="locationOn"
+            [showDistance]="preciseLocation"
             (rebook)="onRebook($event)"
           />
         }
@@ -560,7 +584,7 @@
             <source media="(prefers-color-scheme: light)" srcset="assets_web/business-horizontal-light.webp" />
             <img src="assets_web/business-horizontal-dark.webp" alt="Bipsy Business" class="app-card__logo" width="85" height="30" loading="lazy" />
           </picture>
-          <span class="app-card__badge">30 días gratis</span>
+          <span class="app-card__badge">Primer mes gratis</span>
           <h3 class="app-card__title">¿Tienes un negocio?</h3>
           <p class="app-card__lead">Gestiona tu agenda, tus clientes y tus cobros desde una sola app.</p>
           <a [href]="businessInfoUrl" target="_blank" rel="noopener" class="app-card__cta">
