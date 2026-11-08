@@ -30,7 +30,8 @@ import { BreakpointService } from '../../core/breakpoint.service';
 import { AvatarComponent } from '../../components/avatar/avatar.component';
 import { SearchBarComponent } from '../../components/search-bar/search-bar.component';
 import { ButtonComponent } from '../../components/button/button.component';
-import { APP_STORE_URL, PLAY_STORE_URL } from '../../data/app-links';
+import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY } from '../../data/app-links';
+import { ComingSoonDirective, SOON } from '../../shared/coming-soon.directive';
 import { HELP_BUSINESS_URL } from '../../data/site.data';
 
 /**
@@ -76,6 +77,7 @@ const freshPager = (): RowPager => ({ page: 0, hasMore: false, loading: false })
     BusinessRowComponent,
     ButtonComponent,
     DragScrollDirective,
+    ComingSoonDirective,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css', './home-blocks.css']
@@ -85,6 +87,9 @@ export class HomeComponent implements OnInit {
   // Apuntaban a youtube.com, heredado de la plantilla.
   readonly appStoreUrl = APP_STORE_URL;
   readonly playStoreUrl = PLAY_STORE_URL;
+  /** Sin fichas publicadas, pulsarlos dice «Próximamente…». */
+  readonly storeLinksReady = STORE_LINKS_READY;
+  readonly soon = SOON;
   /** «Abre ya tu negocio». También iba a youtube.com: un botón que no lleva
    *  a nada es lo que más hace parecer de demo una web. */
   readonly businessInfoUrl = HELP_BUSINESS_URL;

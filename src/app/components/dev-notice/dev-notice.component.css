@@ -1,0 +1,116 @@
+:host { display: contents; }
+
+/* Abajo a la derecha, por debajo de las hojas y diálogos (900), como el
+   indicador de mantenimiento. */
+.dev {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  font-family: var(--ff);
+}
+
+.dev__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px 0 12px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--clr-text);
+  color: var(--clr-base);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-float);
+  transition: transform .12s ease;
+}
+
+.dev__pill:active { transform: scale(.96); }
+
+.dev__pill:focus-visible {
+  outline: 2px solid var(--clr-text);
+  outline-offset: 3px;
+}
+
+/* Ámbar, como el de mantenimiento: «ojo», no «error». */
+.dev__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clr-warn);
+}
+
+.dev__card {
+  position: relative;
+  width: 300px;
+  max-width: 100%;
+  padding: 16px 40px 16px 16px;
+  border-radius: 16px;
+  background: var(--clr-surface, var(--clr-base));
+  color: var(--clr-text);
+  box-shadow: var(--shadow-float);
+  animation: dev-in .2s ease-out;
+}
+
+.dev__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.dev__title .material-symbols-rounded { font-size: 18px; color: var(--clr-warn); }
+
+.dev__text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--clr-text-2);
+}
+
+.dev__text a { color: var(--clr-text); font-weight: 600; }
+
+.dev__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--clr-text-2);
+  cursor: pointer;
+}
+
+.dev__close:hover { background: var(--clr-subtle); color: var(--clr-text); }
+.dev__close .material-symbols-rounded { font-size: 18px; }
+
+@keyframes dev-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dev__card { animation: none; }
+}
+
+/* Móvil y tablet: por encima de la barra de pestañas, como el de mantenimiento. */
+@media (max-width: 1024px) {
+  .dev {
+    bottom: calc(16px + max(var(--tabbar-space, 0px), env(safe-area-inset-bottom, 0px)));
+  }
+}
