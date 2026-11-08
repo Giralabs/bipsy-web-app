@@ -13,24 +13,31 @@
         Pide cita en cualquier negocio que trabaje con agenda. Sin llamadas y sin esperas.
       </p>
 
-      <!-- Solo con las fichas publicadas, como la tira de descarga del móvil:
-           hasta entonces los distintivos llevaban a «Muy pronto». -->
-      @if (storeLinksReady) {
-        <div class="footer__stores">
-          <a [href]="playStoreUrl" target="_blank" rel="noopener" class="footer__store">
-            <img src="assets_apps/donwload_play_store.webp" alt="Consíguelo en Google Play" loading="lazy" />
-          </a>
-          <a [href]="appStoreUrl" target="_blank" rel="noopener" class="footer__store">
-            <img src="assets_web/app-store.webp" alt="Descárgalo en el App Store" loading="lazy" />
-          </a>
-        </div>
-      }
+      <!-- Hasta que las fichas estén publicadas, pulsar dice «Próximamente…»
+           en vez de llevar a ninguna parte (antes, a youtube.com). -->
+      <div class="footer__stores">
+        <a [href]="playStoreUrl" target="_blank" rel="noopener" class="footer__store"
+           [comingSoon]="storeLinksReady ? null : soon.googlePlay">
+          <img src="assets_apps/donwload_play_store.webp" alt="Consíguelo en Google Play" loading="lazy" />
+        </a>
+        <a [href]="appStoreUrl" target="_blank" rel="noopener" class="footer__store"
+           [comingSoon]="storeLinksReady ? null : soon.appStore">
+          <img src="assets_web/app-store.webp" alt="Descárgalo en el App Store" loading="lazy" />
+        </a>
+      </div>
 
       <!-- ── Redes ──
-           Fuera hasta que existan los perfiles (docs/LEGAL-PENDIENTE.md,
-           punto 5). Apuntaban a youtube.com: un icono de Instagram que lleva a
-           otra web es lo que más hace parecer de demo un pie. Al crearlos, va
-           aquí una fila `.footer__socials` con sus enlaces de verdad. -->
+           Los perfiles aún no existen (docs/LEGAL-PENDIENTE.md, punto 5):
+           mientras, cada icono dice «Próximamente». Al crearlos, cambia el
+           botón por un enlace a su dirección. -->
+      <div class="footer__socials">
+        <button type="button" class="footer__social" aria-label="Bipsy en Instagram" [comingSoon]="soon.instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.instagram" /></svg>
+        </button>
+        <button type="button" class="footer__social" aria-label="Bipsy en TikTok" [comingSoon]="soon.tiktok">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.tiktok" /></svg>
+        </button>
+      </div>
     </div>
 
     <!-- ── Navegación ── -->

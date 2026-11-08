@@ -14,6 +14,7 @@ import { PromoBarComponent } from './components/promo-bar/promo-bar.component';
 import { AppBannerComponent } from './components/app-banner/app-banner.component';
 import { TabBarComponent } from './components/tab-bar/tab-bar.component';
 import { MaintenanceIndicatorComponent } from './components/maintenance-indicator/maintenance-indicator.component';
+import { DevNoticeComponent } from './components/dev-notice/dev-notice.component';
 import { MaintenanceComponent } from './pages/maintenance/maintenance.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { MobileTopbarComponent } from './components/mobile-topbar/mobile-topbar.component';
@@ -86,6 +87,7 @@ function isOpenDuringMaintenance(path: string): boolean {
     FooterComponent,
     MaintenanceComponent,
     MaintenanceIndicatorComponent,
+    DevNoticeComponent,
     ConfirmDialogComponent,
     MobileTopbarComponent,
     ToastHostComponent,

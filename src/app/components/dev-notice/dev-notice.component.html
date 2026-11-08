@@ -1,0 +1,24 @@
+<aside class="dev" aria-label="Aviso: web en desarrollo">
+  @if (open()) {
+    <div class="dev__card" id="dev-notice-card" role="status">
+      <button type="button" class="dev__close" (click)="close()" aria-label="Cerrar el aviso">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+      <p class="dev__title">
+        <span class="material-symbols-rounded" aria-hidden="true">construction</span>
+        Web en desarrollo
+      </p>
+      <p class="dev__text">
+        Estamos terminando Bipsy. Puede que algunas cosas cambien o todavía no funcionen del todo.
+        Si ves algo raro, escríbenos a
+        <a href="mailto:soporte@bipsy.es">soporte&#64;bipsy.es</a>.
+      </p>
+    </div>
+  }
+
+  <button type="button" class="dev__pill" (click)="toggle()"
+          [attr.aria-expanded]="open()" aria-controls="dev-notice-card">
+    <span class="dev__dot" aria-hidden="true"></span>
+    En desarrollo
+  </button>
+</aside>

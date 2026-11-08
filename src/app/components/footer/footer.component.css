@@ -48,6 +48,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   background: var(--clr-subtle);
   color: var(--clr-text-2);
   transition: background-color .2s ease, color .2s ease, transform .12s ease;
