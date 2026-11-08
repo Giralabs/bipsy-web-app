@@ -8,7 +8,7 @@ import { SessionService } from '../../core/session.service';
 import { ChatRepository } from '../../repositories/chat.repository';
 import { ChatSocketService } from '../../core/chat-socket.service';
 import { UserProfileDto } from '../../models/bipsy.models';
-import { scrollToBusinessPromo } from '../../shared/business-promo';
+import { BUSINESS_URL } from '../../data/site.data';
 
 /**
  * Hasta dónde llega, bajando, el buscador grande del héroe de la portada.
@@ -120,7 +120,6 @@ export class NavbarComponent implements OnInit {
     this.router.navigate(['/crear-cuenta']);
   }
 
-  onBizPromoClick(): void {
-    scrollToBusinessPromo(this.router);
-  }
+  /** «¿Tienes un negocio?»: la web de Bipsy Business. */
+  readonly businessUrl = BUSINESS_URL;
 }

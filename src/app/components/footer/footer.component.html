@@ -27,13 +27,13 @@
       </div>
 
       <!-- ── Redes ──
-           Los perfiles aún no existen (docs/LEGAL-PENDIENTE.md, punto 5):
-           mientras, cada icono dice «Próximamente». Al crearlos, cambia el
-           botón por un enlace a su dirección. -->
+           Instagram ya existe (@bipsy_es). TikTok todavía no: mientras, su
+           icono dice «Próximamente»; al crearlo, cambia el botón por un enlace
+           a su dirección. -->
       <div class="footer__socials">
-        <button type="button" class="footer__social" aria-label="Bipsy en Instagram" [comingSoon]="soon.instagram">
+        <a [href]="instagramUrl" target="_blank" rel="noopener" class="footer__social" aria-label="Bipsy en Instagram">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.instagram" /></svg>
-        </button>
+        </a>
         <button type="button" class="footer__social" aria-label="Bipsy en TikTok" [comingSoon]="soon.tiktok">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="icons.tiktok" /></svg>
         </button>

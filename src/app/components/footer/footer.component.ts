@@ -7,6 +7,9 @@ import { HELP_CLIENTS_URL } from '../../data/site.data';
 import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY } from '../../data/app-links';
 import { ComingSoonDirective, SOON } from '../../shared/coming-soon.directive';
 
+/** El perfil de Bipsy en Instagram. */
+const INSTAGRAM_URL = 'https://www.instagram.com/bipsy_es/';
+
 /** Iconos de las redes, en una caja de 24×24 pintada con currentColor. */
 const SOCIAL_ICONS = {
   instagram:
@@ -46,6 +49,7 @@ export class FooterComponent {
   readonly storeLinksReady = STORE_LINKS_READY;
   readonly soon = SOON;
   readonly icons = SOCIAL_ICONS;
+  readonly instagramUrl = INSTAGRAM_URL;
 
   /** Los documentos legales publicados. Solo el nombre, no el texto. */
   readonly legalDocs = LEGAL_INDEX;
