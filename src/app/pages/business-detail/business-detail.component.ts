@@ -36,6 +36,7 @@ import { duration, euros, parseLocal } from '../../shared/dates';
 import { fixImageUrl } from '../../shared/image-url';
 import { categoryIcon } from '../../shared/category-icons';
 import { PageMetaService } from '../../core/page-meta.service';
+import { onRevisit } from '../../core/revisit';
 import { businessBookingPath, businessIdFromParam, businessSlug } from '../../shared/slug';
 
 /**
@@ -165,6 +166,58 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       void this.load(businessIdFromParam(params.get('id')));
     });
+
+    // Al volver a la pestaña, la ficha se pone al día sin esqueletos.
+    onRevisit(this.destroyRef, () => void this.refresh());
+  }
+
+  /**
+   * Vuelve a pedir la ficha abierta sin vaciarla ni enseñar esqueletos: lo que
+   * llega sustituye a lo que hay y lo que falla se queda como estaba.
+   *
+   * Para cuando el negocio cambia algo con la página abierta (portada, foto,
+   * galería, servicios, horario). Las reseñas solo se tocan si no se ha pedido
+   * «Ver más»: rehacer la primera página encogería la lista que se está leyendo.
+   */
+  async refresh(): Promise<void> {
+    const id = this.business?.id;
+    if (id == null || this.isLoading || this.extrasLoading) {
+      return;
+    }
+    const generation = this.loadGeneration;
+    const [business, services, policies, portfolio, schedule] = await Promise.allSettled([
+      this.catalog.business(id),
+      this.catalog.businessServices(id),
+      this.catalog.businessPolicies(id),
+      this.catalog.businessPortfolio(id),
+      this.catalog.businessSchedule(id),
+    ]);
+    // Se ha abierto otra ficha mientras tanto.
+    if (generation !== this.loadGeneration || this.business?.id !== id) return;
+
+    if (business.status === 'fulfilled') {
+      const renamed = business.value.name !== this.business?.name;
+      this.business = business.value;
+      this.isFavorite = this.session.isFavorite(id);
+      if (renamed) {
+        this.releaseMeta?.();
+        this.releaseMeta = this.meta.set(this.business.name);
+      }
+    }
+    if (services.status === 'fulfilled') this.services = services.value.filter(s => s.active);
+    if (policies.status === 'fulfilled') this.policies = policies.value;
+    if (schedule.status === 'fulfilled') this.schedule = schedule.value;
+    if (portfolio.status === 'fulfilled') {
+      this.portfolio = portfolio.value;
+      // Con el visor abierto y una foto menos, el índice podía quedar fuera.
+      if (this.viewerIndex !== null) {
+        this.viewerIndex = this.portfolio.length ? Math.min(this.viewerIndex, this.portfolio.length - 1) : null;
+      }
+      if (!this.portfolio.length) this.galleryOpen = false;
+    }
+    if (this.reviewNextPage === 1) {
+      await this.loadFirstReviews(id, generation);
+    }
   }
 
   async load(id: number | null): Promise<void> {

@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { distinctUntilChanged, skip } from 'rxjs';
 import { BipsyService } from '../../services/bipsy.service';
 import { ApiError } from '../../core/api-error';
+import { onRevisit } from '../../core/revisit';
 import {
   BookingResponse,
   BusinessResponse,
@@ -213,6 +214,13 @@ export class HomeComponent implements OnInit {
           void this.loadFavorites(false);
         }
       });
+
+    // Lo que un negocio cambia (portada, foto, nombre) se ve al volver a la
+    // pestaña, como al volver a Explorar en la app. Con medio minuto de margen:
+    // la portada pide bastante más que una ficha.
+    onRevisit(this.destroyRef, () => {
+      if (this.sessionKnown) void this.loadData(true);
+    }, 30_000);
   }
 
   constructor() {
@@ -222,13 +230,22 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  async loadData(): Promise<void> {
-    this.isLoading = true;
-    this.loadError = null;
+  /**
+   * `silent`: al volver a la pestaña. Se pide todo otra vez, pero sin esqueletos
+   * y sin cambiar la portada por un error: si falla, se queda lo que se veía.
+   */
+  async loadData(silent = false): Promise<void> {
+    if (silent && (this.isLoading || this.loadError)) {
+      return;
+    }
+    if (!silent) {
+      this.isLoading = true;
+      this.loadError = null;
+    }
     this.rowGeneration++;
     this.loadedWith = this.coords ?? null;
 
-    void this.loadFavorites(true);
+    void this.loadFavorites(!silent).catch(() => undefined);
     try {
       const [cats, featured, rebook, sample] = await Promise.all([
         this.bipsyService.getCategories(),
@@ -257,7 +274,7 @@ export class HomeComponent implements OnInit {
       // cara a nada. Con menos de dos, la línea no se pinta.
       this.heroBusinesses = sample.filter(b => b.profileImageUrl || b.coverImageUrl).slice(0, 4);
     } catch (error) {
-      this.loadError = ApiError.from(error);
+      if (!silent) this.loadError = ApiError.from(error);
     } finally {
       this.isLoading = false;
     }
