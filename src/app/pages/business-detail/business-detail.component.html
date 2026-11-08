@@ -67,7 +67,7 @@
     <div class="hero">
       <div class="cover" [class.cover--empty]="!coverUrl()">
         @if (coverUrl(); as src) {
-          <img class="cover__img" [src]="src" alt="" fetchpriority="high" />
+          <img appImgFade class="cover__img" [src]="src" alt="" fetchpriority="high" />
         } @else {
           <span class="cover__img img-placeholder" aria-hidden="true">
             <span class="material-symbols-rounded">storefront</span>
@@ -422,8 +422,12 @@
           <div class="side__book">
             <p class="side__eyebrow">Reserva en un minuto</p>
             <p class="side__lead">
+              <!-- Mientras llegan los servicios, la línea se queda en blanco (con
+                   su alto) en vez de decir otra cosa y cambiarla a la décima. -->
               @if (services.length > 0) {
                 {{ services.length }} {{ services.length === 1 ? 'servicio' : 'servicios' }} · desde {{ fromPrice }}
+              } @else if (extrasLoading) {
+                &nbsp;
               } @else {
                 Elige servicio, día y hora.
               }

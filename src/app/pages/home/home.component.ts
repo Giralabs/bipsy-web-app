@@ -2,9 +2,9 @@ import { Component, DestroyRef, ElementRef, OnInit, ViewChild, effect, inject, u
 import { Coords, LocationService, distanceKm } from '../../core/location.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { distinctUntilChanged, skip } from 'rxjs';
+import { distinctUntilChanged, filter, skip } from 'rxjs';
 import { BipsyService } from '../../services/bipsy.service';
 import { ApiError } from '../../core/api-error';
 import { onRevisit } from '../../core/revisit';
@@ -32,7 +32,7 @@ import { SearchBarComponent } from '../../components/search-bar/search-bar.compo
 import { ButtonComponent } from '../../components/button/button.component';
 import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY } from '../../data/app-links';
 import { ComingSoonDirective, SOON } from '../../shared/coming-soon.directive';
-import { HELP_BUSINESS_URL } from '../../data/site.data';
+import { BUSINESS_URL } from '../../data/site.data';
 
 /**
  * Lo que tiene que moverse la posición para volver a pedir las filas. La
@@ -92,7 +92,7 @@ export class HomeComponent implements OnInit {
   readonly soon = SOON;
   /** «Abre ya tu negocio». También iba a youtube.com: un botón que no lleva
    *  a nada es lo que más hace parecer de demo una web. */
-  readonly businessInfoUrl = HELP_BUSINESS_URL;
+  readonly businessInfoUrl = BUSINESS_URL;
 
   private readonly bipsyService = inject(BipsyService);
   private readonly catalog = inject(CatalogRepository);
@@ -226,6 +226,23 @@ export class HomeComponent implements OnInit {
     onRevisit(this.destroyRef, () => {
       if (this.sessionKnown) void this.loadData(true);
     }, 30_000);
+
+    // La portada se aparta al salir y vuelve tal cual (KeepAliveStrategy). Si
+    // se ha estado fuera más de un minuto, al volver se pone al día en
+    // silencio, sin esqueletos ni mover nada de sitio.
+    let leftAt: number | null = null;
+    this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef))
+      .subscribe(e => {
+        const home = e.urlAfterRedirects.split(/[?#]/)[0] === '/';
+        if (!home) {
+          leftAt ??= Date.now();
+          return;
+        }
+        const away = leftAt === null ? 0 : Date.now() - leftAt;
+        leftAt = null;
+        if (away > 60_000 && this.sessionKnown) void this.loadData(true);
+      });
   }
 
   constructor() {

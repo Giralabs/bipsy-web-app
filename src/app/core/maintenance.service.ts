@@ -71,6 +71,16 @@ export class MaintenanceService {
   private confirmed = false;
 
   /**
+   * Ya se sabe qué enseñar: el servidor ha contestado (o fallado), lo guardado
+   * de la visita anterior dice que hay mantenimiento, o se ha esperado bastante.
+   *
+   * Hasta entonces la raíz no pinta ni la web ni la pantalla de mantenimiento,
+   * solo el fondo: arrancar «cerrada» enseñaba en cada recarga el «Estamos
+   * poniendo Bipsy a punto» a pantalla completa una décima, y luego la web.
+   */
+  readonly settled = signal(false);
+
+  /**
    * Sube cada vez que el pase cambia. Una respuesta que salió con el pase
    * anterior ya no vale: sin esto, una comprobación en vuelo al desbloquear
    * volvía con `bypass: false` y tiraba el pase recién estrenado.
@@ -81,7 +91,14 @@ export class MaintenanceService {
   private inFlight: Promise<void> | null = null;
 
   constructor() {
-    void this.check();
+    // Lo guardado ya dice «mantenimiento»: se enseña desde el primer fotograma.
+    if (this.state().maintenance && this.read(MaintenanceService.STATE)) {
+      this.settled.set(true);
+    }
+    void this.check().finally(() => this.settled.set(true));
+    // Un servidor dormido no deja la pantalla vacía: pasado esto se decide con
+    // lo que haya, que ante la duda es «cerrada».
+    setTimeout(() => this.settled.set(true), 1500);
 
     if (typeof document === 'undefined') {
       return;

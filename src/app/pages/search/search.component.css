@@ -290,3 +290,19 @@
   .search-header { padding-top: 12px; }
   .search-tools { width: 100%; }
 }
+
+/* Buscando otra vez con resultados a la vista: se quedan, y solo si la
+   respuesta tarda más de 150 ms se atenúan. Así un filtro rápido cambia la
+   rejilla sin parpadeo, y uno lento dice que está en ello sin vaciar nada. */
+.results-layout { transition: opacity var(--dur-2) var(--ease-out); }
+.results-layout.is-stale {
+  opacity: .5;
+  pointer-events: none;
+  transition-delay: 150ms;
+}
+/* Escritorio: las tarjetas ya no son cajas (business-card), así que la
+   rejilla respira con más hueco, sobre todo entre filas. */
+@media (min-width: 1025px) {
+  .results-grid { gap: 32px 20px; }
+  .results-skeleton { height: auto; aspect-ratio: 4 / 3.75; border-radius: var(--r-lg); }
+}

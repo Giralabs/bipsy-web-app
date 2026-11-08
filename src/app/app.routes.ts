@@ -14,7 +14,9 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    data: { defaultTitle: true },
+    // `keepAlive`: volver desde un negocio la recupera tal cual se dejó, en
+    // vez de reconstruirla (core/keep-alive.strategy.ts).
+    data: { defaultTitle: true, keepAlive: true },
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
   },
   {

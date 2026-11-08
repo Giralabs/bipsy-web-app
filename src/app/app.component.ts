@@ -126,6 +126,13 @@ export class AppComponent {
     () => this.maintenance.blocked() && !isOpenDuringMaintenance(this.path()),
   );
 
+  /**
+   * Aún no se sabe si la web está abierta: ni web ni mantenimiento, solo el
+   * fondo, unas décimas. Así una recarga no enseña el «Estamos poniendo Bipsy a
+   * punto» de pasada antes de la web.
+   */
+  readonly booting = computed(() => this.showMaintenance() && !this.maintenance.settled());
+
   /** Si se pinta lo de alrededor: barra, buscador, pie y pestañas. */
   readonly chrome = computed(() => !this.maintenance.blocked());
 

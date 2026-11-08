@@ -118,11 +118,11 @@
   background: none;
   color: var(--clr-field);
   cursor: pointer;
-  transition: color .15s ease, transform .15s cubic-bezier(.2,1.6,.4,1);
+  transition: color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
 
 .rv-picker__star .material-symbols-rounded { font-size: 42px; }
-.rv-picker__star:hover { transform: scale(1.12); }
+.rv-picker__star:hover { transform: scale(1.06); }
 .rv-picker__star--on { color: var(--clr-star); }
 
 .rv-picker__word {

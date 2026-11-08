@@ -249,7 +249,10 @@
       </div>
     </section>
 
+    <!-- Cambiar de categoría funde lo de debajo en vez de cambiarlo de golpe.
+         Cada rama es un bloque nuevo, así que la animación sale sola. -->
     @if (selectedCategoryCode === 'ALL') {
+     <div class="swap-in">
 
       @if (loadError) {
         <div class="empty-state">
@@ -493,9 +496,14 @@
           </section>
         }
       }
+     </div>
     } @else {
+     @for (code of [selectedCategoryCode]; track code) {
+     <div class="swap-in">
 
-      <!-- ══════════ CATEGORÍA ELEGIDA ══════════ -->
+      <!-- ══════════ CATEGORÍA ELEGIDA ══════════
+           El `@for` de una vuelta, con la categoría por clave: pasar de una
+           categoría a otra también vuelve a fundir, no solo de «Todas» a una. -->
       <header class="catlist__head">
         <h2 class="catlist__title">
           <span class="material-symbols-rounded">{{ getCategoryIcon(selectedCategoryCode) }}</span>
@@ -527,7 +535,7 @@
           <app-button variant="secondary" icon="close" (onClick)="clearCategory()">Ver todo</app-button>
         </div>
       } @else {
-        <div class="cat-list">
+        <div class="cat-list swap-in">
           @for (biz of businesses; track biz.id) {
             <app-business-card
               [business]="biz"
@@ -539,6 +547,8 @@
           }
         </div>
       }
+     </div>
+     }
     }
 
     <!-- ══════════ LAS APPS ══════════

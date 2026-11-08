@@ -108,9 +108,23 @@
   .dev__card { animation: none; }
 }
 
-/* Móvil y tablet: por encima de la barra de pestañas, como el de mantenimiento. */
-@media (max-width: 1024px) {
-  .dev {
-    bottom: calc(16px + max(var(--tabbar-space, 0px), env(safe-area-inset-bottom, 0px)));
-  }
+/* Móvil: la franja de arriba, en el flujo de la página. */
+.dev-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 16px;
+  padding-top: calc(6px + env(safe-area-inset-top, 0px));
+  background: var(--clr-surface);
+  color: var(--clr-text-2);
+  font-family: var(--ff);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
 }
+
+.dev-strip strong { color: var(--clr-text); font-weight: 700; }
+.dev-strip .dev__dot { flex-shrink: 0; }

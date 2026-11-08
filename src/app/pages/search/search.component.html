@@ -178,13 +178,16 @@
 
   <!-- ── Resultados ── -->
   <div class="results-wrap">
-    @if (isLoading) {
+    <!-- El esqueleto solo la primera vez. Después, al cambiar un filtro, los
+         resultados de antes se quedan (atenuados si tarda) hasta que llegan los
+         nuevos: vaciar la rejilla en cada toque hacía saltar toda la página. -->
+    @if (isLoading && businesses.length === 0 && !loadError) {
       <div class="results-grid">
         @for (i of [1,2,3,4,5]; track i) {
           <div class="skeleton results-skeleton"></div>
         }
       </div>
-    } @else if (loadError) {
+    } @else if (loadError && !isLoading) {
       <div class="empty-state">
         <span class="material-symbols-rounded">{{ loadError.networkError ? 'wifi_off' : 'error' }}</span>
         <h3>{{ loadError.networkError ? 'Sin conexión' : 'No hemos podido buscar' }}</h3>
@@ -213,7 +216,8 @@
       <!-- Con el mapa puesto: en el móvil el mapa ocupa la pantalla, como en
            la app; en escritorio va al lado de la lista y se mueven juntos,
            que es lo que se espera de un buscador en pantalla grande. -->
-      <div class="results-layout" [class.results-layout--map]="showMap">
+      <div class="results-layout" [class.results-layout--map]="showMap" [class.is-stale]="isLoading"
+           [attr.aria-busy]="isLoading">
         <div class="results-list">
           @if (businesses.length === 0) {
             <!-- El de `_ResultsSlivers`: «Ver todo» siempre, que deja la

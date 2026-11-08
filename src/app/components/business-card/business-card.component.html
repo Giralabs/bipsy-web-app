@@ -1,4 +1,7 @@
-<a [routerLink]="link" class="biz-card" [class.biz-card--compact]="compact">
+<!-- Pasar el ratón o llegar con el tabulador ya pide la ficha: al hacer clic
+     está casi todo en casa (BusinessPreviewService). -->
+<a [routerLink]="link" class="biz-card" [class.biz-card--compact]="compact"
+   (pointerenter)="warm($event)" (focus)="warm()">
 
   <!-- La foto llega a los cantos: sin margen ni radio propio. -->
   <div class="biz-card__photo">
@@ -6,7 +9,7 @@
     <!-- Sin velo, como `_GlassHomeCard`: la foto se ve tal cual la sube el
          negocio, y las insignias llevan su propio fondo oscuro. -->
     @if (imageUrl; as src) {
-      <img [src]="src" alt="" class="biz-card__img" loading="lazy" decoding="async" />
+      <img appImgFade [src]="src" alt="" class="biz-card__img" loading="lazy" decoding="async" />
     } @else {
       <span class="biz-card__img img-placeholder" aria-hidden="true">
         <span class="material-symbols-rounded">storefront</span>

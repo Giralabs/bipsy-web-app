@@ -47,9 +47,9 @@
           }
         </a>
       } @else {
-        <button type="button" class="biz-promo-link" (click)="onBizPromoClick()">
-          ¿Tienes un negocio?
-        </button>
+        <!-- A Bipsy Business, como la tira de arriba: antes bajaba hasta la
+             tarjeta de la portada, que solo repetía la pregunta. -->
+        <a class="biz-promo-link" [href]="businessUrl">¿Tienes un negocio?</a>
         <button type="button" class="nav-btn" (click)="goToLogin()">Iniciar sesión</button>
         <button type="button" class="nav-btn nav-btn--primary" (click)="goToRegister()">Crear cuenta</button>
       }

@@ -37,6 +37,8 @@ import { fixImageUrl } from '../../shared/image-url';
 import { categoryIcon } from '../../shared/category-icons';
 import { PageMetaService } from '../../core/page-meta.service';
 import { onRevisit } from '../../core/revisit';
+import { BusinessPreviewService } from '../../core/business-preview.service';
+import { ImgFadeDirective } from '../../shared/img-fade.directive';
 import { businessBookingPath, businessIdFromParam, businessSlug } from '../../shared/slug';
 
 /**
@@ -91,7 +93,7 @@ const WEEKDAYS: { code: string; label: string }[] = [
 @Component({
   selector: 'app-business-detail',
   standalone: true,
-  imports: [CommonModule, ButtonComponent, ReportSheetComponent, PortfolioViewerComponent, BlockedBannerComponent],
+  imports: [CommonModule, ButtonComponent, ReportSheetComponent, PortfolioViewerComponent, BlockedBannerComponent, ImgFadeDirective],
   templateUrl: './business-detail.component.html',
   styleUrl: './business-detail.component.css',
 })
@@ -114,6 +116,7 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(DialogService);
   private readonly bookings = inject(BookingRepository);
   private readonly safety = inject(BusinessSafetyService);
+  private readonly previews = inject(BusinessPreviewService);
   /** Para descartar respuestas de una ficha que ya no es la abierta. */
   private loadGeneration = 0;
   /**
@@ -240,38 +243,52 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
       this.isLoading = false;
       return;
     }
-    this.isLoading = true;
     this.loadError = null;
+    // Lo que se pidió al pasar el ratón por la tarjeta, si llegó a tiempo.
+    const early = this.previews.take(id);
+
+    // Desde la tarjeta: la cabecera (portada, nombre, valoración, dirección)
+    // sale en el mismo fotograma del clic, y lo de debajo se completa con sus
+    // esqueletos. Sin esto la ficha enseñaba un esqueleto gris a pantalla
+    // completa y, una décima después, todo de golpe.
+    const seed = this.previews.peek(id);
+    if (seed) {
+      this.showBusiness(seed);
+      this.isLoading = false;
+    } else {
+      this.isLoading = true;
+    }
+    // Servicios y valoraciones enseñan su esqueleto mientras llegan: decían
+    // «todavía no ha publicado su catálogo» y luego crecían de golpe.
+    this.extrasLoading = true;
+
     try {
-      const business = await this.bipsy.getBusinessById(id);
+      const business = await (early?.business ?? this.bipsy.getBusinessById(id));
       if (generation !== this.loadGeneration) return;
-      this.business = business;
-      this.isFavorite = this.session.isFavorite(this.business.id);
-      // El nombre en la pestaña: con el título genérico, cinco fichas abiertas
-      // eran cinco pestañas iguales, y el lector de pantalla no decía dónde se
-      // había llegado.
-      this.releaseMeta?.();
-      this.releaseMeta = this.meta.set(this.business.name);
+      this.showBusiness(business);
+      this.previews.remember(business);
     } catch (error) {
       if (generation !== this.loadGeneration) return;
-      this.loadError = ApiError.from(error);
-      this.isLoading = false;
-      return;
+      // Con la cabecera ya pintada, un fallo de la ficha completa no la tira:
+      // se queda lo que se veía y lo demás lo dice cada sección.
+      if (!seed) {
+        this.loadError = ApiError.from(error);
+        this.isLoading = false;
+        return;
+      }
     }
     this.isLoading = false;
     this.prefetchMyBookings(generation);
 
     // El resto se pide en paralelo y NINGUNO tumba la ficha: sin galería o sin
     // horario la ficha sigue sirviendo para lo que se viene, que es reservar.
-    // Mientras llega, servicios y valoraciones enseñan su esqueleto: decían
-    // «todavía no ha publicado su catálogo» y luego crecían de golpe.
-    this.extrasLoading = true;
+    const extras = early?.extras;
     const [services, , policies, portfolio, schedule] = await Promise.allSettled([
-      this.bipsy.getBusinessServices(id),
+      extras?.services ?? this.bipsy.getBusinessServices(id),
       this.loadFirstReviews(id, generation),
-      this.catalog.businessPolicies(id),
-      this.catalog.businessPortfolio(id),
-      this.catalog.businessSchedule(id),
+      extras?.policies ?? this.catalog.businessPolicies(id),
+      extras?.portfolio ?? this.catalog.businessPortfolio(id),
+      extras?.schedule ?? this.catalog.businessSchedule(id),
     ]);
     if (generation !== this.loadGeneration) return;
 
@@ -280,6 +297,20 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     this.portfolio = valueOr(portfolio, []);
     this.schedule = valueOr(schedule, []);
     this.extrasLoading = false;
+  }
+
+  /** Pinta [business] y pone su nombre en la pestaña. */
+  private showBusiness(business: BusinessResponse): void {
+    const renamed = business.name !== this.business?.name || !this.releaseMeta;
+    this.business = business;
+    this.isFavorite = this.session.isFavorite(business.id);
+    // El nombre en la pestaña: con el título genérico, cinco fichas abiertas
+    // eran cinco pestañas iguales, y el lector de pantalla no decía dónde se
+    // había llegado.
+    if (renamed) {
+      this.releaseMeta?.();
+      this.releaseMeta = this.meta.set(business.name);
+    }
   }
 
   /**

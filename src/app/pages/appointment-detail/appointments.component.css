@@ -72,10 +72,12 @@
   color: #1E242A;
   cursor: pointer;
   overflow: hidden;
-  transition: transform .25s cubic-bezier(.2,.8,.2,1);
+  /* Sin saltar al pasar el ratón: la flecha ya dice que se puede abrir. Al
+     pulsarla cede un poco, como un botón. */
+  transition: transform var(--dur-1) var(--ease-out);
 }
 
-.next:hover { transform: translateY(-3px); }
+.next:active { transform: scale(.99); }
 .next:focus-visible { outline: 2px solid var(--clr-text); outline-offset: 3px; }
 
 .next__leaf {

@@ -355,7 +355,7 @@
 
 .cats__row {
   display: flex;
-  gap: 12px;
+  gap: 4px;
   overflow-x: auto;
   padding: 4px 0 8px;
   scrollbar-width: none;
@@ -366,64 +366,79 @@
 .cats__row::-webkit-scrollbar { display: none; }
 .cats__row.is-dragging { cursor: grabbing; }
 
+/* Una barra de iconos con su nombre, no una fila de cajas. Eran nueve
+   cuadrados grises de 132 × 124 con uno en menta: pesaban más que los
+   negocios que venían debajo. Ahora cada categoría es un icono y su nombre
+   sobre el fondo, en gris; la elegida se enciende (texto blanco, icono menta y
+   un fondo suave) y el resto se aclara al pasar el ratón. */
 .cat-card,
 .cat-card-skeleton {
-  flex: 0 0 132px;
-  height: 124px;
-  border-radius: var(--r-xl);
+  flex: 0 0 auto;
+  min-width: 92px;
+  height: 76px;
+  border-radius: var(--r-md);
 }
+
+.cat-card-skeleton { width: 92px; }
 
 .cat-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px 10px;
+  gap: 6px;
+  padding: 10px 14px;
   border: none;
-  background: var(--clr-surface);
-  color: var(--clr-text);
+  background: transparent;
+  color: var(--clr-text-2);
   font-family: var(--ff);
   cursor: pointer;
-  transition: background-color .2s ease, transform .2s cubic-bezier(.2,.8,.2,1);
+  /* Cambio de color corto y sin desplazamiento. Con 0,2 s el paso de menta a
+     gris (y al revés) atravesaba un verde sucio que se veía en las dos
+     tarjetas a la vez, y el salto de 3 px al pasar el ratón hacía bailar la
+     fila. Al pulsar cede un poco, como un botón. */
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
 }
 
-.cat-card:hover { background: var(--clr-surface-hover); transform: translateY(-3px); }
+.cat-card:hover { color: var(--clr-text); background: var(--clr-card); }
+.cat-card:active { transform: scale(.96); }
 
 /* El icono a secas, como `_CategoryTile`: sin disco detrás. */
 .cat-card__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--clr-text);
+  color: inherit;
+  transition: color var(--dur-1) var(--ease-out);
 }
 
-.cat-card__icon .material-symbols-rounded { font-size: 30px; }
+.cat-card__icon .material-symbols-rounded { font-size: 26px; }
 
 .cat-card__name {
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: nowrap;
 }
 
-.cat-card--on { background: var(--clr-mint); color: var(--clr-mint-text); }
-.cat-card--on:hover { background: var(--clr-mint-hover); }
-.cat-card--on .cat-card__icon { color: inherit; }
+.cat-card--on,
+.cat-card--on:hover { background: var(--clr-surface); color: var(--clr-text); }
+.cat-card--on .cat-card__icon { color: var(--clr-mint); }
 
 /* ══════════ UBICACIÓN ══════════ */
+/* Una línea con un filo fino, no una banda de color: es una sugerencia, y
+   a todo el ancho y en menta competía con los negocios de debajo. */
 .locate {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 20px;
-  padding: 12px 12px 12px 14px;
-  border-radius: var(--r-xl);
-  background: var(--clr-mint-dim);
+  gap: 12px;
+  margin-top: 16px;
+  padding: 6px 6px 6px 16px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--clr-border);
 }
 
 /* El icono de ubicación a secas, en menta, como `_LocationBanner`. */
@@ -433,27 +448,28 @@
   color: var(--clr-mint);
 }
 
-.locate__icon .material-symbols-rounded { font-size: 24px; }
+.locate__icon .material-symbols-rounded { font-size: 20px; }
 
-.locate__text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 0.8125rem; }
-.locate__text strong { font-weight: 800; color: var(--clr-text); }
+.locate__text { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; column-gap: 6px; font-size: 0.8125rem; }
+.locate__text strong { font-weight: 700; color: var(--clr-text); }
 .locate__text span { font-weight: 500; color: var(--clr-text-2); }
 
 .locate__btn {
   flex: 0 0 auto;
-  height: 38px;
-  padding: 0 18px;
+  height: 34px;
+  padding: 0 16px;
   border: none;
   border-radius: var(--r-pill);
-  background: var(--clr-mint);
-  color: var(--clr-mint-text);
+  background: var(--clr-surface);
+  color: var(--clr-text);
   font-family: var(--ff);
   font-size: 0.8125rem;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
+  transition: background-color var(--dur-2) var(--ease-out);
 }
 
-.locate__btn:hover { background: var(--clr-mint-hover); }
+.locate__btn:hover { background: var(--clr-surface-hover); }
 
 /* ══════════ CATEGORÍA ELEGIDA ══════════ */
 .catlist__head {
@@ -489,7 +505,8 @@
 .cat-skeleton { height: 260px; border-radius: var(--r-lg); }
 
 @media (min-width: 1025px) {
-  .cat-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+  .cat-list { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 28px 20px; }
+  .cat-skeleton { height: auto; aspect-ratio: 4 / 3.75; }
 }
 
 /* ══════════ ÚNETE ══════════ */
@@ -603,8 +620,9 @@
 .app-card__lead { margin-top: 8px; font-size: 0.875rem; font-weight: 500; line-height: 1.5; color: var(--clr-text-2); }
 
 .app-card__stores { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 20px; }
-.app-card__stores a { display: block; height: 40px; transition: transform .2s ease; }
-.app-card__stores a:hover { transform: translateY(-2px); }
+/* Los distintivos no saltan: se atenúan un poco, como cualquier enlace. */
+.app-card__stores a { display: block; height: 40px; transition: opacity var(--dur-2) var(--ease-out); }
+.app-card__stores a:hover { opacity: .85; }
 .app-card__stores img { height: 100%; width: auto; display: block; }
 
 .app-card__cta {
@@ -620,11 +638,13 @@
   font-size: 0.875rem;
   font-weight: 700;
   text-decoration: none;
-  transition: transform .15s ease;
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
 
-.app-card__cta:hover { transform: translateY(-2px); }
-.app-card__cta .material-symbols-rounded { font-size: 18px; }
+.app-card__cta:hover { opacity: .9; }
+.app-card__cta:active { transform: scale(.97); }
+.app-card__cta .material-symbols-rounded { font-size: 18px; transition: transform var(--dur-2) var(--ease-out); }
+.app-card__cta:hover .material-symbols-rounded { transform: translateX(2px); }
 
 .app-card__img {
   position: absolute;
@@ -634,10 +654,7 @@
   height: auto;
   object-fit: contain;
   object-position: bottom right;
-  transition: transform .5s cubic-bezier(.2,.8,.2,1);
 }
-
-.app-card:hover .app-card__img { transform: translateY(-6px); }
 
 @media (max-width: 1180px) {
   .apps { grid-template-columns: 1fr; }
@@ -829,6 +846,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .hero__mascot { animation: none; }
-  .cat-card:hover,
-  .app-card:hover .app-card__img { transform: none; }
+  .cat-card:active,
+  .app-card__cta:active { transform: none; }
 }

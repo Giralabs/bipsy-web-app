@@ -15,14 +15,15 @@
   text-decoration: none;
   color: inherit;
   cursor: pointer;
-  transition: background-color .2s ease, transform .25s cubic-bezier(.2,.8,.2,1);
+  /* Al pasar por encima la tarjeta se aclara y la foto se acerca un poco; ya
+     no da el salto de 4 px hacia arriba, que en una fila de cinco hacía bailar
+     la pantalla al recorrerla con el ratón. Al pulsar cede un poco, como un
+     botón: dice «te he oído» antes de que cambie la página. */
+  transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
 
 .biz-card:hover { background: var(--clr-surface-hover); }
-
-@media (hover: hover) and (min-width: 1025px) {
-  .biz-card:hover { transform: translateY(-4px); }
-}
+.biz-card:active { transform: scale(.985); }
 
 /* ── Foto a sangre, 16:9 ──
    Es la proporción única de `GipsiImageRatios.businessCover`: la misma foto
@@ -42,10 +43,12 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform .45s ease;
+  transition: transform .6s var(--ease-out), opacity var(--dur-3) var(--ease-out);
 }
 
-.biz-card:hover .biz-card__img { transform: scale(1.04); }
+@media (hover: hover) {
+  .biz-card:hover .biz-card__img { transform: scale(1.025); }
+}
 
 /* ── Insignias sobre la foto ──
    16 y no 8: así su curva es concéntrica con la esquina de la tarjeta. */
@@ -111,11 +114,11 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform .18s ease, background-color .2s ease, opacity .2s ease;
+  transition: transform var(--dur-1) var(--ease-out), background-color var(--dur-2) var(--ease-out), opacity var(--dur-2) var(--ease-out);
 }
 
 .biz-card__fav .material-symbols-rounded { font-size: 20px; }
-.biz-card__fav:hover { transform: scale(1.1); background: rgba(46, 52, 59, 0.9); }
+.biz-card__fav:hover { background: rgba(46, 52, 59, 0.9); }
 .biz-card__fav:active { transform: scale(0.9); }
 .biz-card__fav--on { background: #fff; color: #E5484D; }
 .biz-card__fav--on:hover { background: #fff; }
@@ -206,7 +209,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color .2s ease, transform .12s ease;
+  transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
 
 .biz-card__rebook .material-symbols-rounded { font-size: 18px; }
@@ -214,7 +217,41 @@
 .biz-card__rebook:active { transform: scale(0.94); }
 
 @media (prefers-reduced-motion: reduce) {
-  .biz-card, .biz-card:hover { transition: none; transform: none; }
+  .biz-card, .biz-card:hover, .biz-card:active { transition: none; transform: none; }
   .biz-card__img { transition: none; }
   .biz-card:hover .biz-card__img { transform: none; }
+}
+
+/* ══════════ ESCRITORIO: la foto manda ══════════
+   En pantalla grande la tarjeta deja de ser una caja gris con una foto
+   dentro: es la foto, redondeada, y el texto debajo, sobre el propio fondo
+   —como las fichas de la App Store o de Airbnb—. Una rejilla de cajas
+   iguales era lo que hacía que la portada pareciera una plantilla; sin caja,
+   las fotos de los negocios son lo que se ve. El móvil se queda como la app. */
+@media (min-width: 1025px) {
+  .biz-card {
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .biz-card:hover { background: transparent; }
+  .biz-card:active { transform: none; }
+
+  .biz-card__photo {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--r-lg);
+    background: var(--clr-surface);
+    /* Para que la foto se acerque dentro de su marco sin salirse. */
+    isolation: isolate;
+    transition: transform var(--dur-1) var(--ease-out);
+  }
+
+  .biz-card:active .biz-card__photo { transform: scale(.985); }
+
+  .biz-card__foot { padding: 12px 2px 4px; gap: 10px; }
+  .biz-card__name { font-size: 0.9375rem; transition: color var(--dur-2) var(--ease-out); }
+  .biz-card__loc { margin-top: 2px; }
+  .biz-card__flags { top: 12px; left: 12px; }
+  .biz-card__rating { top: 12px; right: 12px; }
 }

@@ -7,6 +7,8 @@ import { SessionService } from '../../core/session.service';
 import { BipsyService } from '../../services/bipsy.service';
 import { businessPath } from '../../shared/slug';
 import { fixImageUrl } from '../../shared/image-url';
+import { ImgFadeDirective } from '../../shared/img-fade.directive';
+import { BusinessPreviewService } from '../../core/business-preview.service';
 
 /**
  * Tarjeta de un negocio. Port de `_GlassHomeCard` (Explorar, app cliente).
@@ -24,11 +26,12 @@ import { fixImageUrl } from '../../shared/image-url';
 @Component({
   selector: 'app-business-card',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ImgFadeDirective],
   templateUrl: './business-card.component.html',
   styleUrl: './business-card.component.css'
 })
 export class BusinessCardComponent implements OnInit {
+  private readonly previews = inject(BusinessPreviewService);
   private readonly session = inject(SessionService);
   private readonly bipsy = inject(BipsyService);
   private readonly router = inject(Router);
@@ -58,6 +61,8 @@ export class BusinessCardComponent implements OnInit {
   favoriteBusy = false;
 
   ngOnInit(): void {
+    // La ficha arranca desde aquí: lo que ya se ve en la tarjeta no se espera.
+    this.previews.remember(this.business);
     this.session.favoriteBusinessIds$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ids => (this.isFavorite = !!this.business && ids.includes(this.business.id)));
@@ -96,6 +101,15 @@ export class BusinessCardComponent implements OnInit {
       return null;
     }
     return `${this.distanceKm.toFixed(1).replace('.', ',')} km`;
+  }
+
+  /**
+   * Con ratón o teclado, pide la ficha por adelantado. Con el dedo no: en el
+   * móvil un roce al deslizar la fila no es intención de abrir nada.
+   */
+  warm(event?: PointerEvent): void {
+    if (event && event.pointerType !== 'mouse') return;
+    if (this.business?.id != null) this.previews.prefetch(this.business.id);
   }
 
   onRebookClick(event: MouseEvent): void {
