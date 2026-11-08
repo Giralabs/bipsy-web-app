@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
 
 const STORAGE_KEY = 'bipsy.devNotice.seen';
 
@@ -22,6 +22,9 @@ const STORAGE_KEY = 'bipsy.devNotice.seen';
   styleUrl: './dev-notice.component.css',
 })
 export class DevNoticeComponent {
+  /** `float`: la pastilla del escritorio. `strip`: la franja fina del móvil. */
+  @Input() variant: 'float' | 'strip' = 'float';
+
   readonly open = signal(!readSeen());
 
   toggle(): void {

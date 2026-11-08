@@ -1,3 +1,11 @@
+@if (variant === 'strip') {
+  <!-- Móvil: una franja fina arriba que se va con el scroll. Flotando abajo
+       tapaba «Pedir cita» y el botón del mapa. -->
+  <p class="dev-strip" role="note">
+    <span class="dev__dot" aria-hidden="true"></span>
+    <span><strong>Web en desarrollo.</strong> Puede que algo no funcione todavía.</span>
+  </p>
+} @else {
 <aside class="dev" aria-label="Aviso: web en desarrollo">
   @if (open()) {
     <div class="dev__card" id="dev-notice-card" role="status">
@@ -22,3 +30,4 @@
     En desarrollo
   </button>
 </aside>
+}

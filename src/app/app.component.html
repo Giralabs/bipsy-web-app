@@ -1,4 +1,9 @@
-@if (showMaintenance()) {
+@if (booting()) {
+
+  <!-- Unas décimas, mientras el servidor dice si la web está abierta: solo el
+       fondo de la página. -->
+
+} @else if (showMaintenance()) {
 
   <!-- ── Mantenimiento ──
        En lugar de la web, no encima de ella: ni barra, ni pie, ni pestañas, ni
@@ -11,6 +16,10 @@
     <!-- Lo primero que alcanza el tabulador: salta la barra, el buscador y
          la tira, que si no hay que recorrer en cada página. -->
     <a class="skip-link" href="#contenido" (click)="skipToContent($event)">Saltar al contenido</a>
+
+    @if (!desktop()) {
+      <app-dev-notice variant="strip" />
+    }
 
     @if (chrome()) {
       <!-- ── Móvil y tablet: la app ──
@@ -61,8 +70,12 @@
     <app-maintenance-indicator></app-maintenance-indicator>
   }
 
-  <!-- «Web en desarrollo»: en todas las páginas mientras Bipsy se termina. -->
-  <app-dev-notice />
+  <!-- «Web en desarrollo»: en todas las páginas mientras Bipsy se termina. En
+       escritorio, la pastilla de abajo a la derecha; en el móvil va arriba
+       (dentro de .app-root), donde no tapa ningún botón. -->
+  @if (desktop()) {
+    <app-dev-notice />
+  }
 
 
 }

@@ -13,7 +13,7 @@
 .navbar {
   height: 72px;
   background: var(--clr-base);
-  transition: box-shadow .2s ease, background-color .2s ease;
+  transition: box-shadow var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out);
 }
 
 /* Al bajar, el filo de abajo dice dónde acaba la barra y empieza la página. */
@@ -44,13 +44,13 @@
   min-width: 0;
   display: flex;
   justify-content: center;
+  /* Aparece fundiéndose en su sitio, sin caer desde arriba. */
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-6px);
-  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+  transition: opacity var(--dur-2) var(--ease-out), visibility var(--dur-2);
 }
 
-.navbar-search--on { opacity: 1; visibility: visible; transform: none; }
+.navbar-search--on { opacity: 1; visibility: visible; }
 .navbar-search app-search-bar { width: min(560px, 100%); }
 
 /* ── Derecha ── */
@@ -142,10 +142,18 @@
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color .2s ease, color .2s ease;
+  transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
 }
 
-.biz-promo-link { background: none; color: var(--clr-text-2); font-weight: 600; }
+/* Es un enlace (a Bipsy Business): centrado como los botones, sin subrayado. */
+.biz-promo-link {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  color: var(--clr-text-2);
+  font-weight: 600;
+  text-decoration: none;
+}
 .biz-promo-link:hover { color: var(--clr-text); background: var(--clr-surface); }
 
 .nav-btn { background: var(--clr-surface); color: var(--clr-text); }

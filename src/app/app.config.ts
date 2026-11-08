@@ -1,6 +1,7 @@
 import { ApplicationConfig, ErrorHandler, provideZoneChangeDetection } from '@angular/core';
-import { TitleStrategy, provideRouter, withInMemoryScrolling, withNavigationErrorHandler } from '@angular/router';
+import { RouteReuseStrategy, TitleStrategy, provideRouter, withInMemoryScrolling, withNavigationErrorHandler } from '@angular/router';
 import { BipsyTitleStrategy } from './core/page-meta.service';
+import { KeepAliveStrategy } from './core/keep-alive.strategy';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 
 import { routes } from './app.routes';
@@ -25,6 +26,8 @@ export const appConfig: ApplicationConfig = {
     // Cada página con su título en la pestaña: «Mis citas · Bipsy». Es lo
     // primero que anuncia el lector de pantalla al llegar.
     { provide: TitleStrategy, useClass: BipsyTitleStrategy },
+    // Explorar se aparta al salir y vuelve tal cual al regresar (ver la clase).
+    { provide: RouteReuseStrategy, useClass: KeepAliveStrategy },
     // Lo mismo, para los `import()` que no pasan por el router. Todo lo demás
     // sigue yendo a la consola y nada más: ver `AppErrorHandler`.
     { provide: ErrorHandler, useClass: AppErrorHandler },

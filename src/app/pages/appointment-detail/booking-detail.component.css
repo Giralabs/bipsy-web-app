@@ -233,10 +233,11 @@
   font-family: var(--ff);
   text-align: left;
   cursor: pointer;
-  transition: transform .2s ease;
+  transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
 }
 
-.ask:hover { transform: translateY(-2px); }
+.ask:hover { background: var(--clr-surface-hover); }
+.ask:active { transform: scale(.99); }
 .ask__stars { display: flex; color: var(--clr-star); }
 .ask__stars .material-symbols-rounded { font-size: 22px; }
 .ask__text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 0.8125rem; font-weight: 500; color: var(--clr-text-2); }

@@ -522,12 +522,26 @@
   .gallery__item:nth-child(n + 6) { display: none; }
   .gallery__item:first-child:nth-last-child(n + 5) { grid-column: span 2; grid-row: span 2; }
 
-  /* Servicios en una columna ancha, con la descripción y «Reservar» a la
-     vista. En dos columnas el nombre se cortaba a la mitad. */
-  .services { margin-top: 20px; gap: 12px; }
-  .service { height: 120px; }
-  .service__thumb { flex-basis: 120px; width: 120px; }
-  .service__info { padding: 14px 16px; gap: 6px; }
+  /* Servicios: una lista limpia, una fila por servicio con su filo debajo,
+     como la carta de un restaurante o los ajustes de un iPhone. Eran cuatro
+     cajas grises de 120 px con un bloque de icono a la izquierda y un botón
+     menta en cada una: cuatro llamadas a la acción gritando a la vez. Ahora
+     «Reservar» es discreto y se enciende en la fila por la que pasa el ratón.
+     El icono genérico sobra; la foto del servicio, si la hay, se queda. */
+  .services { margin-top: 12px; gap: 0; }
+  .service {
+    height: auto;
+    min-height: 84px;
+    padding: 0 4px;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: inset 0 -1px 0 var(--clr-border);
+  }
+  .services li:last-child .service { box-shadow: none; }
+  .service:hover { background: var(--clr-card); border-radius: var(--r-md); box-shadow: none; }
+  .service__thumb { flex-basis: 64px; width: 64px; height: 64px; margin: 10px 0; border-radius: var(--r-sm); }
+  .service__thumb--icon { display: none; }
+  .service__info { padding: 16px 12px; gap: 4px; }
   .service__name { font-size: 1rem; }
   .service__desc {
     display: -webkit-box;
@@ -539,16 +553,18 @@
     font-weight: 500;
     color: var(--clr-text-2);
   }
-  .service__go { padding-right: 20px; }
+  .service__go { padding-right: 8px; }
   .service__go-label {
     display: block;
-    padding: 9px 18px;
+    padding: 8px 16px;
     border-radius: var(--r-pill);
-    background: var(--clr-mint);
-    color: var(--clr-mint-text);
-    font-size: .875rem;
+    background: var(--clr-surface);
+    color: var(--clr-text);
+    font-size: .8125rem;
     font-weight: 700;
+    transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
   }
+  .service:hover .service__go-label { background: var(--clr-mint); color: var(--clr-mint-text); }
   .service__go .material-symbols-rounded { display: none; }
   .service__place { margin-top: 0; }
 
@@ -610,3 +626,21 @@
   .review__reply { background: color-mix(in srgb, var(--clr-surface), #2E343B 7%); }
 }
 
+
+/* Lo pulsable: mismo fundido y cede al pulsar (antes cambiaba de golpe). */
+.cover__btn,
+.info-action,
+.social__btn,
+.service,
+.hours__close,
+.side-action {
+  transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+
+.cover__btn:active,
+.info-action:active,
+.social__btn:active,
+.hours__close:active,
+.side-action:active { transform: scale(.94); }
+
+.service:active { transform: scale(.99); }

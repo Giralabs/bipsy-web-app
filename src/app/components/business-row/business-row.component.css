@@ -99,8 +99,14 @@
    una fila de dos o tres negocios dejaba media pantalla vacía a la derecha y
    la portada parecía a medio cargar. La quinta asoma al desplazar. */
 @media (min-width: 1025px) {
-  .row__item { flex: 0 0 calc((100% - 3 * 14px) / 4); min-width: 0; }
-  .row__skeleton { height: 248px; }
+  /* Más aire entre filas y entre tarjetas: sin cajas, lo que separa es el
+     espacio. El esqueleto, con la forma de la tarjeta nueva (foto 4:3 y dos
+     líneas debajo). */
+  .row { margin-bottom: 48px; }
+  .row__scroll { gap: 20px; }
+  .row__item { flex: 0 0 calc((100% - 3 * 20px) / 4); min-width: 0; }
+  .row__skeleton { height: auto; aspect-ratio: 4 / 3.75; border-radius: var(--r-lg); }
+  .row__title { font-size: 1.375rem; letter-spacing: -0.4px; }
 }
 
 /* ── Vacía ── */
