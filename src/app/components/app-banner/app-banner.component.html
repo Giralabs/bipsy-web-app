@@ -1,5 +1,9 @@
 <!-- Sin botón de cerrar: el aviso se queda. Quien reserva desde el navegador
      es justamente a quien hay que decirle que existe la app. -->
+<!-- Solo si la tienda de este sistema ya tiene ficha: hoy, en iPhone sí y en
+     Android todavía no. Una tira con el botón en «Próximamente» delataba una
+     web a medias. -->
+@if (linkReady) {
 <aside class="appbanner">
   <!-- El símbolo sobre fondo, como se ve el icono en la pantalla de inicio. -->
   <span class="appbanner__icon" aria-hidden="true">
@@ -17,11 +21,6 @@
     <small>Pide cita sin llamar, desde la app</small>
   </span>
 
-  @if (linkReady) {
-    <a class="appbanner__go" [href]="store.url" target="_blank" rel="noopener">Obtener</a>
-  } @else {
-    <!-- Las fichas no existen todavía. Un botón que diera un 404 o que llevara
-         a una búsqueda —y sacara la app de otro— sería peor que esto. -->
-    <span class="appbanner__go appbanner__go--soon">Próximamente</span>
-  }
+  <a class="appbanner__go" [href]="store.url" target="_blank" rel="noopener">Obtener</a>
 </aside>
+}

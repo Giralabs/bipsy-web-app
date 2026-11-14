@@ -2,7 +2,9 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PageMetaService } from '../../core/page-meta.service';
 import {
+  APP_STORE_READY,
   BipsyApp,
+  PLAY_STORE_READY,
   STORE_LINKS_READY,
   appStoreUrl,
   mobilePlatformOf,
@@ -35,8 +37,15 @@ export class DownloadComponent implements OnInit, OnDestroy {
 
   readonly app: BipsyApp = this.route.snapshot.data['app'] === 'business' ? 'business' : 'customer';
   readonly published = STORE_LINKS_READY;
-  readonly appStore = appStoreUrl(this.app);
-  readonly googlePlay = playStoreUrl(this.app);
+  readonly appStore = APP_STORE_READY ? appStoreUrl(this.app) : '';
+  readonly googlePlay = PLAY_STORE_READY ? playStoreUrl(this.app) : '';
+
+  /** La frase según qué tiendas tienen ya la ficha. */
+  get lead(): string {
+    if (this.appStore && this.googlePlay) return 'Elige tu tienda para descargar la app.';
+    if (this.appStore) return 'Ya disponible en iPhone y iPad. En Android llega en unas semanas.';
+    return 'Ya disponible en Android. En iPhone llega muy pronto.';
+  }
 
   get heading(): string {
     return this.app === 'business' ? 'Bipsy para negocios' : 'Descarga Bipsy';
