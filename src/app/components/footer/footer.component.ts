@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { HELP_INDEX, LEGAL_INDEX } from '../../pages/legal/legal.index';
 import { LEGAL_COMPANY } from '../../pages/legal/legal.models';
 import { HELP_CLIENTS_URL } from '../../data/site.data';
-import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY } from '../../data/app-links';
+import { APP_STORE_READY, APP_STORE_URL, PLAY_STORE_READY, PLAY_STORE_URL } from '../../data/app-links';
 import { ComingSoonDirective, SOON } from '../../shared/coming-soon.directive';
 
 /** El perfil de Bipsy en Instagram. */
@@ -46,7 +46,8 @@ export class FooterComponent {
   // que las fichas se publiquen dicen «Próximamente» al pulsarlos.
   readonly appStoreUrl = APP_STORE_URL;
   readonly playStoreUrl = PLAY_STORE_URL;
-  readonly storeLinksReady = STORE_LINKS_READY;
+  readonly appStoreReady = APP_STORE_READY;
+  readonly playStoreReady = PLAY_STORE_READY;
   readonly soon = SOON;
   readonly icons = SOCIAL_ICONS;
   readonly instagramUrl = INSTAGRAM_URL;

@@ -1,10 +1,18 @@
 import { Component } from '@angular/core';
-import { APP_STORE_URL, PLAY_STORE_URL, STORE_LINKS_READY, mobilePlatformOf } from '../../data/app-links';
+import {
+  APP_STORE_READY,
+  APP_STORE_URL,
+  PLAY_STORE_READY,
+  PLAY_STORE_URL,
+  mobilePlatformOf,
+} from '../../data/app-links';
 
 /** A dónde manda el botón según el teléfono. */
 interface StoreTarget {
   label: string;
   url: string;
+  /** Si esa tienda ya tiene la ficha publicada. */
+  ready: boolean;
 }
 
 /**
@@ -24,8 +32,8 @@ interface StoreTarget {
  * agent y no en el ancho: un iPad es tablet a 1024 px y a 1366, y lo que
  * decide a qué tienda mandar es el sistema, no el tamaño.
  *
- * ⚠️ Mientras las fichas no existan (`STORE_LINKS_READY`), el botón dice
- * «Próximamente» y no navega. Ver `data/app-links.ts`.
+ * ⚠️ Si la tienda de ese sistema aún no tiene ficha (hoy, Google Play), la
+ * tira no se pinta. Ver `data/app-links.ts`.
  */
 @Component({
   selector: 'app-app-banner',
@@ -36,8 +44,12 @@ interface StoreTarget {
 export class AppBannerComponent {
   readonly store = this.detectStore();
 
-  /** Si el botón lleva de verdad a una tienda. Ver `data/app-links.ts`. */
-  readonly linkReady = STORE_LINKS_READY;
+  /**
+   * Si el botón lleva de verdad a una tienda: cada sistema la suya. En iPhone,
+   * ya; en Android, cuando se publique (`PLAY_STORE_READY`). Mientras tanto la
+   * tira no se enseña. Ver `data/app-links.ts`.
+   */
+  readonly linkReady = this.store.ready;
 
   /**
    * Qué tienda toca.
@@ -52,8 +64,8 @@ export class AppBannerComponent {
     const hasTouch = typeof document !== 'undefined' && 'ontouchend' in document;
 
     if (mobilePlatformOf(ua, hasTouch) === 'ios') {
-      return { label: 'App Store', url: APP_STORE_URL };
+      return { label: 'App Store', url: APP_STORE_URL, ready: APP_STORE_READY };
     }
-    return { label: 'Google Play', url: PLAY_STORE_URL };
+    return { label: 'Google Play', url: PLAY_STORE_URL, ready: PLAY_STORE_READY };
   }
 }
