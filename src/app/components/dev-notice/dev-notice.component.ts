@@ -2,6 +2,21 @@ import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core
 
 const STORAGE_KEY = 'bipsy.devNotice.seen';
 
+/** La tarjeta abierta. Fuera del componente para que el aviso de cookies la cierre. */
+const cardOpen = signal(!readSeen());
+
+/**
+ * El aviso de cookies está en pantalla. En escritorio lleva dentro este mismo
+ * aviso, así que la tarjeta se aparta: un solo aviso a la vez.
+ */
+export const cookieNoticeUp = signal(false);
+
+/** Contestar a las cookies cuenta como haber visto el aviso. */
+export function dismissDevCard(): void {
+  cardOpen.set(false);
+  markSeen();
+}
+
 /**
  * «Web en desarrollo». Una pastilla abajo a la derecha que se despliega en una
  * tarjeta con la explicación.
@@ -25,7 +40,8 @@ export class DevNoticeComponent {
   /** `float`: la pastilla del escritorio. `strip`: la franja fina del móvil. */
   @Input() variant: 'float' | 'strip' = 'float';
 
-  readonly open = signal(!readSeen());
+  readonly open = cardOpen;
+  readonly cookieUp = cookieNoticeUp;
 
   toggle(): void {
     this.open.update(v => !v);
@@ -33,8 +49,7 @@ export class DevNoticeComponent {
   }
 
   close(): void {
-    this.open.set(false);
-    markSeen();
+    dismissDevCard();
   }
 }
 

@@ -1,9 +1,21 @@
-<section class="consent" role="region" aria-labelledby="consent-title">
-  <h2 id="consent-title" class="consent__title">Cookies</h2>
-  <p class="consent__text">
-    Usamos cookies de análisis (Google Analytics) para saber qué páginas se visitan y mejorar la web.
-    Solo si aceptas.
-    <a routerLink="/legal/cookies" class="consent__link">Política de cookies</a>
+<section class="consent" role="region" aria-label="Aviso de la web y cookies">
+  <!-- Escritorio: el aviso «Web en desarrollo» va aquí dentro, para que no
+       haya dos tarjetas a la vez. En el móvil ya lo dice la franja de arriba. -->
+  <div class="consent__dev">
+    <p class="consent__title">
+      <span class="material-symbols-rounded" aria-hidden="true">construction</span>
+      Web en desarrollo
+    </p>
+    <p class="consent__text">
+      Puede que algo cambie o no funcione del todo. Si ves algo raro, escríbenos a
+      <a href="mailto:soporte@bipsy.es" class="consent__link">soporte&#64;bipsy.es</a>.
+    </p>
+  </div>
+
+  <p class="consent__text consent__ask">
+    <strong>¿Aceptas cookies de análisis?</strong>
+    Solo para saber qué páginas se visitan.
+    <a routerLink="/legal/cookies" class="consent__link">Más información</a>
   </p>
   <div class="consent__actions">
     <app-button variant="secondary" size="small" [overCard]="true" [fullWidth]="true"
