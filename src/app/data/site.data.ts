@@ -46,4 +46,4 @@ export const GIRALABS_URL = 'https://giralabs.es';
  * switches all of that on (core/analytics.service.ts, legal.content.ts);
  * when it is set, update `updatedAt` of the cookie policy too.
  */
-export const GA_MEASUREMENT_ID: string = '';
+export const GA_MEASUREMENT_ID: string = 'G-0HEWY150GV';

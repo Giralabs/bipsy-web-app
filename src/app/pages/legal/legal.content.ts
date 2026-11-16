@@ -307,7 +307,7 @@ const PRIVACY: LegalDocument = {
   // un marcador de posicion, es una persona identificada—. El backend solo
   // registra la version de los TERMINOS, asi que esto no pide aceptar nada.
   version: '2.0',
-  updatedAt: '2 de septiembre de 2026',
+  updatedAt: '16 de noviembre de 2026',
   sections: [
     {
       id: 'responsable',
@@ -632,7 +632,7 @@ const COOKIES: LegalDocument = {
   version: '1.0',
   // ⚠️ When GA_MEASUREMENT_ID is set (site.data.ts) this text changes: put
   // that day's date here.
-  updatedAt: '2 de septiembre de 2026',
+  updatedAt: '16 de noviembre de 2026',
   sections: [
     {
       id: 'que-son',
