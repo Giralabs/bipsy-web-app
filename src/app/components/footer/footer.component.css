@@ -86,6 +86,20 @@
 /* El correo es largo y rompe la rejilla si no se le deja cortar. */
 .footer__col a { overflow-wrap: anywhere; }
 
+/* «Configurar cookies» is a button (it opens the notice, it goes nowhere)
+   dressed as one more link of its column. */
+.footer__cookies {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 0.875rem var(--ff);
+  color: var(--clr-text-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.footer__cookies:hover { color: var(--clr-text); }
+
 /* ── Quién está detrás ── */
 .footer__bottom {
   width: min(1240px, 100% - 48px);

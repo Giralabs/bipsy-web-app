@@ -52,21 +52,26 @@ export function canonicalPathOf(url: string): string {
   return path.startsWith('/') ? path : `/${path}`;
 }
 
-/** Meta tags this service owns, with the attribute that names them. */
-const MANAGED_TAGS: readonly { attr: 'name' | 'property'; key: string }[] = [
-  { attr: 'name', key: 'description' },
-  { attr: 'property', key: 'og:type' },
-  { attr: 'property', key: 'og:title' },
-  { attr: 'property', key: 'og:description' },
-  { attr: 'property', key: 'og:url' },
-  { attr: 'property', key: 'og:image' },
-  { attr: 'property', key: 'og:image:type' },
-  { attr: 'property', key: 'og:image:width' },
-  { attr: 'property', key: 'og:image:height' },
-  { attr: 'property', key: 'og:image:alt' },
-  { attr: 'name', key: 'twitter:title' },
-  { attr: 'name', key: 'twitter:description' },
+/** Meta tags this service owns. */
+const MANAGED_TAGS: readonly string[] = [
+  'description',
+  'og:type',
+  'og:title',
+  'og:description',
+  'og:url',
+  'og:image',
+  'og:image:type',
+  'og:image:width',
+  'og:image:height',
+  'og:image:alt',
+  'twitter:title',
+  'twitter:description',
 ];
+
+/** Open Graph tags are named by `property`, the rest by `name`. */
+function attrOf(key: string): 'name' | 'property' {
+  return key.startsWith('og:') ? 'property' : 'name';
+}
 
 /** Marks the JSON-LD scripts this service injected, so it only ever removes its own. */
 const JSON_LD_ATTR = 'data-page-jsonld';
@@ -100,9 +105,9 @@ export class PageMetaService {
    * og:url is not one of them: it only makes sense next to a canonical.
    */
   private readonly defaultTags = new Map<string, string | null>(
-    MANAGED_TAGS.map(({ attr, key }) => [
+    MANAGED_TAGS.map(key => [
       key,
-      key === 'og:url' ? null : this.meta.getTag(`${attr}="${key}"`)?.content ?? null,
+      key === 'og:url' ? null : this.meta.getTag(`${attrOf(key)}="${key}"`)?.content ?? null,
     ]),
   );
 
@@ -209,7 +214,8 @@ export class PageMetaService {
   }
 
   private writeTags(values: ReadonlyMap<string, string | null>): void {
-    for (const { attr, key } of MANAGED_TAGS) {
+    for (const key of MANAGED_TAGS) {
+      const attr = attrOf(key);
       const content = values.get(key);
       if (content) {
         this.meta.updateTag({ [attr]: key, content });

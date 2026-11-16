@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { PageMetaService } from '../../core/page-meta.service';
+import { AnalyticsService } from '../../core/analytics.service';
+import { ButtonComponent } from '../../components/button/button.component';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LEGAL_DOCUMENTS } from './legal.content';
@@ -19,7 +21,7 @@ import { LEGAL_GROUPS, LEGAL_INDEX, HELP_INDEX } from './legal.index';
 @Component({
   selector: 'app-legal',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ButtonComponent],
   templateUrl: './legal.component.html',
   styleUrl: './legal.component.css'
 })
@@ -27,6 +29,8 @@ export class LegalComponent implements OnInit, OnDestroy {
   doc: LegalDocument | null = null;
 
   private readonly meta = inject(PageMetaService);
+  /** The cookie policy offers «Configurar cookies» when there is analytics. */
+  readonly analytics = inject(AnalyticsService);
   private releaseMeta: (() => void) | null = null;
 
   constructor(private route: ActivatedRoute) {}

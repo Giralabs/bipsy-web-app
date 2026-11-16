@@ -105,6 +105,13 @@
           </section>
         }
 
+        <!-- On touch screens there is no site footer: this is where the
+             cookie choice can be changed from a phone. -->
+        @if (doc.slug === 'cookies' && analytics.enabled) {
+          <app-button variant="secondary" size="small" label="Configurar cookies"
+                      (onClick)="analytics.reopen()" />
+        }
+
         <!-- ─── Pie ─── -->
         <div class="divider"></div>
         <footer class="legal-footer">
