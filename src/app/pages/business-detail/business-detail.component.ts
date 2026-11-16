@@ -39,7 +39,7 @@ import { PageMetaService } from '../../core/page-meta.service';
 import { onRevisit } from '../../core/revisit';
 import { BusinessPreviewService } from '../../core/business-preview.service';
 import { ImgFadeDirective } from '../../shared/img-fade.directive';
-import { businessBookingPath, businessIdFromParam, businessSlug } from '../../shared/slug';
+import { businessBookingPath, businessIdFromParam, businessShareUrl } from '../../shared/slug';
 import { businessSeo } from './business-seo';
 
 /**
@@ -664,7 +664,8 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     if (!business) {
       return;
     }
-    const link = `${location.origin}/negocio/${businessSlug(business)}`;
+    // Su subdominio (ismaelillobarber.bipsy.es) si lo tiene: es lo corto.
+    const link = businessShareUrl(business, location.origin);
     const text = business.city
       ? `Mira ${business.name} en ${business.city} y pide cita con Bipsy:\n${link}`
       : `Mira ${business.name} y pide cita con Bipsy:\n${link}`;

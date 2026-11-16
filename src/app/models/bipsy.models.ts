@@ -71,6 +71,8 @@ export interface BusinessDiscovery {
 export interface BusinessResponse {
   id: number;
   name: string;
+  /** Su subdominio, <subdomain>.bipsy.es (backend V131): lo que se comparte. Redirige a su ficha. */
+  subdomain?: string | null;
   email?: string;
   username?: string;
   phone?: string;
