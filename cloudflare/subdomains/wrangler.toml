@@ -1,0 +1,13 @@
+# Cloudflare Worker de los subdominios de negocio (ver worker.js y LEEME.md).
+name = "bipsy-subdomains"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+# Todo *.bipsy.es. Los subdominios con su propio registro "Solo DNS" (nube gris)
+# no pasan por aquí; los que vayan por el proxy, el Worker los deja pasar.
+routes = [
+  { pattern = "*.bipsy.es/*", zone_name = "bipsy.es" }
+]
+
+[vars]
+API_URL = "https://api.bipsy.es"

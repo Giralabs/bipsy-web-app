@@ -13,6 +13,17 @@ export function businessSlug(business: { id: number; name?: string }): string {
   return name ? `${name}-${business.id}` : String(business.id);
 }
 
+/**
+ * El enlace que se comparte de un negocio: su subdominio,
+ * `https://ismaelillobarber.bipsy.es` (backend V131), que redirige a su ficha.
+ * Sin subdominio (el primer minuto de un alta), la ficha de siempre.
+ */
+export function businessShareUrl(business: { id: number; name?: string; subdomain?: string | null }, origin: string): string {
+  return business.subdomain
+    ? `https://${business.subdomain}.bipsy.es`
+    : `${origin}/negocio/${businessSlug(business)}`;
+}
+
 /** Los segmentos de ruta para `routerLink` y `router.navigate`. */
 export function businessPath(business: { id: number; name?: string }): string[] {
   return ['/negocio', businessSlug(business)];
