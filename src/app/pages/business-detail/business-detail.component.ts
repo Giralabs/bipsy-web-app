@@ -40,6 +40,7 @@ import { onRevisit } from '../../core/revisit';
 import { BusinessPreviewService } from '../../core/business-preview.service';
 import { ImgFadeDirective } from '../../shared/img-fade.directive';
 import { businessBookingPath, businessIdFromParam, businessSlug } from '../../shared/slug';
+import { businessSeo } from './business-seo';
 
 /**
  * Reseñas por página. Más que las 3 de la app: en escritorio caben, y con tres
@@ -199,17 +200,13 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     if (generation !== this.loadGeneration || this.business?.id !== id) return;
 
     if (business.status === 'fulfilled') {
-      const renamed = business.value.name !== this.business?.name;
       this.business = business.value;
       this.isFavorite = this.session.isFavorite(id);
-      if (renamed) {
-        this.releaseMeta?.();
-        this.releaseMeta = this.meta.set(this.business.name);
-      }
     }
     if (services.status === 'fulfilled') this.services = services.value.filter(s => s.active);
     if (policies.status === 'fulfilled') this.policies = policies.value;
     if (schedule.status === 'fulfilled') this.schedule = schedule.value;
+    this.applySeo();
     if (portfolio.status === 'fulfilled') {
       this.portfolio = portfolio.value;
       // Con el visor abierto y una foto menos, el índice podía quedar fuera.
@@ -241,6 +238,7 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     if (id === null) {
       this.loadError = new ApiError(404, 'No hemos encontrado este negocio.');
       this.isLoading = false;
+      this.applyErrorSeo();
       return;
     }
     this.loadError = null;
@@ -257,6 +255,10 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
       this.isLoading = false;
     } else {
       this.isLoading = true;
+      // Coming from another business (same component, reused): its canonical
+      // and structured data must not stay on this address while it loads.
+      this.releaseMeta?.();
+      this.releaseMeta = null;
     }
     // Servicios y valoraciones enseñan su esqueleto mientras llegan: decían
     // «todavía no ha publicado su catálogo» y luego crecían de golpe.
@@ -274,6 +276,7 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
       if (!seed) {
         this.loadError = ApiError.from(error);
         this.isLoading = false;
+        this.applyErrorSeo();
         return;
       }
     }
@@ -297,20 +300,37 @@ export class BusinessDetailComponent implements OnInit, OnDestroy {
     this.portfolio = valueOr(portfolio, []);
     this.schedule = valueOr(schedule, []);
     this.extrasLoading = false;
+    // Again, now with the services and opening hours for the structured data.
+    this.applySeo();
   }
 
   /** Pinta [business] y pone su nombre en la pestaña. */
   private showBusiness(business: BusinessResponse): void {
-    const renamed = business.name !== this.business?.name || !this.releaseMeta;
     this.business = business;
     this.isFavorite = this.session.isFavorite(business.id);
-    // El nombre en la pestaña: con el título genérico, cinco fichas abiertas
-    // eran cinco pestañas iguales, y el lector de pantalla no decía dónde se
-    // había llegado.
-    if (renamed) {
-      this.releaseMeta?.();
-      this.releaseMeta = this.meta.set(business.name);
-    }
+    this.applySeo();
+  }
+
+  /**
+   * El nombre en la pestaña: con el título genérico, cinco fichas abiertas
+   * eran cinco pestañas iguales, y el lector de pantalla no decía dónde se
+   * había llegado.
+   *
+   * Plus the description, canonical and JSON-LD (`business-seo.ts`), from
+   * whatever has arrived so far. Applying again replaces the previous one.
+   */
+  private applySeo(): void {
+    if (!this.business) return;
+    this.releaseMeta = this.meta.apply(businessSeo({
+      business: this.business,
+      services: this.services,
+      schedule: this.schedule,
+    }));
+  }
+
+  /** A business that does not load is not a page to index. */
+  private applyErrorSeo(): void {
+    this.releaseMeta = this.meta.set('Negocio no encontrado', true);
   }
 
   /**

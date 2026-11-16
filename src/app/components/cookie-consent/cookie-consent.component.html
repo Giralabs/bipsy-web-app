@@ -1,0 +1,14 @@
+<section class="consent" role="region" aria-labelledby="consent-title">
+  <h2 id="consent-title" class="consent__title">Cookies</h2>
+  <p class="consent__text">
+    Usamos cookies de análisis (Google Analytics) para saber qué páginas se visitan y mejorar la web.
+    Solo si aceptas.
+    <a routerLink="/legal/cookies" class="consent__link">Política de cookies</a>
+  </p>
+  <div class="consent__actions">
+    <app-button variant="secondary" size="small" [overCard]="true" [fullWidth]="true"
+                label="Rechazar" (onClick)="analytics.reject()" />
+    <app-button variant="secondary" size="small" [overCard]="true" [fullWidth]="true"
+                label="Aceptar" (onClick)="analytics.accept()" />
+  </div>
+</section>

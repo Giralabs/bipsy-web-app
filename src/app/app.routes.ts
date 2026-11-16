@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { ErrorComponent } from './pages/error/error.component';
+import { HOME_SEO, SEARCH_SEO } from './core/seo/site-seo';
 
 /**
  * Rutas de la web. **Todas en español**, como el resto de la web.
@@ -16,12 +17,15 @@ export const routes: Routes = [
     pathMatch: 'full',
     // `keepAlive`: volver desde un negocio la recupera tal cual se dejó, en
     // vez de reconstruirla (core/keep-alive.strategy.ts).
-    data: { defaultTitle: true, keepAlive: true },
+    // `seo`: description, canonical and structured data (core/seo/site-seo.ts),
+    // applied by the title strategy so they come back with the kept-alive page.
+    data: { defaultTitle: true, keepAlive: true, seo: HOME_SEO },
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
   },
   {
     path: 'buscar',
     title: 'Buscar',
+    data: { seo: SEARCH_SEO },
     loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent),
   },
   {
@@ -155,7 +159,7 @@ export const routes: Routes = [
   { path: 'legal', redirectTo: 'legal/terminos', pathMatch: 'full' },
   {
     path: 'legal/:slug',
-    title: 'Información legal',
+    // No `title`: each document sets its own title and description.
     loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalComponent),
   },
 

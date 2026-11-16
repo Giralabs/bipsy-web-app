@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The site's fixed public pages. Served as is by Vercel (static files win over
+  the SPA rewrite in vercel.json) and announced in robots.txt.
+
+  Keep it in step with the routes: a new public page goes here, and a page
+  that becomes private or noindex comes out. The legal pages are the slugs in
+  src/app/pages/legal/legal.index.ts.
+
+  NEXT STEP - business pages. They are dynamic (/negocio/{slug}-{id}), so they
+  cannot be listed here. The plan:
+    1. The backend (gipsi_api) exposes GET /public/sitemap/businesses.xml with
+       one <url> per published business (setupComplete, not blocked):
+       <loc>https://bipsy.es/negocio/{slug}-{id}</loc> with the same slug as
+       src/app/shared/slug.ts, and <lastmod> from the business's updatedAt.
+    2. vercel.json rewrites /sitemap-negocios.xml to that endpoint.
+    3. This file becomes a <sitemapindex> listing sitemap-paginas.xml (these
+       URLs) and sitemap-negocios.xml, and robots.txt keeps pointing here.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://bipsy.es/</loc></url>
+  <url><loc>https://bipsy.es/buscar</loc></url>
+  <url><loc>https://bipsy.es/descargar</loc></url>
+  <url><loc>https://bipsy.es/descargar/negocio</loc></url>
+  <url><loc>https://bipsy.es/legal/quienes-somos</loc></url>
+  <url><loc>https://bipsy.es/legal/contacto</loc></url>
+  <url><loc>https://bipsy.es/legal/seguridad</loc></url>
+  <url><loc>https://bipsy.es/legal/aviso-legal</loc></url>
+  <url><loc>https://bipsy.es/legal/terminos</loc></url>
+  <url><loc>https://bipsy.es/legal/privacidad</loc></url>
+  <url><loc>https://bipsy.es/legal/cookies</loc></url>
+</urlset>

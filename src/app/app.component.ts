@@ -1,4 +1,14 @@
-import { Component, DestroyRef, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  Injector,
+  ViewChild,
+  ViewContainerRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { ConfirmRequestGateService } from './core/confirm-request-gate.service';
 import { LocationService } from './core/location.service';
 import { ViewportScroller } from '@angular/common';
@@ -20,6 +30,7 @@ import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dial
 import { MobileTopbarComponent } from './components/mobile-topbar/mobile-topbar.component';
 import { ToastHostComponent } from './components/toast-host/toast-host.component';
 import { PaymentRequestGateComponent } from './components/payment-request-gate/payment-request-gate.component';
+import { GA_MEASUREMENT_ID } from './data/site.data';
 import { LEGAL_INDEX } from './pages/legal/legal.index';
 import { STORE_LINKS_READY } from './data/app-links';
 
@@ -150,6 +161,17 @@ export class AppComponent {
     // La cita que el negocio te ha dado y espera tu respuesta se abre sola al
     // entrar y al volver a la pestaña, como `ConfirmRequestGate` en la app.
     inject(ConfirmRequestGateService).start(inject(DestroyRef));
+
+    // Analytics and its cookie notice, only with a measurement ID. The
+    // service is imported on demand to keep it out of the initial bundle; it
+    // starts gtag for whoever already accepted and mounts the notice here,
+    // next to the root, for whoever has not answered.
+    if (GA_MEASUREMENT_ID) {
+      const host = inject(ViewContainerRef);
+      const injector = inject(Injector);
+      void import('./components/cookie-consent/cookie-consent.component')
+        .then(m => injector.get(m.AnalyticsService).mountNoticeIn(host));
+    }
 
     let first = true;
     this.router.events

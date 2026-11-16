@@ -66,6 +66,10 @@
       @for (doc of legalDocs; track doc.slug) {
         <a [routerLink]="['/legal', doc.slug]">{{ doc.title }}</a>
       }
+      <!-- Withdrawing consent has to be as easy as giving it: always at hand. -->
+      @if (analyticsOn) {
+        <button type="button" class="footer__cookies" (click)="configureCookies()">Configurar cookies</button>
+      }
     </nav>
 
     <!-- ── Ayuda ──

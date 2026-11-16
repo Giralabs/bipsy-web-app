@@ -1,14 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, Injector, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HELP_INDEX, LEGAL_INDEX } from '../../pages/legal/legal.index';
 import { LEGAL_COMPANY } from '../../pages/legal/legal.models';
-import { HELP_CLIENTS_URL } from '../../data/site.data';
+import { GA_MEASUREMENT_ID, HELP_CLIENTS_URL, INSTAGRAM_URL } from '../../data/site.data';
 import { APP_STORE_READY, APP_STORE_URL, PLAY_STORE_READY, PLAY_STORE_URL } from '../../data/app-links';
 import { ComingSoonDirective, SOON } from '../../shared/coming-soon.directive';
-
-/** El perfil de Bipsy en Instagram. */
-const INSTAGRAM_URL = 'https://www.instagram.com/bipsy_es/';
 
 /** Iconos de las redes, en una caja de 24×24 pintada con currentColor. */
 const SOCIAL_ICONS = {
@@ -51,6 +48,15 @@ export class FooterComponent {
   readonly soon = SOON;
   readonly icons = SOCIAL_ICONS;
   readonly instagramUrl = INSTAGRAM_URL;
+  /** «Configurar cookies», only when there is analytics to configure. */
+  readonly analyticsOn = GA_MEASUREMENT_ID !== '';
+  private readonly injector = inject(Injector);
+
+  /** Brings the cookie notice back. The service is loaded on demand, as in the root. */
+  configureCookies(): void {
+    void import('../cookie-consent/cookie-consent.component')
+      .then(m => this.injector.get(m.AnalyticsService).reopen());
+  }
 
   /** Los documentos legales publicados. Solo el nombre, no el texto. */
   readonly legalDocs = LEGAL_INDEX;

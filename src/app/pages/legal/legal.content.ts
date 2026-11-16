@@ -1,4 +1,19 @@
 import { LegalDocument, LEGAL_COMPANY } from './legal.models';
+import { GA_MEASUREMENT_ID } from '../../data/site.data';
+
+/**
+ * Google Analytics is on (there is a measurement ID). The cookie and privacy
+ * policies then describe it; without an ID their text is exactly the one
+ * from before analytics existed.
+ *
+ * ⚠️ The day the ID is set, update `updatedAt` of COOKIES (and of PRIVACY):
+ * the policy promises to say when it changed. `version` stays: the backend
+ * only records the version of the terms.
+ */
+const ANALYTICS = GA_MEASUREMENT_ID !== '';
+
+/** GA4's per-property cookie: `_ga_` + the measurement ID without «G-». */
+const GA_PROPERTY_COOKIE = `_ga_${GA_MEASUREMENT_ID.replace(/^G-/, '')}`;
 
 /**
  * Los cuatro documentos legales publicados.
@@ -305,13 +320,22 @@ const PRIVACY: LegalDocument = {
     {
       id: 'datos',
       title: '2. Qué datos tratamos',
-      paragraphs: ['Tratamos únicamente los datos necesarios para que el servicio funcione:'],
+      paragraphs: [
+        ANALYTICS
+          ? 'Tratamos los datos necesarios para que el servicio funcione y, solo si lo aceptas, los de uso ' +
+            'de la web:'
+          : 'Tratamos únicamente los datos necesarios para que el servicio funcione:',
+      ],
       bullets: [
         'Identificación y contacto: nombre, correo electrónico y teléfono.',
         'Datos de la cuenta: contraseña cifrada y preferencias de la app.',
         'Datos del negocio: nombre comercial, CIF, dirección y ubicación exacta si la facilitas.',
         'Actividad: reservas, valoraciones y mensajes de soporte.',
         'Datos técnicos: identificador de dispositivo para las notificaciones push.',
+        ...(ANALYTICS
+          ? ['Uso de la web, solo si aceptas las cookies de análisis: páginas visitadas, tipo de dispositivo ' +
+              'y zona aproximada, que Google Analytics asocia a un identificador seudónimo.']
+          : []),
       ],
     },
     {
@@ -323,6 +347,10 @@ const PRIVACY: LegalDocument = {
         'Interés legítimo: prevenir el fraude y el abuso de la plataforma, y mejorar el servicio.',
         'Consentimiento: envío de comunicaciones comerciales sobre Bipsy o Giralabs, que es opcional y ' +
           'puedes retirar en cualquier momento sin que afecte al resto del servicio.',
+        ...(ANALYTICS
+          ? ['Consentimiento: la medición del uso de la web con Google Analytics, solo si aceptas las ' +
+              'cookies de análisis. Puedes retirarlo cuando quieras desde «Configurar cookies».']
+          : []),
       ],
     },
     {
@@ -348,6 +376,10 @@ const PRIVACY: LegalDocument = {
         'Resend — envío del correo transaccional (verificación, avisos de cita).',
         'Google Firebase — notificaciones push y, si lo eliges, el acceso con cuenta de Google.',
         'Google Maps — mapas y búsqueda por zona. Solo se carga al abrir un mapa.',
+        ...(ANALYTICS
+          ? ['Google Analytics (Google Ireland Limited) — estadística de uso de la web. Solo se carga si ' +
+              'aceptas las cookies de análisis.']
+          : []),
         'Stripe — procesamiento de pagos, cuando el negocio exija tarjeta. Los datos de la tarjeta ' +
           'los recoge Stripe directamente y Bipsy nunca llega a verlos.',
       ],
@@ -390,7 +422,15 @@ const PRIVACY: LegalDocument = {
     {
       id: 'cookies',
       title: '9. Cookies y almacenamiento local',
-      paragraphs: [
+      paragraphs: ANALYTICS ? [
+        'Esta web guarda en tu navegador lo imprescindible para funcionar, como la sesión iniciada para no ' +
+          'pedirte la contraseña en cada página.',
+        'No usamos cookies de publicidad. Las de análisis (Google Analytics) solo se instalan si las aceptas ' +
+          'en el aviso de cookies, y puedes retirar el consentimiento cuando quieras desde «Configurar ' +
+          'cookies». El detalle está en la Política de cookies.',
+        'Las aplicaciones móviles no usan cookies: guardan la sesión en el almacenamiento seguro del ' +
+          'dispositivo.',
+      ] : [
         'Esta web usa únicamente almacenamiento técnico imprescindible: guardamos en tu navegador la sesión ' +
           'iniciada para no pedirte la contraseña en cada página.',
         'No usamos cookies de publicidad ni de analítica de terceros, así que no necesitamos pedirte ' +
@@ -590,6 +630,8 @@ const COOKIES: LegalDocument = {
   title: 'Política de cookies',
   subtitle: 'Qué se guarda en tu navegador, para qué y cómo quitarlo',
   version: '1.0',
+  // ⚠️ When GA_MEASUREMENT_ID is set (site.data.ts) this text changes: put
+  // that day's date here.
   updatedAt: '2 de septiembre de 2026',
   sections: [
     {
@@ -611,9 +653,15 @@ const COOKIES: LegalDocument = {
       id: 'resumen',
       title: '2. Resumen',
       paragraphs: [
-        'Bipsy no usa cookies de publicidad, de analítica ni de seguimiento entre sitios. No verás un banner ' +
-          'de consentimiento porque no hay nada que consentir: todo lo que guardamos es imprescindible para ' +
-          'prestar el servicio que pides, y la normativa exime a ese uso del consentimiento previo.',
+        ANALYTICS
+          ? 'Bipsy no usa cookies de publicidad ni de seguimiento entre sitios. Lo único que no es ' +
+            'imprescindible son las cookies de análisis de Google Analytics, y solo se instalan si las ' +
+            'aceptas en el aviso que verás al entrar: mientras no contestes, o si las rechazas, no se carga ' +
+            'nada de Google Analytics. Todo lo demás es necesario para prestar el servicio que pides, y la ' +
+            'normativa exime a ese uso del consentimiento previo.'
+          : 'Bipsy no usa cookies de publicidad, de analítica ni de seguimiento entre sitios. No verás un banner ' +
+            'de consentimiento porque no hay nada que consentir: todo lo que guardamos es imprescindible para ' +
+            'prestar el servicio que pides, y la normativa exime a ese uso del consentimiento previo.',
         'Lo que sí conviene que sepas es que dos funciones concretas —el mapa y el pago con tarjeta— cargan ' +
           'código de Google y de Stripe, y esos proveedores guardan cosas por su cuenta. Se detallan abajo.',
       ],
@@ -636,6 +684,10 @@ const COOKIES: LegalDocument = {
         'bipsy_promo_business y bipsy_app_banner — recuerdan que has cerrado el aviso superior o la tira ' +
           'que ofrece la aplicación, para no volver a mostrártelos. Son preferencias de interfaz: no ' +
           'identifican a nadie ni se envían a ningún sitio.',
+        ...(ANALYTICS
+          ? ['bipsy.cookies.analytics — tu respuesta al aviso de cookies (si aceptas o rechazas las de ' +
+              'análisis), para no volver a preguntarte en cada visita. Se borra al pulsar «Configurar cookies».']
+          : []),
       ],
       closingParagraphs: [
         'Si bloqueas este almacenamiento podrás navegar y consultar negocios, pero no mantener la sesión ' +
@@ -646,10 +698,21 @@ const COOKIES: LegalDocument = {
       id: 'terceros',
       title: '4. Servicios de terceros',
       paragraphs: [
-        'Ninguno de estos servicios se carga al entrar en la web. Cada uno se descarga solo cuando usas la ' +
-          'función que lo necesita, y hasta entonces no guarda nada:',
+        ANALYTICS
+          ? 'Ninguno de estos servicios se carga sin más al entrar en la web: Google Analytics, solo si lo ' +
+            'aceptas, y los demás, solo cuando usas la función que los necesita. Hasta entonces no guardan nada:'
+          : 'Ninguno de estos servicios se carga al entrar en la web. Cada uno se descarga solo cuando usas la ' +
+            'función que lo necesita, y hasta entonces no guarda nada:',
       ],
       bullets: [
+        ...(ANALYTICS
+          ? ['Google Analytics (Google Ireland Limited) — estadística de uso: qué páginas se visitan, desde ' +
+              'qué tipo de dispositivo y desde qué zona aproximada, para saber qué funciona y mejorar la web. ' +
+              `Instala las cookies _ga y ${GA_PROPERTY_COOKIE}, que duran hasta 2 años. Solo se instalan si ` +
+              'aceptas las cookies de análisis. Puedes retirar el consentimiento cuando quieras desde ' +
+              '«Configurar cookies», en el pie de la web o al final de esta página: se dejan de enviar datos ' +
+              'y se borran esas cookies.']
+          : []),
         'Google Maps (Google Ireland Limited) — se carga al abrir un mapa, en la búsqueda por zona y en la ' +
           'ficha de un negocio. Google guarda preferencias del propio mapa y, al servirse desde sus ' +
           'dominios, puede leer las cookies que ya tengas de tu cuenta de Google.',
@@ -672,7 +735,7 @@ const COOKIES: LegalDocument = {
       paragraphs: ['Para que quede escrito y sea exigible:'],
       bullets: [
         'No usamos cookies publicitarias ni de personalización de anuncios.',
-        'No usamos Google Analytics ni ninguna otra herramienta de analítica de terceros.',
+        ...(ANALYTICS ? [] : ['No usamos Google Analytics ni ninguna otra herramienta de analítica de terceros.']),
         'No usamos píxeles de redes sociales ni botones que rastreen tu navegación.',
         'No vendemos ni cedemos datos de navegación a terceros con fines comerciales.',
       ],
