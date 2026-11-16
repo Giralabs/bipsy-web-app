@@ -1013,6 +1013,88 @@ const CONTACT: LegalDocument = {
   ],
 };
 
+/**
+ * Cómo borrar la cuenta, sin tener que entrar.
+ *
+ * Google Play exige una URL pública con los pasos y con qué se borra y qué se
+ * conserva; es la que se declara en «Seguridad de los datos» de las dos apps.
+ * Describe lo que hacen `CustomerService.deleteAccount` y
+ * `BusinessAccountDeletionService` (14 días de margen, los de la retención de
+ * Stripe): si cambia la baja, cambia esta página en el mismo cambio.
+ */
+const ACCOUNT_DELETION: LegalDocument = {
+  slug: 'eliminar-cuenta',
+  title: 'Eliminar tu cuenta',
+  subtitle: 'Cómo borrar tu cuenta de Bipsy o de Bipsy Business, y qué pasa con tus datos',
+  version: '1.0',
+  updatedAt: '16 de noviembre de 2026',
+  sections: [
+    {
+      id: 'desde-la-app',
+      title: '1. Desde la aplicación',
+      paragraphs: [
+        'Es la forma más rápida. Necesitas haber iniciado sesión con la cuenta que quieres borrar.',
+      ],
+      bullets: [
+        'Bipsy (clientes): Perfil › Eliminar cuenta. Si entraste con contraseña, te la pediremos para confirmar.',
+        'Bipsy Business (negocios y trabajadores): Perfil › Eliminar cuenta.',
+        'Desde el ordenador, los clientes también pueden hacerlo en bipsy.es, en Ajustes › Eliminar cuenta.',
+      ],
+    },
+    {
+      id: 'sin-la-app',
+      title: '2. Sin la aplicación',
+      paragraphs: [
+        `Si ya no tienes la aplicación o no puedes entrar, escríbenos a ${LEGAL_COMPANY.privacyEmail} ` +
+          'con el asunto «Eliminar cuenta». Envíalo desde el correo de tu cuenta y dinos si es de Bipsy o ' +
+          'de Bipsy Business. Si no puedes escribir desde ese correo, te pediremos que acredites que la ' +
+          'cuenta es tuya.',
+        'La borraremos en un plazo máximo de un mes y te confirmaremos cuándo está hecho.',
+      ],
+    },
+    {
+      id: 'que-se-borra',
+      title: '3. Qué se borra',
+      paragraphs: ['Al eliminar la cuenta:'],
+      bullets: [
+        'Tu nombre, tu correo y tu teléfono se sustituyen por datos anónimos, y ya no se puede entrar en la cuenta.',
+        'Se borran tu foto de perfil, tus direcciones guardadas, la dirección de tus citas a domicilio y tus favoritos.',
+        'Se desvinculan tus accesos con Google o Apple, se cierran todas tus sesiones y tus móviles dejan de recibir avisos.',
+        'Tus citas futuras se cancelan, y lo que ya hubieras pagado por ellas se devuelve entero.',
+      ],
+      closingParagraphs: [
+        'Puedes volver a registrarte cuando quieras con el mismo correo: será una cuenta nueva.',
+      ],
+    },
+    {
+      id: 'negocios',
+      title: '4. Si tienes un negocio',
+      paragraphs: [
+        'La cuenta de un negocio se borra en dos pasos. Al pedirlo, el negocio deja de aparecer en Bipsy ' +
+          'y de aceptar reservas, se cancelan sus citas futuras con devolución completa a cada cliente y ' +
+          'se avisa a tu equipo.',
+        'Pasados 14 días se desvincula a tu equipo y se anonimizan los datos de la cuenta. Si vuelves a ' +
+          'entrar antes de ese plazo, podrás reactivar el negocio; las citas canceladas no vuelven.',
+        'Si pagas Bipsy desde la App Store o Google Play, cancela también la suscripción allí: nosotros ' +
+          'no podemos hacerlo por ti.',
+        'Las cuentas de los trabajadores se borran en el momento, como las de los clientes.',
+      ],
+    },
+    {
+      id: 'que-se-conserva',
+      title: '5. Qué se conserva y durante cuánto tiempo',
+      paragraphs: [
+        'Las citas pasadas, los mensajes y las valoraciones se quedan en el historial del negocio, pero ' +
+          'sin tus datos: aparecen como «Cuenta eliminada».',
+        'Los registros de pagos y devoluciones se conservan, anonimizados, durante los plazos legales de ' +
+          'prescripción, porque lo exige la normativa fiscal y contable. Los mensajes de soporte se guardan ' +
+          'mientras el caso siga abierto y, después, el tiempo necesario para acreditar cómo se resolvió.',
+        'Más detalle en la Política de privacidad, apartado «Cuánto tiempo los guardamos».',
+      ],
+    },
+  ],
+};
+
 /** Documentos indexados por slug de ruta. */
 export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
   'aviso-legal': NOTICE,
@@ -1022,4 +1104,5 @@ export const LEGAL_DOCUMENTS: Record<string, LegalDocument> = {
   'quienes-somos': ABOUT,
   seguridad: SECURITY,
   contacto: CONTACT,
+  'eliminar-cuenta': ACCOUNT_DELETION,
 };
