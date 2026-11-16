@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AnalyticsService } from '../../core/analytics.service';
 import { ButtonComponent } from '../button/button.component';
+import { cookieNoticeUp, dismissDevCard } from '../dev-notice/dev-notice.component';
 
 /**
  * The analytics cookie notice. `AnalyticsService` imports it and mounts it
@@ -27,6 +28,20 @@ export { AnalyticsService };
   templateUrl: './cookie-consent.component.html',
   styleUrl: './cookie-consent.component.css',
 })
-export class CookieConsentComponent {
+export class CookieConsentComponent implements OnDestroy {
   readonly analytics = inject(AnalyticsService);
+
+  /**
+   * One notice at a time: on desktop this card carries «Web en desarrollo»
+   * too, so the dev card steps aside while it is up, and answering counts as
+   * having read it (only the «En desarrollo» pill stays).
+   */
+  constructor() {
+    cookieNoticeUp.set(true);
+  }
+
+  ngOnDestroy(): void {
+    cookieNoticeUp.set(false);
+    dismissDevCard();
+  }
 }
