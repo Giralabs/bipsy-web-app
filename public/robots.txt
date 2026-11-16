@@ -20,3 +20,6 @@ Disallow: /invitacion/
 Disallow: /equipo/
 Disallow: /admin
 Disallow: /negocio/*/reservar
+
+# Las páginas fijas. Las fichas de los negocios aún no están: ver sitemap.xml.
+Sitemap: https://bipsy.es/sitemap.xml
