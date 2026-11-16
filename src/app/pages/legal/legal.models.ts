@@ -31,7 +31,8 @@ export type LegalSlug =
   | 'cookies'
   | 'quienes-somos'
   | 'seguridad'
-  | 'contacto';
+  | 'contacto'
+  | 'eliminar-cuenta';
 
 export interface LegalDocument {
   slug: LegalSlug;

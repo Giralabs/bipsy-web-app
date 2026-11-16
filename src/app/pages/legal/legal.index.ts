@@ -35,6 +35,7 @@ export const HELP_INDEX: LegalEntry[] = [
   { slug: 'quienes-somos', title: 'Quiénes somos' },
   { slug: 'contacto', title: 'Contacto' },
   { slug: 'seguridad', title: 'Seguridad' },
+  { slug: 'eliminar-cuenta', title: 'Eliminar tu cuenta' },
 ];
 
 /** Los dos grupos, para la navegación lateral de las propias páginas. */
