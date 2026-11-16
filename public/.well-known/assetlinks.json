@@ -4,7 +4,21 @@
     "target": {
       "namespace": "android_app",
       "package_name": "com.gipsi.gipsi",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_RELEASE_SHA256_FINGERPRINT"]
+      "sha256_cert_fingerprints": [
+        "F8:DD:2A:A5:1F:1D:48:1C:50:37:F1:36:87:61:C5:07:27:66:20:06:5F:B0:20:2E:4D:89:82:6E:58:1E:87:38",
+        "83:AB:14:ED:7F:A2:32:89:80:1F:86:D1:F0:4D:5F:EE:78:02:23:72:00:5C:72:E4:BE:A0:CB:CF:5B:A7:38:AB"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.gipsi.gipsi_business",
+      "sha256_cert_fingerprints": [
+        "F7:DB:13:15:5F:DE:27:1A:68:18:C8:11:91:3D:50:F9:96:36:B1:1E:E8:0A:21:C5:98:57:DD:0A:D6:32:EB:C6",
+        "76:75:F3:98:4F:90:60:4F:02:8D:3A:A0:97:EA:C0:77:15:A2:03:A7:81:51:D8:6E:76:53:B8:A2:81:51:0C:A7"
+      ]
     }
   }
 ]
