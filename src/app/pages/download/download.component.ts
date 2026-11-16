@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PageMetaService } from '../../core/page-meta.service';
+import { downloadSeo } from './download-seo';
 import {
   APP_STORE_READY,
   BipsyApp,
@@ -33,9 +34,9 @@ import { StatusPageComponent } from '../../components/status-page/status-page.co
 })
 export class DownloadComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
-  private readonly releaseMeta = inject(PageMetaService).set('Descargar Bipsy');
-
   readonly app: BipsyApp = this.route.snapshot.data['app'] === 'business' ? 'business' : 'customer';
+  private readonly releaseMeta = inject(PageMetaService).apply(downloadSeo(this.app));
+
   readonly published = STORE_LINKS_READY;
   readonly appStore = APP_STORE_READY ? appStoreUrl(this.app) : '';
   readonly googlePlay = PLAY_STORE_READY ? playStoreUrl(this.app) : '';

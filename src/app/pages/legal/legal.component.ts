@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { PageMetaService } from '../../core/page-meta.service';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LEGAL_DOCUMENTS } from './legal.content';
@@ -22,8 +23,11 @@ import { LEGAL_GROUPS, LEGAL_INDEX, HELP_INDEX } from './legal.index';
   templateUrl: './legal.component.html',
   styleUrl: './legal.component.css'
 })
-export class LegalComponent implements OnInit {
+export class LegalComponent implements OnInit, OnDestroy {
   doc: LegalDocument | null = null;
+
+  private readonly meta = inject(PageMetaService);
+  private releaseMeta: (() => void) | null = null;
 
   constructor(private route: ActivatedRoute) {}
 
@@ -33,6 +37,15 @@ export class LegalComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const slug = params.get('slug') ?? 'terminos';
       this.doc = LEGAL_DOCUMENTS[slug] ?? null;
+      // Each document is its own indexable page; an unknown slug renders the
+      // «not found» block and must not be indexed.
+      this.releaseMeta = this.doc
+        ? this.meta.apply({
+            title: this.doc.title,
+            description: `${this.doc.subtitle}.`,
+            path: `/legal/${this.doc.slug}`,
+          })
+        : this.meta.set('Página no encontrada', true);
       // Solo al principio si NO se venía a un apartado concreto: con un
       // fragmento en la URL, el router ya está saltando allí y subir a la vez
       // deja al usuario arriba en vez de donde pidió ir.
@@ -40,6 +53,10 @@ export class LegalComponent implements OnInit {
         window.scrollTo({ top: 0, behavior: 'auto' });
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.releaseMeta?.();
   }
 
   /** Los dos grupos de la barra lateral: lo legal y lo de ayuda. */

@@ -2,10 +2,18 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Bipsy - Reservas de Barbería, Peluquería y Estética</title>
+  <title>Bipsy · Pide cita en barberías, peluquerías y estética</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Encuentra negocios de belleza y bienestar cerca de ti y pide cita en unos toques, sin llamar.">
+  <!-- The home's description (same text as HOME_SEO in core/seo/site-seo.ts).
+       Each public page replaces it, and the canonical below, with its own
+       (core/page-meta.service.ts); on any address but `/` the canonical is
+       removed at start-up until the page sets the right one. -->
+  <meta name="description" content="Pide cita en barberías, peluquerías, centros de estética y de uñas cerca de ti. Mira servicios, precios y opiniones, elige día y hora y reserva sin llamar.">
+  <link rel="canonical" href="https://bipsy.es/">
+
+  <!-- Safari on iPhone shows its banner to open or install the customer app. -->
+  <meta name="apple-itunes-app" content="app-id=6828380156">
 
   <!-- Vista previa al compartir un enlace (WhatsApp, Mensajes, redes).
        Va aquí y no en Angular: quien la lee no ejecuta JavaScript, así que
@@ -17,13 +25,16 @@
   <meta property="og:site_name" content="Bipsy">
   <meta property="og:locale" content="es_ES">
   <meta property="og:title" content="Bipsy · Pide cita sin llamar">
-  <meta property="og:description" content="Encuentra negocios de belleza y bienestar cerca de ti y pide cita en unos toques.">
+  <meta property="og:description" content="Pide cita en barberías, peluquerías, centros de estética y de uñas cerca de ti, sin llamar.">
+  <meta property="og:url" content="https://bipsy.es/">
   <meta property="og:image" content="https://bipsy.es/og-image.jpg">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Logotipo de Bipsy">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Bipsy · Pide cita sin llamar">
+  <meta name="twitter:description" content="Pide cita en barberías, peluquerías, centros de estética y de uñas cerca de ti, sin llamar.">
 
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">

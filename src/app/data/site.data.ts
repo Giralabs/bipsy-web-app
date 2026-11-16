@@ -31,3 +31,9 @@ export const HELP_BUSINESS_URL = `${HELP_URL}/negocios`;
  * against.
  */
 export const BUSINESS_URL = 'https://business.bipsy.es';
+
+/** Bipsy on Instagram: linked from the footer and listed in the home's structured data. */
+export const INSTAGRAM_URL = 'https://www.instagram.com/bipsy_es/';
+
+/** Giralabs, who builds Bipsy and publishes its apps. */
+export const GIRALABS_URL = 'https://giralabs.es';

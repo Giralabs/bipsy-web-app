@@ -3,12 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HELP_INDEX, LEGAL_INDEX } from '../../pages/legal/legal.index';
 import { LEGAL_COMPANY } from '../../pages/legal/legal.models';
-import { HELP_CLIENTS_URL } from '../../data/site.data';
+import { HELP_CLIENTS_URL, INSTAGRAM_URL } from '../../data/site.data';
 import { APP_STORE_READY, APP_STORE_URL, PLAY_STORE_READY, PLAY_STORE_URL } from '../../data/app-links';
 import { ComingSoonDirective, SOON } from '../../shared/coming-soon.directive';
-
-/** El perfil de Bipsy en Instagram. */
-const INSTAGRAM_URL = 'https://www.instagram.com/bipsy_es/';
 
 /** Iconos de las redes, en una caja de 24×24 pintada con currentColor. */
 const SOCIAL_ICONS = {
